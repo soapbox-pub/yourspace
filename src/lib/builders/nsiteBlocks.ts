@@ -448,14 +448,20 @@ export function canvasFontFace(interFontUrl: string): string {
 
 /**
  * What makes the starting page look like a page. It is a bare fragment with no
- * stylesheet of its own, so something has to supply the background and the font.
+ * stylesheet of its own, so something has to supply the margin and the font.
  *
- * A page that brings its own CSS must not get these. Both declarations sit
- * directly on `body`, which beats a site's `html` background and beats the font
- * `body` would otherwise inherit from `:root` — so imposing them on an imported
- * site silently repaints and re-fonts it.
+ * The backdrop is deliberately not here. It belongs behind the frame, where it
+ * can't reach a page that brings its own — and where it doesn't have to compete
+ * with the `body { background-color: #fff }` GrapesJS appends to the frame's
+ * `<body>`, which outranks anything in the `<head>` and which this rule lost to
+ * for as long as it carried one.
+ *
+ * A page that brings its own CSS must not get even what is left. Both
+ * declarations sit directly on `body`, which beats the font `body` would
+ * otherwise inherit from `:root`, and a site is as likely to want the UA's
+ * default margin as none.
  */
-export const canvasPageDefaults = `body{margin:0;background:#f8fafc;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}`;
+export const canvasPageDefaults = `body{margin:0;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}`;
 
 /** Both, for a canvas that only ever shows this app's own starting page. */
 export function canvasResetCss(interFontUrl: string): string {

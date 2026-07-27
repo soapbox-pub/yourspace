@@ -129,10 +129,9 @@ function initialProject(): StudioProject {
  *
  * The reset drops to bare infrastructure — the font face and the scrollbar —
  * once a real site is loaded. Ordering isn't enough to keep it out of the way:
- * `canvasPageDefaults` styles `body` directly, so it wins over a site that
- * paints `html` instead, and over a font `body` inherits from `:root`. Both are
- * how a site normally writes those, so the defaults have to be absent rather
- * than merely overridable.
+ * `canvasPageDefaults` styles `body` directly, so it beats the font a site's
+ * `body` inherits from `:root`, which is how a site normally sets one. The
+ * defaults have to be absent rather than merely overridable.
  */
 function styleCanvas(editor: Editor, siteCss: string, imported: boolean) {
   const doc = editor.Canvas.getDocument();
@@ -280,10 +279,10 @@ export function GrapesJSStudioDemo() {
          * everything in `<head>`, so it outranks both stylesheets below and
          * paints over any site that colours `html` rather than `body`.
          *
-         * Nothing here is load-bearing: the starting page's background comes
-         * from `canvasPageDefaults` and the scrollbars from
-         * `studioScrollbarCss`. The wrapper sizing and the dashed-outline rules
-         * GrapesJS injects alongside it are separate, and stay.
+         * Nothing here is load-bearing: the backdrop is on `.gjs-frame`, behind
+         * the frame where a page can't be painted over by it, and the scrollbars
+         * are in `studioScrollbarCss`. The wrapper sizing and the dashed-outline
+         * rules GrapesJS injects alongside it are separate, and stay.
          */
         frameStyle: '',
       },
