@@ -1,10 +1,33 @@
 {
-  "name": "WYSIWYG builders for Nostr nsites",
-  "short_name": "nsite builders",
-  "description": "Side-by-side demos of open source visual page builders, evaluated for building and publishing Nostr homepages.",
+  "name": "YourSpace",
+  "short_name": "YourSpace",
+  "description": "Build a homepage that is actually yours, and publish it to Nostr as an nsite.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6366f1",
-  "icons": []
+  "background_color": "#0f172a",
+  "theme_color": "#8b5cf6",
+  "categories": ["social", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }

@@ -2,7 +2,7 @@ import type { Component, Editor } from 'grapesjs';
 import type { NostrMetadata, NPool } from '@nostrify/nostrify';
 import { nip19 } from 'nostr-tools';
 
-import { demoLinks, demoNotes, demoProfile, formatSats } from '@/lib/nsiteDemo';
+import { demoLinks, demoNotes, demoProfile, formatSats } from '@/lib/nsite/demoContent';
 
 /**
  * The nsite content the builder starts from: its blocks, its "Profile hero"

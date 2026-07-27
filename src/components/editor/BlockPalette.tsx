@@ -13,7 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { nsiteBlockDefs, type BlockContent, type NsiteBlockDef } from '@/lib/builders/nsiteBlocks';
+import { nsiteBlockDefs, type BlockContent, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 
 interface BlockPaletteProps {

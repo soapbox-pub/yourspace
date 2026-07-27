@@ -2,11 +2,11 @@ import { useState, type ReactNode } from 'react';
 import type { Editor } from 'grapesjs';
 import { Eye, Monitor, Redo2, Smartphone, SquareDashed, Tablet, Undo2 } from 'lucide-react';
 
-import { nsiteDevices } from '@/lib/builders/nsiteBlocks';
+import { nsiteDevices } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 import { useEditorEvent } from './editorHooks';
 
-interface StudioToolbarProps {
+interface EditorToolbarProps {
   editor: Editor | null;
   /**
    * Site-level controls — which page is open, and where the site came from.
@@ -24,7 +24,7 @@ const deviceIcons = {
 const buttonClass =
   'flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40';
 
-export function StudioToolbar({ editor, leading }: StudioToolbarProps) {
+export function EditorToolbar({ editor, leading }: EditorToolbarProps) {
   // Undo availability changes on every edit, and the device on every switch.
   useEditorEvent(editor, 'update change:device undo redo');
 

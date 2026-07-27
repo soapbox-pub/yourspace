@@ -97,8 +97,8 @@
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(222.2 84% 4.9%);
 
-  --primary: hsl(222.2 47.4% 11.2%);
-  --primary-foreground: hsl(210 40% 98%);
+  --primary: hsl(258 90% 60%);
+  --primary-foreground: hsl(0 0% 100%);
 
   --secondary: hsl(210 40% 96.1%);
   --secondary-foreground: hsl(222.2 47.4% 11.2%);
@@ -114,7 +114,7 @@
 
   --border: hsl(214.3 31.8% 91.4%);
   --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(222.2 84% 4.9%);
+  --ring: hsl(258 90% 60%);
 
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
@@ -142,8 +142,8 @@
   --popover: hsl(222.2 84% 4.9%);
   --popover-foreground: hsl(210 40% 98%);
 
-  --primary: hsl(210 40% 98%);
-  --primary-foreground: hsl(222.2 47.4% 11.2%);
+  --primary: hsl(258 90% 66%);
+  --primary-foreground: hsl(0 0% 100%);
 
   --secondary: hsl(217.2 32.6% 17.5%);
   --secondary-foreground: hsl(210 40% 98%);
@@ -159,7 +159,7 @@
 
   --border: hsl(217.2 32.6% 17.5%);
   --input: hsl(217.2 32.6% 17.5%);
-  --ring: hsl(212.7 26.8% 83.9%);
+  --ring: hsl(258 90% 66%);
 
   --chart-1: hsl(220 70% 50%);
   --chart-2: hsl(160 60% 45%);
@@ -188,5 +188,97 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * YourSpace brand
+ * ---------------------------------------------------------------------------
+ *
+ * The marketing surfaces are their own dark, cosmic world — a deliberate nod to
+ * the profile pages people used to build for themselves — so everything below
+ * hardcodes its colours rather than reading the app palette. They look the same
+ * whether or not the app is in dark mode.
+ */
+
+/* Drifting nebula: three radial glows over a fixed indigo-to-slate base. */
+.ys-aurora {
+  background:
+    radial-gradient(circle at 20% 80%, rgb(139 92 246 / 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgb(59 130 246 / 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgb(99 102 241 / 0.3) 0%, transparent 50%),
+    linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e3a8a 50%, #3730a3 75%, #0f172a 100%);
+  /* Only the three glows are oversized; the base gradient stays put. */
+  background-size: 300% 300%, 300% 300%, 300% 300%, 100% 100%;
+  animation: ys-aurora-drift 15s ease-in-out infinite;
+}
+
+@keyframes ys-aurora-drift {
+  0%,
+  100% {
+    background-position: 0% 50%, 100% 50%, 50% 0%, 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%, 0% 100%, 100% 100%, 0% 0%;
+  }
+}
+
+/* The wordmark. Light stops only — this always sits on the aurora. */
+.ys-wordmark {
+  background: linear-gradient(45deg, #a78bfa, #22d3ee, #60a5fa);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/*
+ * Glass panels over the aurora. `backdrop-filter` needs something behind it to
+ * blur, so these only read correctly inside `.ys-aurora`.
+ */
+.ys-glass {
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.ys-glass-card {
+  background: linear-gradient(135deg, rgb(139 92 246 / 0.08) 0%, rgb(59 130 246 / 0.08) 100%);
+  border: 1px solid rgb(139 92 246 / 0.25);
+  backdrop-filter: blur(10px);
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.ys-glass-card:hover {
+  background: linear-gradient(135deg, rgb(139 92 246 / 0.14) 0%, rgb(59 130 246 / 0.14) 100%);
+  border-color: rgb(139 92 246 / 0.45);
+  transform: translateY(-2px);
+}
+
+.ys-float {
+  animation: ys-float 3s ease-in-out infinite;
+}
+
+@keyframes ys-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ys-aurora,
+  .ys-float {
+    animation: none;
+  }
+
+  .ys-glass-card:hover {
+    transform: none;
   }
 }

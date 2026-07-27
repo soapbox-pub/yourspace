@@ -9,17 +9,17 @@ import { Blocks, Images, Layers } from 'lucide-react';
 // `grapesjs-studio.css` restyles those. No Font Awesome: this page draws its
 // own icons.
 import 'grapesjs/dist/css/grapes.min.css';
-import '@/components/builders/grapesjs-studio.css';
+import '@/components/editor/grapesjs.css';
 
-import { BuilderShell } from '@/components/builders/BuilderShell';
-import { OutputPanel } from '@/components/builders/OutputPanel';
-import { AssetList } from '@/components/builders/studio/AssetList';
-import { BlockPalette } from '@/components/builders/studio/BlockPalette';
-import { ImportNsiteDialog } from '@/components/builders/studio/ImportNsiteDialog';
-import { Inspector } from '@/components/builders/studio/Inspector';
-import { LayerTree } from '@/components/builders/studio/LayerTree';
-import { PageSwitcher } from '@/components/builders/studio/PageSwitcher';
-import { StudioToolbar } from '@/components/builders/studio/StudioToolbar';
+import { EditorShell } from '@/components/editor/EditorShell';
+import { OutputPanel } from '@/components/editor/OutputPanel';
+import { AssetList } from '@/components/editor/AssetList';
+import { BlockPalette } from '@/components/editor/BlockPalette';
+import { ImportNsiteDialog } from '@/components/editor/ImportNsiteDialog';
+import { Inspector } from '@/components/editor/Inspector';
+import { LayerTree } from '@/components/editor/LayerTree';
+import { PageSwitcher } from '@/components/editor/PageSwitcher';
+import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { useToast } from '@/hooks/useToast';
 import {
   canvasResetCss,
@@ -27,7 +27,7 @@ import {
   nostrComponents,
   nsiteBlockDefs,
   nsiteDevices,
-} from '@/lib/builders/nsiteBlocks';
+} from '@/lib/nsite/blocks';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import {
   assetsOf,
@@ -184,11 +184,11 @@ function registerAssets(editor: Editor, files: NsiteFile[]) {
   );
 }
 
-export function GrapesJSStudioDemo() {
+export function Edit() {
   useSeoMeta({
-    title: 'GrapesJS Studio — nsite builder demo',
+    title: 'Editor — YourSpace',
     description:
-      'GrapesJS driven by a custom React interface: import a published nsite, switch between its pages, edit it, and read back the files it would ship.',
+      'Build your homepage block by block: import a published nsite, switch between its pages, edit it, and read back the files it would ship.',
   });
 
   const { nostr } = useNostr();
@@ -402,14 +402,9 @@ export function GrapesJSStudioDemo() {
   const assets = assetsOf(project.files);
 
   return (
-    <BuilderShell
-      name="GrapesJS Studio"
-      pkg="grapesjs"
-      license="BSD-3-Clause"
-      docsUrl="https://grapesjs.com/docs/"
-    >
+    <EditorShell>
       <div className="flex min-h-0 flex-1 flex-col">
-        <StudioToolbar
+        <EditorToolbar
           editor={editor}
           leading={
             <div className="flex items-center gap-2">
@@ -517,8 +512,8 @@ export function GrapesJSStudioDemo() {
           ]}
         />
       </div>
-    </BuilderShell>
+    </EditorShell>
   );
 }
 
-export default GrapesJSStudioDemo;
+export default Edit;
