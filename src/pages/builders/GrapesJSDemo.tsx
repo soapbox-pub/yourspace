@@ -3,10 +3,6 @@ import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
 import { useNostr } from '@nostrify/react';
 
-// Inter, for the canvas iframe. Font faces don't cross a document boundary, so
-// the app's @fontsource import doesn't reach the page being edited.
-import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-
 // GrapesJS's panel buttons are Font Awesome 4.7 glyphs. It normally injects
 // them from a CDN, which the app's CSP blocks — so bundle them instead and
 // disable the CDN request via `cssIcons` below.
@@ -237,7 +233,7 @@ export function GrapesJSDemo() {
 
       const style = doc.createElement('style');
       style.id = 'nsite-canvas-reset';
-      style.textContent = canvasResetCss(interLatin);
+      style.textContent = canvasResetCss;
       doc.head.appendChild(style);
     };
 

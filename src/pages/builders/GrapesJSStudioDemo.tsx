@@ -4,10 +4,6 @@ import grapesjs, { type Editor } from 'grapesjs';
 import { useNostr } from '@nostrify/react';
 import { Blocks, Images, Layers } from 'lucide-react';
 
-// Inter, for the canvas iframe. Font faces don't cross a document boundary, so
-// the app's @fontsource import doesn't reach the page being edited.
-import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
-
 // Only the canvas tooling is used from GrapesJS's stylesheet — the selection
 // outline, the badge, the component toolbar and the sorter's drop indicator.
 // `grapesjs-studio.css` restyles those and resets what the stock demo's
@@ -26,8 +22,7 @@ import { PageSwitcher } from '@/components/builders/studio/PageSwitcher';
 import { StudioToolbar } from '@/components/builders/studio/StudioToolbar';
 import { useToast } from '@/hooks/useToast';
 import {
-  canvasFontFace,
-  canvasPageDefaults,
+  canvasResetCss,
   initialPage,
   nostrComponents,
   nsiteBlockDefs,
@@ -127,13 +122,11 @@ function initialProject(): StudioProject {
  * GrapesJS's own stylesheet stays last in the head: the site's CSS has to beat
  * the reset, and an edit made in the inspector has to beat both.
  *
- * The reset drops to bare infrastructure — the font face and the scrollbar —
- * once a real site is loaded. Ordering isn't enough to keep it out of the way:
- * `canvasPageDefaults` styles `body` directly, so it beats the font a site's
- * `body` inherits from `:root`, which is how a site normally sets one. The
- * defaults have to be absent rather than merely overridable.
+ * Both stylesheets are the same for every page. The reset is the editor
+ * artifact fix plus the scrollbar treatment, neither of which is page styling
+ * and neither of which a site should have to override.
  */
-function styleCanvas(editor: Editor, siteCss: string, imported: boolean) {
+function styleCanvas(editor: Editor, siteCss: string) {
   const doc = editor.Canvas.getDocument();
   if (!doc?.head) return;
 
@@ -150,8 +143,7 @@ function styleCanvas(editor: Editor, siteCss: string, imported: boolean) {
     doc.head.prepend(reset, site);
   }
 
-  reset.textContent =
-    canvasFontFace(interLatin) + studioScrollbarCss + (imported ? '' : canvasPageDefaults);
+  reset.textContent = canvasResetCss + studioScrollbarCss;
   site.textContent = siteCss;
 }
 
@@ -228,7 +220,7 @@ export function GrapesJSStudioDemo() {
 
   /** Re-applies both canvas stylesheets from whatever the project holds now. */
   const paintCanvas = useCallback((instance: Editor) => {
-    styleCanvas(instance, siteCssRef.current, projectRef.current.origin !== null);
+    styleCanvas(instance, siteCssRef.current);
   }, []);
 
   /**

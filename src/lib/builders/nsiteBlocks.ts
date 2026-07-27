@@ -434,36 +434,20 @@ export const nsiteDevices = [
 ];
 
 /**
- * Makes Inter available inside the canvas. The `@font-face` has to be
- * redeclared there — the parent document's font registry is not shared across a
- * document boundary. The file is served same-origin, so `font-src 'self'` is
- * satisfied.
+ * The one rule the canvas document needs, whatever it is showing.
+ *
+ * GrapesJS gives the wrapper `min-height: 100vh` — it only skips that for an
+ * auto-height frame, which neither demo uses — so the body already fills the
+ * viewport exactly. The UA's default 8px margins on top of that push the
+ * document past it, leaving a scrollbar with nothing to scroll.
+ *
+ * That makes this compensation for an editor artifact rather than page styling,
+ * which is why it applies to an imported site as much as to the starting page.
+ * Everything else a page needs it either brings itself or gets from behind the
+ * frame: the backdrop is on `.gjs-frame`, and the starting template carries its
+ * own font on the root div.
  *
  * The app's CSP forbids `data:` stylesheets, so this is injected as an inline
  * `<style>` into the canvas document rather than passed to `canvas.styles`.
  */
-export function canvasFontFace(interFontUrl: string): string {
-  return `@font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interFontUrl}) format('woff2-variations');}`;
-}
-
-/**
- * What makes the starting page look like a page. It is a bare fragment with no
- * stylesheet of its own, so something has to supply the margin and the font.
- *
- * The backdrop is deliberately not here. It belongs behind the frame, where it
- * can't reach a page that brings its own — and where it doesn't have to compete
- * with the `body { background-color: #fff }` GrapesJS appends to the frame's
- * `<body>`, which outranks anything in the `<head>` and which this rule lost to
- * for as long as it carried one.
- *
- * A page that brings its own CSS must not get even what is left. Both
- * declarations sit directly on `body`, which beats the font `body` would
- * otherwise inherit from `:root`, and a site is as likely to want the UA's
- * default margin as none.
- */
-export const canvasPageDefaults = `body{margin:0;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}`;
-
-/** Both, for a canvas that only ever shows this app's own starting page. */
-export function canvasResetCss(interFontUrl: string): string {
-  return `${canvasFontFace(interFontUrl)}\n${canvasPageDefaults}`;
-}
+export const canvasResetCss = `body{margin:0;}`;
