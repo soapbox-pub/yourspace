@@ -62,11 +62,18 @@
  * `.gjs-frame` already carries `transition: width .35s ease`, so the surface
  * animates between breakpoints for free. `border: none` in grapes.min.css is a
  * single-class selector, so this two-class rule wins without `!important`.
+ *
+ * The fill is a literal white rather than `--background`, because this is the
+ * only thing behind a page that sets no background of its own, and what such a
+ * page gets in a browser is a white canvas — not whatever colour the app around
+ * it happens to be wearing. GrapesJS used to supply this from inside the frame
+ * with `body { background-color: #fff }`; that had to go, since it also painted
+ * over sites that colour `html`, so the backdrop belongs out here instead.
  */
 .nsite-studio .gjs-frame {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--background);
+  background: #fff;
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06);
 }
 
