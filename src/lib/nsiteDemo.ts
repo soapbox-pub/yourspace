@@ -114,4 +114,14 @@ export const builderDemos = [
     summary:
       'A framework-agnostic web page editor with a stock UI, style manager and layer tree. Outputs real HTML and CSS.',
   },
+  {
+    slug: 'grapesjs-studio',
+    name: 'GrapesJS Studio',
+    path: '/builders/grapesjs-studio',
+    license: 'BSD-3-Clause',
+    pkg: 'grapesjs',
+    tagline: 'GrapesJS with custom chrome',
+    summary:
+      'The same engine and the same blocks as the GrapesJS demo, with every panel replaced by React. Selecting an element shows its settings immediately.',
+  },
 ] as const;

@@ -1,0 +1,109 @@
+/*
+ * Canvas theming for the custom-chrome GrapesJS demo.
+ *
+ * The studio page runs GrapesJS with `customUI: true` and `panels.defaults: []`,
+ * so none of the stock panels exist and none of `grapes.min.css`'s panel rules
+ * apply. What is still needed from that stylesheet is the *canvas* tooling —
+ * the selection outline, the component badge, the per-component toolbar, and
+ * the sorter's drop indicator — none of which have a public API to rebuild.
+ *
+ * So the approach is: keep grapes.min.css, and restyle only those few pieces to
+ * match the app. Everything here is scoped to `.nsite-studio` so it cannot
+ * reach the stock demo at /builders/grapesjs.
+ */
+
+.nsite-studio {
+  /*
+   * `grapesjs-overrides.css` sets `--gjs-canvas-top: 42px` on `:root` to clear
+   * the stock top bar. That file is a module-level import in the *other* demo,
+   * so once a visitor has opened /builders/grapesjs the variable is in the
+   * document for the rest of the SPA session. There is no top bar here, so
+   * reset it rather than inherit a 42px gap that only appears to people who
+   * arrived via the other page.
+   */
+  --gjs-canvas-top: 0px;
+  --gjs-left-width: 0%;
+
+  /* Selection chrome, matched to the hero's violet. */
+  --gjs-color-blue: #8b5cf6;
+  --gjs-color-highlight: #c4b5fd;
+}
+
+/*
+ * Tailwind's Preflight sets `img, svg, video { display: block }` and
+ * `img { max-width: 100% }`. GrapesJS centers the icons in its canvas toolbar
+ * with `text-align`, which only affects inline boxes, so without this every
+ * toolbar glyph stacks and sits hard left.
+ */
+.nsite-studio .gjs-editor svg,
+.nsite-studio .gjs-editor img {
+  display: inline;
+  vertical-align: middle;
+}
+
+.nsite-studio .gjs-editor img {
+  max-width: none;
+}
+
+/* The canvas fills its container; `customUI` already handles the geometry. */
+.nsite-studio .gjs-cv-canvas {
+  background: transparent;
+}
+
+/*
+ * The name label shown above a hovered or selected component. Stock is a
+ * square 12px chip in `--gjs-color-blue`.
+ */
+.nsite-studio .gjs-badge {
+  border-radius: 6px 6px 0 0;
+  padding: 3px 8px;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+/* The move / clone / delete strip attached to the selected component. */
+.nsite-studio .gjs-toolbar {
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.18);
+}
+
+.nsite-studio .gjs-toolbar-item {
+  padding: 5px 6px;
+  transition: background-color 0.15s ease;
+}
+
+.nsite-studio .gjs-toolbar-item:hover {
+  background-color: rgb(0 0 0 / 0.18);
+}
+
+/*
+ * The sorter's insertion indicator — the line showing where a dragged block
+ * will land. Stock is a 1px green line that is easy to miss against content.
+ */
+.nsite-studio .gjs-placeholder {
+  border-color: #8b5cf6;
+}
+
+.nsite-studio .gjs-placeholder.horizontal {
+  border-top-width: 3px;
+  margin-top: -2px;
+}
+
+.nsite-studio .gjs-placeholder.vertical {
+  border-left-width: 3px;
+  margin-left: -2px;
+}
+
+.nsite-studio .gjs-placeholder-int {
+  background-color: #8b5cf6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nsite-studio .gjs-frame-wrapper--anim {
+    transition: none;
+  }
+}
