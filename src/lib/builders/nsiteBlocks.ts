@@ -5,13 +5,8 @@ import { nip19 } from 'nostr-tools';
 import { demoLinks, demoNotes, demoProfile, formatSats } from '@/lib/nsiteDemo';
 
 /**
- * The nsite content shared by both GrapesJS demos — the same blocks, the same
- * "Profile hero" component type, the same starting page.
- *
- * Only the chrome differs between `/builders/grapesjs` (stock panels) and
- * `/builders/grapesjs-studio` (custom React chrome), so keeping the content
- * here is what makes the two pages an actual comparison of the UI rather than
- * of two different editors.
+ * The nsite content the builder starts from: its blocks, its "Profile hero"
+ * component type and its starting page.
  *
  * GrapesJS renders the page inside an iframe and edits real HTML/CSS, so the
  * app's Tailwind classes do not apply. Blocks are therefore written as

@@ -1,5 +1,5 @@
 /*
- * Canvas theming for the custom-chrome GrapesJS demo.
+ * Canvas theming for the custom-chrome GrapesJS editor.
  *
  * The studio page runs GrapesJS with `customUI: true` and `panels.defaults: []`,
  * so none of the stock panels exist and none of `grapes.min.css`'s panel rules
@@ -8,18 +8,14 @@
  * the sorter's drop indicator — none of which have a public API to rebuild.
  *
  * So the approach is: keep grapes.min.css, and restyle only those few pieces to
- * match the app. Everything here is scoped to `.nsite-studio` so it cannot
- * reach the stock demo at /builders/grapesjs.
+ * match the app. Everything here is scoped to `.nsite-studio`.
  */
 
 .nsite-studio {
   /*
-   * `grapesjs-overrides.css` sets `--gjs-canvas-top: 42px` on `:root` to clear
-   * the stock top bar. That file is a module-level import in the *other* demo,
-   * so once a visitor has opened /builders/grapesjs the variable is in the
-   * document for the rest of the SPA session. There is no top bar here, so
-   * reset it rather than inherit a 42px gap that only appears to people who
-   * arrived via the other page.
+   * grapes.min.css reserves `--gjs-canvas-top: 40px` for the stock top panel.
+   * There is no top bar here, so reset it rather than inherit a 40px gap above
+   * the page.
    */
   --gjs-canvas-top: 0px;
   --gjs-left-width: 0%;

@@ -1,8 +1,6 @@
 /**
- * Shared fixture data for the WYSIWYG builder demos.
- *
- * Every demo builds the same thing — a personal Nostr homepage (an "nsite") —
- * so the three editors can be compared on equal footing.
+ * Fixture data for the builder demo, which puts together a personal Nostr
+ * homepage (an "nsite").
  */
 
 export interface DemoLink {
@@ -82,46 +80,3 @@ export function formatSats(sats: number): string {
   }
   return String(sats);
 }
-
-export const builderDemos = [
-  {
-    slug: 'puck',
-    name: 'Puck',
-    path: '/builders/puck',
-    license: 'MIT',
-    pkg: '@puckeditor/core',
-    tagline: 'Drop-in React visual editor',
-    summary:
-      'Renders a complete editor from a config object mapping your React components to editable fields. Outputs JSON.',
-  },
-  {
-    slug: 'tiptap',
-    name: 'Tiptap',
-    path: '/builders/tiptap',
-    license: 'MIT',
-    pkg: '@tiptap/react',
-    tagline: 'Headless ProseMirror editor',
-    summary:
-      'A rich text editor with no UI of its own. Layout blocks require custom nodes with React node views. Outputs HTML or JSON.',
-  },
-  {
-    slug: 'grapesjs',
-    name: 'GrapesJS',
-    path: '/builders/grapesjs',
-    license: 'BSD-3-Clause',
-    pkg: 'grapesjs',
-    tagline: 'HTML/CSS page editor',
-    summary:
-      'A framework-agnostic web page editor with a stock UI, style manager and layer tree. Outputs real HTML and CSS.',
-  },
-  {
-    slug: 'grapesjs-studio',
-    name: 'GrapesJS Studio',
-    path: '/builders/grapesjs-studio',
-    license: 'BSD-3-Clause',
-    pkg: 'grapesjs',
-    tagline: 'GrapesJS with custom chrome',
-    summary:
-      'The same engine and the same blocks as the GrapesJS demo, with every panel replaced by React. Selecting an element shows its settings immediately.',
-  },
-] as const;

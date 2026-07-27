@@ -6,8 +6,8 @@ import { Blocks, Images, Layers } from 'lucide-react';
 
 // Only the canvas tooling is used from GrapesJS's stylesheet — the selection
 // outline, the badge, the component toolbar and the sorter's drop indicator.
-// `grapesjs-studio.css` restyles those and resets what the stock demo's
-// overrides leave on `:root`. No Font Awesome: this page draws its own icons.
+// `grapesjs-studio.css` restyles those. No Font Awesome: this page draws its
+// own icons.
 import 'grapesjs/dist/css/grapes.min.css';
 import '@/components/builders/grapesjs-studio.css';
 
@@ -58,9 +58,6 @@ import { isHtmlDocument, toCanvasHtml, toSiteHtml } from '@/lib/nsite/siteHtml';
  * the canvas back into the file it came from and parses the next one in. The
  * editor's own `PageManager` is deliberately unused, because its pages share a
  * single stylesheet and an nsite's don't.
- *
- * The blocks and the Profile hero component are shared with `/builders/grapesjs`
- * via `@/lib/builders/nsiteBlocks`, so the two pages differ only in their shell.
  */
 
 const blocks = nsiteBlockDefs.map(({ id, label, category, content }) => ({
@@ -81,8 +78,7 @@ const blocks = nsiteBlockDefs.map(({ id, label, category, content }) => ({
  *
  * Thinning it and making the track transparent keeps the scroll affordance
  * while letting the page's own background run to the border. Applied to the
- * canvas document only — the stock demo's square, full-bleed canvas has nowhere
- * for the strip to look wrong.
+ * canvas document only, so the app's own scrollbars are left alone.
  */
 const studioScrollbarCss = `
   html{scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.4) transparent;}
@@ -105,7 +101,7 @@ interface StudioProject {
   origin: string | null;
 }
 
-/** A one-page site holding the same starting content as the stock demo. */
+/** A one-page site holding the starting content from `nsiteBlocks`. */
 function initialProject(): StudioProject {
   return {
     files: [textFile(ENTRY_PATH, initialPage)],
@@ -406,7 +402,12 @@ export function GrapesJSStudioDemo() {
   const assets = assetsOf(project.files);
 
   return (
-    <BuilderShell slug="grapesjs-studio" docsUrl="https://grapesjs.com/docs/">
+    <BuilderShell
+      name="GrapesJS Studio"
+      pkg="grapesjs"
+      license="BSD-3-Clause"
+      docsUrl="https://grapesjs.com/docs/"
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <StudioToolbar
           editor={editor}
