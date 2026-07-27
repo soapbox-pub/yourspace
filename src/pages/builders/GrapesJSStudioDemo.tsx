@@ -49,6 +49,28 @@ const blocks = nsiteBlockDefs.map(({ id, label, category, content }) => ({
   content,
 }));
 
+/**
+ * The page surface has a border and rounded corners here, and a classic
+ * scrollbar sits *inside* them — a ~15px strip of track between the border and
+ * the content, which reads as stray padding down the right edge rather than as
+ * part of the page being edited.
+ *
+ * Platforms with overlay scrollbars (macOS, and Chrome headless) never show
+ * this, so it looks fine right up until someone opens it on Linux or Windows.
+ *
+ * Thinning it and making the track transparent keeps the scroll affordance
+ * while letting the page's own background run to the border. Applied to the
+ * canvas document only — the stock demo's square, full-bleed canvas has nowhere
+ * for the strip to look wrong.
+ */
+const studioScrollbarCss = `
+  html{scrollbar-width:thin;scrollbar-color:rgba(100,116,139,.4) transparent;}
+  html::-webkit-scrollbar{width:8px;height:8px;}
+  html::-webkit-scrollbar-track{background:transparent;}
+  html::-webkit-scrollbar-thumb{background-color:rgba(100,116,139,.4);border-radius:9999px;}
+  html::-webkit-scrollbar-thumb:hover{background-color:rgba(100,116,139,.6);}
+`;
+
 export function GrapesJSStudioDemo() {
   useSeoMeta({
     title: 'GrapesJS Studio — nsite builder demo',
@@ -97,7 +119,7 @@ export function GrapesJSStudioDemo() {
 
       const style = doc.createElement('style');
       style.id = 'nsite-canvas-reset';
-      style.textContent = canvasResetCss(interLatin);
+      style.textContent = canvasResetCss(interLatin) + studioScrollbarCss;
       doc.head.appendChild(style);
     };
 
