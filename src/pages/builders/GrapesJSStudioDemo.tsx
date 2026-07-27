@@ -273,6 +273,20 @@ export function GrapesJSStudioDemo() {
       // Suppresses the Font Awesome CDN request, which the app's CSP blocks.
       cssIcons: '',
       panels: { defaults: [] },
+      canvas: {
+        /*
+         * Emptied, because the default is `body { background-color: #fff }` and
+         * a pair of scrollbar rules, appended to the frame's `<body>` — after
+         * everything in `<head>`, so it outranks both stylesheets below and
+         * paints over any site that colours `html` rather than `body`.
+         *
+         * Nothing here is load-bearing: the starting page's background comes
+         * from `canvasPageDefaults` and the scrollbars from
+         * `studioScrollbarCss`. The wrapper sizing and the dashed-outline rules
+         * GrapesJS injects alongside it are separate, and stay.
+         */
+        frameStyle: '',
+      },
       // `custom` stops each manager building a DOM view it would have no panel
       // to live in. The models stay exactly as they are — the React panels read
       // blocks, traits, layers and styles straight off them.
