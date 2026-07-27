@@ -71,6 +71,20 @@ const studioScrollbarCss = `
   html::-webkit-scrollbar-thumb:hover{background-color:rgba(100,116,139,.6);}
 `;
 
+/**
+ * Whether a string is a whole HTML document rather than a fragment.
+ *
+ * This has to be decided before parsing, because the two take different
+ * branches. `Components.parseString` only reads the doctype, the `<html>`
+ * attributes and the `<head>` when `asDocument` is set — but setting it for a
+ * fragment is worse than leaving it off: with no doctype to key on, the parser
+ * returns the synthesized `<body>` itself, which then lands on the page as a
+ * stray `<body>` element.
+ */
+function isHtmlDocument(value: string): boolean {
+  return /^\s*(<!doctype\s|<html[\s>])/i.test(value);
+}
+
 export function GrapesJSStudioDemo() {
   useSeoMeta({
     title: 'GrapesJS Studio — nsite builder demo',
@@ -135,9 +149,17 @@ export function GrapesJSStudioDemo() {
      * leave the rules pointing at ids the new components no longer have.
      */
     const syncOutput = () => {
-      const css = instance.getCss() ?? '';
+      const html = instance.getHtml();
+      const styleTag = `<style>\n${instance.getCss() ?? ''}\n</style>`;
+
       setOutput({
-        html: `${instance.getHtml()}\n\n<style>\n${css}\n</style>`,
+        // `ComponentWrapper.toHTML` decides between a fragment and a whole
+        // document from whether the project carries a doctype, so this follows
+        // whatever was last imported. Put the stylesheet in the head when there
+        // is one, rather than leaving it dangling after `</html>`.
+        html: html.includes('</head>')
+          ? html.replace('</head>', `  ${styleTag}\n</head>`)
+          : `${html}\n\n${styleTag}`,
         json: JSON.stringify(instance.getProjectData(), null, 2),
       });
     };
@@ -185,7 +207,7 @@ export function GrapesJSStudioDemo() {
 
     editor.select();
     editor.Css.clear();
-    editor.setComponents(value);
+    editor.setComponents(value, { asDocument: isHtmlDocument(value) });
   };
 
   return (
@@ -256,7 +278,7 @@ export function GrapesJSStudioDemo() {
               label: 'HTML',
               language: 'html',
               description:
-                'Editable. This is the page as it would ship to Blossom — plain HTML with a stylesheet, no renderer or hydration step. Change it and Apply to rebuild the canvas from your markup; the Profile hero is recognised on the way back in.',
+                'Editable. This is the page as it would ship to Blossom — plain HTML with a stylesheet, no renderer or hydration step. Paste a whole document and the doctype, <html> attributes and <head> are kept; paste a fragment and it replaces the body. The Profile hero is recognised on the way back in. Script tags and inline event handlers are stripped by the parser.',
               content: output.html,
               onApply: applyHtml,
             },
