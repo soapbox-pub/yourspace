@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import grapesjs, { type Editor } from 'grapesjs';
+import grapesjs, { type Component, type Editor } from 'grapesjs';
 
 // Inter, for the canvas iframe. Font faces don't cross a document boundary, so
 // the app's @fontsource import doesn't reach the page being edited.
@@ -33,17 +33,94 @@ import { demoLinks, demoNotes, demoProfile, formatSats } from '@/lib/nsiteDemo';
 
 const card = 'border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:24px;';
 
-const heroBlock = `
-  <section style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:#fff;">
+/*
+ * ---------------------------------------------------------------------------
+ * "Profile hero" as a registered component type.
+ *
+ * Every other block below is a snippet: GrapesJS parses the HTML string into
+ * generic `text` / `image` / `default` components, one per element, each
+ * independently selectable and draggable. Nothing marks them as one thing.
+ *
+ * The hero is registered with `DomComponents.addType` instead, which gets it a
+ * recognizer, traits, a name in the layer tree, and a locked subtree so it
+ * behaves as a single unit.
+ * ---------------------------------------------------------------------------
+ */
+
+const HERO_TYPE = 'nostr-profile-hero';
+
+/**
+ * The hero's editable state.
+ *
+ * Traits write to attributes by default, so the attribute *is* the persisted
+ * state: it survives `getHtml()`, and `isComponent` picks the element back up
+ * as this type when that HTML is parsed again.
+ */
+const heroFields = [
+  { name: 'data-name', label: 'Display name', value: demoProfile.name },
+  { name: 'data-nip05', label: 'NIP-05', value: demoProfile.nip05 },
+  { name: 'data-tagline', label: 'Tagline', value: demoProfile.tagline },
+  { name: 'data-avatar', label: 'Avatar URL', value: demoProfile.avatar },
+];
+
+const heroAttributes: Record<string, string> = {
+  'data-nostr': 'profile-hero',
+  ...Object.fromEntries(heroFields.map((field) => [field.name, field.value])),
+};
+
+const heroStyle = {
+  border: '1px solid #e2e8f0',
+  'border-radius': '12px',
+  overflow: 'hidden',
+  background: '#fff',
+  display: 'block',
+};
+
+/**
+ * Trait values are attacker-controlled once this is a real editor, and the
+ * canvas iframe is same-origin — script injected there runs on this origin and
+ * can read the `nsec` in localStorage. Everything interpolated below is escaped,
+ * and the avatar is held to an https-only allowlist.
+ */
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] ?? char,
+  );
+}
+
+function safeImageUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+/** Rebuilt from the attributes on every trait change. */
+function heroMarkup(attributes: Record<string, string>): string {
+  const read = (name: string) => escapeHtml(attributes[name] ?? '');
+
+  return `
     <div style="height:160px;background:linear-gradient(135deg,#8b5cf6,#6366f1 50%,#38bdf8);"></div>
     <div style="padding:0 24px 24px;">
-      <img src="${demoProfile.avatar}" alt="" style="width:88px;height:88px;border-radius:9999px;border:4px solid #fff;margin-top:-44px;background:#e2e8f0;display:block;"/>
-      <h1 style="font-size:36px;font-weight:700;margin:12px 0 4px;letter-spacing:-0.02em;">${demoProfile.name}</h1>
-      <p style="font-family:ui-monospace,monospace;font-size:14px;color:#64748b;margin:0;">&#10003; ${demoProfile.nip05}</p>
-      <p style="font-size:18px;color:#475569;margin:12px 0 0;">${demoProfile.tagline}</p>
+      <img src="${escapeHtml(safeImageUrl(attributes['data-avatar'] ?? ''))}" alt="" style="width:88px;height:88px;border-radius:9999px;border:4px solid #fff;margin-top:-44px;background:#e2e8f0;display:block;"/>
+      <h1 style="font-size:36px;font-weight:700;margin:12px 0 4px;letter-spacing:-0.02em;">${read('data-name')}</h1>
+      <p style="font-family:ui-monospace,monospace;font-size:14px;color:#64748b;margin:0;">&#10003; ${read('data-nip05')}</p>
+      <p style="font-size:18px;color:#475569;margin:12px 0 0;">${read('data-tagline')}</p>
     </div>
-  </section>
-`;
+  `;
+}
+
+/**
+ * The root element as it appears in serialized HTML — no children, because the
+ * model generates those. Used to seed the starting page.
+ */
+const heroBlock = `<section ${Object.entries(heroAttributes)
+  .map(([name, value]) => `${name}="${escapeHtml(value)}"`)
+  .join(' ')}></section>`;
 
 const aboutBlock = `
   <section style="${card}">
@@ -133,7 +210,14 @@ const icons = {
 };
 
 const blocks = [
-  { id: 'hero', label: 'Profile hero', category: 'Nostr', media: icons.hero, content: heroBlock },
+  {
+    id: 'hero',
+    label: 'Profile hero',
+    category: 'Nostr',
+    media: icons.hero,
+    // A component reference, not markup — compare with the snippets below.
+    content: { type: HERO_TYPE },
+  },
   { id: 'about', label: 'About', category: 'Nostr', media: icons.about, content: aboutBlock },
   { id: 'links', label: 'Link list', category: 'Nostr', media: icons.links, content: linksBlock },
   { id: 'notes', label: 'Recent notes', category: 'Nostr', media: icons.notes, content: notesBlock },
@@ -180,6 +264,71 @@ const initialPage = `
     ${footerBlock}
   </div>
 `;
+
+/**
+ * Makes the generated markup inert, so the hero selects, drags, and deletes as
+ * one unit with a single badge and a single entry in the layer tree. This is
+ * the practical difference between a component and a snippet — without it the
+ * user grabs the `<h1>` instead of the hero.
+ */
+function lockSubtree(parent: Component) {
+  parent.components().forEach((child: Component) => {
+    child.set({
+      selectable: false,
+      hoverable: false,
+      draggable: false,
+      droppable: false,
+      removable: false,
+      copyable: false,
+      layerable: false,
+      editable: false,
+    });
+    lockSubtree(child);
+  });
+}
+
+/**
+ * Registered as a plugin rather than after `init`, because `grapesjs.init`
+ * loads plugins *before* parsing `components` — the source says so outright:
+ * "A plugin might have extended/added some custom type so this is a good point
+ * to load stuff like components". Registering afterwards would leave the
+ * starting page's hero parsed as an anonymous `<section>`.
+ */
+function nostrComponents(editor: Editor) {
+  editor.DomComponents.addType(HERO_TYPE, {
+    // The recognizer. GrapesJS runs this against every parsed element, which is
+    // how a reloaded project — or hand-edited HTML — comes back as this type
+    // rather than a generic section.
+    isComponent: (el) =>
+      el.tagName === 'SECTION' && el.getAttribute('data-nostr') === 'profile-hero',
+
+    model: {
+      defaults: {
+        name: 'Profile hero',
+        tagName: 'section',
+        attributes: heroAttributes,
+        style: heroStyle,
+        // Nothing else belongs inside it.
+        droppable: false,
+        traits: heroFields.map(({ name, label }) => ({ name, label })),
+      },
+
+      init() {
+        this.renderHero();
+        // Traits write to attributes, and GrapesJS emits a per-key change event
+        // for each one.
+        for (const field of heroFields) {
+          this.on(`change:attributes:${field.name}`, () => this.renderHero());
+        }
+      },
+
+      renderHero() {
+        this.components(heroMarkup(this.getAttributes()));
+        lockSubtree(this);
+      },
+    },
+  });
+}
 
 const devices = [
   { id: 'desktop', name: 'Desktop', width: '', icon: 'fa fa-desktop' },
@@ -304,6 +453,7 @@ export function GrapesJSDemo() {
       height: '100%',
       width: 'auto',
       fromElement: false,
+      plugins: [nostrComponents],
       components: initialPage,
       // No backend in this demo, so keep everything in memory.
       storageManager: false,
