@@ -339,6 +339,11 @@ function lockSubtree(parent: Component) {
       copyable: false,
       layerable: false,
       editable: false,
+      // Without this the "View components" toggle still draws a dashed outline
+      // around every child — `highlightable` defaults to true and is what puts
+      // `data-gjs-highlightable` on the element. The outlines advertise
+      // interactivity that the flags above have already removed.
+      highlightable: false,
     });
     lockSubtree(child);
   });
