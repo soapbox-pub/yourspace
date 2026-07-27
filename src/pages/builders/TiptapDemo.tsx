@@ -288,10 +288,14 @@ export function TiptapDemo() {
     },
   });
 
-  // Re-read the serialized HTML whenever the document changes.
-  const html = useEditorState({
+  // Re-serialize whenever the document changes. Both are derived from the same
+  // ProseMirror document, so they always describe the same page.
+  const output = useEditorState({
     editor,
-    selector: ({ editor: e }) => e?.getHTML() ?? '',
+    selector: ({ editor: e }) => ({
+      html: e?.getHTML() ?? '',
+      json: e ? JSON.stringify(e.getJSON(), null, 2) : '',
+    }),
   });
 
   return (
@@ -312,9 +316,24 @@ export function TiptapDemo() {
 
         <OutputPanel
           title="Tiptap output"
-          description="Tiptap serializes to HTML directly, which suits an nsite well. Note that the custom blocks export as empty <div data-block> placeholders — their attributes are stored in the ProseMirror document, so a real implementation needs renderHTML to emit the full markup."
-          language="html"
-          content={html}
+          tabs={[
+            {
+              id: 'json',
+              label: 'JSON',
+              language: 'json',
+              description:
+                'The ProseMirror document — Tiptap\'s source of truth. Every custom block keeps its attributes here, which makes this the format to store if a page must stay re-editable.',
+              content: output.json,
+            },
+            {
+              id: 'html',
+              label: 'HTML',
+              language: 'html',
+              description:
+                'Tiptap serializes to HTML directly, which suits an nsite well. Note that the custom blocks export as empty <div data-block> placeholders — compare them with the JSON tab, where their attributes survive. A real implementation needs renderHTML to emit the full markup.',
+              content: output.html,
+            },
+          ]}
         />
       </div>
     </BuilderShell>

@@ -203,9 +203,16 @@ export function PuckDemo() {
 
         <OutputPanel
           title="Puck output"
-          description="Puck stores pages as JSON. Turning this into an nsite means running it through Puck's <Render> component and serializing the result to static HTML."
-          language="json"
-          content={JSON.stringify(data, null, 2)}
+          tabs={[
+            {
+              id: 'json',
+              label: 'JSON',
+              language: 'json',
+              description:
+                "JSON is the only thing Puck emits — there is no HTML export. Turning this into an nsite means running the data through Puck's <Render> component and serializing the result to static HTML yourself.",
+              content: JSON.stringify(data, null, 2),
+            },
+          ]}
         />
       </div>
     </BuilderShell>

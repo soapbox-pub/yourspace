@@ -172,7 +172,7 @@ export function GrapesJSDemo() {
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [output, setOutput] = useState('');
+  const [output, setOutput] = useState({ html: '', json: '' });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -212,7 +212,10 @@ export function GrapesJSDemo() {
 
     const syncOutput = () => {
       const css = editor.getCss() ?? '';
-      setOutput(`<!-- index.html -->\n${editor.getHtml()}\n\n<!-- style.css -->\n<style>\n${css}\n</style>`);
+      setOutput({
+        html: `<!-- index.html -->\n${editor.getHtml()}\n\n<!-- style.css -->\n<style>\n${css}\n</style>`,
+        json: JSON.stringify(editor.getProjectData(), null, 2),
+      });
     };
 
     editor.on('update', syncOutput);
@@ -240,9 +243,24 @@ export function GrapesJSDemo() {
 
         <OutputPanel
           title="GrapesJS output"
-          description="GrapesJS exports plain HTML and CSS — the closest match to what an nsite actually needs on Blossom. No renderer or hydration step required."
-          language="html"
-          content={output}
+          tabs={[
+            {
+              id: 'json',
+              label: 'JSON',
+              language: 'json',
+              description:
+                'The project data GrapesJS loads back into the editor: the component tree, style rules, assets, and pages. Store this alongside the published site to keep it editable.',
+              content: output.json,
+            },
+            {
+              id: 'html',
+              label: 'HTML',
+              language: 'html',
+              description:
+                'GrapesJS exports plain HTML and CSS — the closest match to what an nsite actually needs on Blossom. No renderer or hydration step required.',
+              content: output.html,
+            },
+          ]}
         />
       </div>
     </BuilderShell>
