@@ -26,6 +26,12 @@ The editor holds a flat list of files rather than a single document, which is wh
 describes. Switching pages serializes the canvas back into the file it came from and parses the next
 one in.
 
+## Status
+
+Editing and importing work; **publishing does not exist yet**. The editor can pull a published
+nsite off the network, edit it, and hand back the files it would ship, but nothing writes a manifest
+event or uploads blobs. The landing page describes where this is going, not what it does today.
+
 ## Development
 
 ```bash
