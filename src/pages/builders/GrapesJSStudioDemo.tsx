@@ -170,13 +170,15 @@ export function GrapesJSStudioDemo() {
 
           {/*
             `nsite-studio` scopes every GrapesJS canvas override to this page.
+            This is the desk the page sits on; the page's own border, rounding
+            and shadow live on the frame (see grapesjs-studio.css), because that
+            is the element the device switcher resizes.
+
             The inner div is what the editor mounts into, and needs a definite
             size because the canvas positions itself absolutely inside it.
           */}
           <main className="nsite-studio min-h-0 flex-1 bg-muted/40 p-4">
-            <div className="relative h-full overflow-hidden rounded-xl border bg-background shadow-sm">
-              <div ref={containerRef} className="h-full w-full" />
-            </div>
+            <div ref={containerRef} className="h-full w-full" />
           </main>
 
           <aside

@@ -51,6 +51,26 @@
 }
 
 /*
+ * The device surface.
+ *
+ * `.gjs-frame-wrapper` is what GrapesJS resizes when the breakpoint changes,
+ * and `.gjs-frame` (the iframe) fills it. So the border, rounding and shadow
+ * belong here rather than on the container element — put them on the container
+ * and the page appears to shrink *inside* a full-width card, which is not what
+ * a device switcher should look like.
+ *
+ * `.gjs-frame` already carries `transition: width .35s ease`, so the surface
+ * animates between breakpoints for free. `border: none` in grapes.min.css is a
+ * single-class selector, so this two-class rule wins without `!important`.
+ */
+.nsite-studio .gjs-frame {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06);
+}
+
+/*
  * The name label shown above a hovered or selected component. Stock is a
  * square 12px chip in `--gjs-color-blue`.
  */
