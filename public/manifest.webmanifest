@@ -1,0 +1,10 @@
+{
+  "name": "WYSIWYG builders for Nostr nsites",
+  "short_name": "nsite builders",
+  "description": "Side-by-side demos of open source visual page builders, evaluated for building and publishing Nostr homepages.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": []
+}
