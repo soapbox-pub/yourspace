@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Component, type Editor } from 'grapesjs';
+import { useNostr } from '@nostrify/react';
+import type { NostrMetadata, NPool } from '@nostrify/nostrify';
+import { nip19 } from 'nostr-tools';
 
 // Inter, for the canvas iframe. Font faces don't cross a document boundary, so
 // the app's @fontsource import doesn't reach the page being edited.
@@ -50,22 +53,22 @@ const card = 'border:1px solid #e2e8f0;border-radius:12px;background:#fff;paddin
 const HERO_TYPE = 'nostr-profile-hero';
 
 /**
- * The hero's editable state.
+ * The hero's entire editable state: one npub. Everything rendered is fetched.
  *
  * Traits write to attributes by default, so the attribute *is* the persisted
  * state: it survives `getHtml()`, and `isComponent` picks the element back up
  * as this type when that HTML is parsed again.
  */
-const heroFields = [
-  { name: 'data-name', label: 'Display name', value: demoProfile.name },
-  { name: 'data-nip05', label: 'NIP-05', value: demoProfile.nip05 },
-  { name: 'data-tagline', label: 'Tagline', value: demoProfile.tagline },
-  { name: 'data-avatar', label: 'Avatar URL', value: demoProfile.avatar },
-];
+const NPUB_ATTR = 'data-npub';
+
+/** Verified against relay.ditto.pub while writing this. */
+const DEMO_NPUB = 'npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6';
+
+const PROFILE_RELAY = 'wss://relay.ditto.pub';
 
 const heroAttributes: Record<string, string> = {
   'data-nostr': 'profile-hero',
-  ...Object.fromEntries(heroFields.map((field) => [field.name, field.value])),
+  [NPUB_ATTR]: DEMO_NPUB,
 };
 
 const heroStyle = {
@@ -77,10 +80,10 @@ const heroStyle = {
 };
 
 /**
- * Trait values are attacker-controlled once this is a real editor, and the
- * canvas iframe is same-origin — script injected there runs on this origin and
- * can read the `nsec` in localStorage. Everything interpolated below is escaped,
- * and the avatar is held to an https-only allowlist.
+ * Everything below is relay data — signatures prove authorship, not
+ * trustworthiness — interpolated into markup that runs in a same-origin iframe,
+ * where injected script could read the `nsec` out of localStorage. Every value
+ * is escaped, and image URLs are held to an https-only allowlist.
  */
 function escapeHtml(value: string): string {
   return value.replace(
@@ -90,26 +93,80 @@ function escapeHtml(value: string): string {
   );
 }
 
-function safeImageUrl(value: string): string {
+function safeImageUrl(value: string | undefined): string {
   try {
-    const url = new URL(value);
+    const url = new URL(value ?? '');
     return url.protocol === 'https:' ? url.href : '';
   } catch {
     return '';
   }
 }
 
-/** Rebuilt from the attributes on every trait change. */
-function heroMarkup(attributes: Record<string, string>): string {
-  const read = (name: string) => escapeHtml(attributes[name] ?? '');
+/**
+ * One in-flight request per npub, shared across every hero on the page.
+ * Rejections are evicted so that editing the trait retries rather than
+ * latching a transient relay failure forever.
+ */
+const profileCache = new Map<string, Promise<NostrMetadata | null>>();
+
+function fetchProfile(nostr: NPool, npub: string): Promise<NostrMetadata | null> {
+  const cached = profileCache.get(npub);
+  if (cached) return cached;
+
+  const pending = (async () => {
+    const decoded = nip19.decode(npub);
+    if (decoded.type !== 'npub') throw new Error('Not an npub');
+
+    // Filters take hex, never bech32. Constrained to `authors` so no other
+    // pubkey's kind 0 can answer for this npub.
+    const [event] = await nostr.relay(PROFILE_RELAY).query(
+      [{ kinds: [0], authors: [decoded.data], limit: 1 }],
+      { signal: AbortSignal.timeout(8000) },
+    );
+
+    return event ? (JSON.parse(event.content) as NostrMetadata) : null;
+  })();
+
+  profileCache.set(npub, pending);
+  pending.catch(() => profileCache.delete(npub));
+
+  return pending;
+}
+
+const shell = (body: string) => `<div style="padding:24px;">${body}</div>`;
+
+const placeholder = (text: string) =>
+  shell(
+    `<p style="font-size:16px;color:#64748b;margin:0;text-align:center;line-height:1.6;">${escapeHtml(text)}</p>`,
+  );
+
+/** Rendered from the kind 0 once it arrives. */
+function heroMarkup(npub: string, metadata: NostrMetadata): string {
+  const name = metadata.display_name || metadata.name || 'Anonymous';
+  const banner = safeImageUrl(metadata.banner);
+  const picture = safeImageUrl(metadata.picture);
+
+  // The banner goes in an <img>, not a CSS `url()`, so a hostile value has no
+  // CSS context to break out of.
+  const bannerMarkup = banner
+    ? `<img src="${escapeHtml(banner)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block;"/>`
+    : `<div style="height:160px;background:linear-gradient(135deg,#8b5cf6,#6366f1 50%,#38bdf8);"></div>`;
+
+  const nip05Markup = metadata.nip05
+    ? `<p style="font-family:ui-monospace,monospace;font-size:14px;color:#64748b;margin:0;">&#10003; ${escapeHtml(metadata.nip05)}</p>`
+    : `<p style="font-family:ui-monospace,monospace;font-size:12px;color:#94a3b8;margin:0;word-break:break-all;">${escapeHtml(npub)}</p>`;
+
+  const aboutMarkup = metadata.about
+    ? `<p style="font-size:18px;color:#475569;margin:12px 0 0;line-height:1.6;white-space:pre-wrap;">${escapeHtml(metadata.about)}</p>`
+    : '';
 
   return `
-    <div style="height:160px;background:linear-gradient(135deg,#8b5cf6,#6366f1 50%,#38bdf8);"></div>
+    ${bannerMarkup}
     <div style="padding:0 24px 24px;">
-      <img src="${escapeHtml(safeImageUrl(attributes['data-avatar'] ?? ''))}" alt="" style="width:88px;height:88px;border-radius:9999px;border:4px solid #fff;margin-top:-44px;background:#e2e8f0;display:block;"/>
-      <h1 style="font-size:36px;font-weight:700;margin:12px 0 4px;letter-spacing:-0.02em;">${read('data-name')}</h1>
-      <p style="font-family:ui-monospace,monospace;font-size:14px;color:#64748b;margin:0;">&#10003; ${read('data-nip05')}</p>
-      <p style="font-size:18px;color:#475569;margin:12px 0 0;">${read('data-tagline')}</p>
+      <img src="${escapeHtml(picture)}" alt="" style="width:88px;height:88px;border-radius:9999px;border:4px solid #fff;margin-top:-44px;background:#e2e8f0;display:block;object-fit:cover;"/>
+      <h1 style="font-size:36px;font-weight:700;margin:12px 0 4px;letter-spacing:-0.02em;">${escapeHtml(name)}</h1>
+      ${nip05Markup}
+      ${aboutMarkup}
     </div>
   `;
 }
@@ -294,40 +351,75 @@ function lockSubtree(parent: Component) {
  * to load stuff like components". Registering afterwards would leave the
  * starting page's hero parsed as an anonymous `<section>`.
  */
-function nostrComponents(editor: Editor) {
-  editor.DomComponents.addType(HERO_TYPE, {
-    // The recognizer. GrapesJS runs this against every parsed element, which is
-    // how a reloaded project — or hand-edited HTML — comes back as this type
-    // rather than a generic section.
-    isComponent: (el) =>
-      el.tagName === 'SECTION' && el.getAttribute('data-nostr') === 'profile-hero',
+function nostrComponents(nostr: NPool) {
+  return (editor: Editor) => {
+    editor.DomComponents.addType(HERO_TYPE, {
+      // The recognizer. GrapesJS runs this against every parsed element, which
+      // is how a reloaded project — or hand-edited HTML — comes back as this
+      // type rather than a generic section.
+      isComponent: (el) =>
+        el.tagName === 'SECTION' && el.getAttribute('data-nostr') === 'profile-hero',
 
-    model: {
-      defaults: {
-        name: 'Profile hero',
-        tagName: 'section',
-        attributes: heroAttributes,
-        style: heroStyle,
-        // Nothing else belongs inside it.
-        droppable: false,
-        traits: heroFields.map(({ name, label }) => ({ name, label })),
-      },
+      model: {
+        defaults: {
+          name: 'Profile hero',
+          tagName: 'section',
+          attributes: heroAttributes,
+          style: heroStyle,
+          // Nothing else belongs inside it.
+          droppable: false,
+          traits: [{ name: NPUB_ATTR, label: 'npub', placeholder: 'npub1…' }],
+        },
 
-      init() {
-        this.renderHero();
-        // Traits write to attributes, and GrapesJS emits a per-key change event
-        // for each one.
-        for (const field of heroFields) {
-          this.on(`change:attributes:${field.name}`, () => this.renderHero());
-        }
-      },
+        init() {
+          this.renderHero();
+          // Traits write to attributes, and GrapesJS emits a per-key change
+          // event for each one.
+          this.on(`change:attributes:${NPUB_ATTR}`, () => this.renderHero());
+        },
 
-      renderHero() {
-        this.components(heroMarkup(this.getAttributes()));
-        lockSubtree(this);
+        async renderHero() {
+          const npub = String(this.getAttributes()[NPUB_ATTR] ?? '').trim();
+
+          if (!npub) {
+            this.setHeroContent(placeholder('Add an npub to load a profile.'));
+            return;
+          }
+
+          this.setHeroContent(placeholder(`Loading ${npub.slice(0, 12)}… from ${PROFILE_RELAY}`));
+
+          let metadata: NostrMetadata | null = null;
+          let failed = false;
+          try {
+            metadata = await fetchProfile(nostr, npub);
+          } catch {
+            failed = true;
+          }
+
+          // The trait may have changed while the relay was answering. Compare
+          // against what the component holds *now*, not what we captured.
+          if (String(this.getAttributes()[NPUB_ATTR] ?? '').trim() !== npub) return;
+
+          if (metadata) {
+            this.setHeroContent(heroMarkup(npub, metadata));
+          } else {
+            this.setHeroContent(
+              placeholder(
+                failed
+                  ? `Couldn't reach ${PROFILE_RELAY}, or that isn't a valid npub.`
+                  : `No profile found for this npub on ${PROFILE_RELAY}.`,
+              ),
+            );
+          }
+        },
+
+        setHeroContent(markup: string) {
+          this.components(markup);
+          lockSubtree(this);
+        },
       },
-    },
-  });
+    });
+  };
 }
 
 const devices = [
@@ -442,6 +534,7 @@ export function GrapesJSDemo() {
     description: 'Evaluating GrapesJS as a WYSIWYG editor for building Nostr homepages.',
   });
 
+  const { nostr } = useNostr();
   const containerRef = useRef<HTMLDivElement>(null);
   const [output, setOutput] = useState({ html: '', json: '' });
 
@@ -453,7 +546,7 @@ export function GrapesJSDemo() {
       height: '100%',
       width: 'auto',
       fromElement: false,
-      plugins: [nostrComponents],
+      plugins: [nostrComponents(nostr)],
       components: initialPage,
       // No backend in this demo, so keep everything in memory.
       storageManager: false,
@@ -537,7 +630,8 @@ export function GrapesJSDemo() {
       window.clearTimeout(pending);
       editor.destroy();
     };
-  }, []);
+    // `nostr` is the app's memoized pool, so this effect runs once.
+  }, [nostr]);
 
   return (
     <BuilderShell slug="grapesjs" docsUrl="https://grapesjs.com/docs/">
