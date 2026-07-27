@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Copy } from 'lucide-react';
+import { AlertCircle, Check, ChevronDown, Copy, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,12 @@ export interface OutputTab {
   /** What this particular serialization is, and what it costs to publish. */
   description: string;
   content: string;
+  /**
+   * When set, the tab becomes a two-way editor: the content is editable and
+   * gains Apply / Revert controls. Throwing from here surfaces the message
+   * inline rather than losing the user's draft.
+   */
+  onApply?: (value: string) => void;
 }
 
 interface OutputPanelProps {
@@ -21,12 +27,94 @@ interface OutputPanelProps {
   tabs: OutputTab[];
 }
 
+const codeClass = 'w-full overflow-auto rounded-lg border bg-background p-4 text-xs leading-relaxed';
+
+/**
+ * An editable serialization.
+ *
+ * The editor keeps re-serializing while this is open, so incoming content is
+ * adopted only while the draft is clean — otherwise every canvas change would
+ * overwrite what the user is typing.
+ */
+function EditableOutput({ tab }: { tab: OutputTab & { onApply: (value: string) => void } }) {
+  const { content, onApply } = tab;
+  // `null` means "no local edits" — the textarea then simply shows whatever the
+  // editor last serialized. That keeps the live content and the user's draft in
+  // one piece of state, so there is nothing to keep in sync as edits stream in.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const value = draft ?? content;
+  const dirty = draft !== null && draft !== content;
+
+  const apply = () => {
+    try {
+      onApply(value);
+      setDraft(null);
+      setError(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not apply this code.');
+    }
+  };
+
+  const revert = () => {
+    setDraft(null);
+    setError(null);
+  };
+
+  return (
+    <>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <p className="max-w-3xl flex-1 text-sm text-muted-foreground">{tab.description}</p>
+        {dirty && (
+          <Button variant="ghost" size="sm" onClick={revert} className="gap-2">
+            <RotateCcw className="size-4" aria-hidden="true" />
+            Revert
+          </Button>
+        )}
+        <Button size="sm" onClick={apply} disabled={!dirty}>
+          Apply to canvas
+        </Button>
+      </div>
+
+      <textarea
+        value={value}
+        spellCheck={false}
+        aria-label={`${tab.label} source`}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault();
+            apply();
+          }
+        }}
+        className={cn(
+          codeClass,
+          'h-[40vh] resize-none font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          dirty && 'border-primary/40',
+        )}
+      />
+
+      {error ? (
+        <p className="mt-2 flex items-start gap-1.5 text-xs text-destructive">
+          <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+          {error}
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-muted-foreground/80">
+          Edits are applied on demand — press Apply, or {'\u2318'}/Ctrl + Enter.
+        </p>
+      )}
+    </>
+  );
+}
+
 /**
  * Collapsible drawer showing what an editor actually exports.
  *
  * Editors that can serialize more than one way pass several tabs — the point of
- * these demos is comparing the shape of each export. The output is rendered as
- * escaped text inside a <pre>, never injected as markup.
+ * these demos is comparing the shape of each export. Read-only output is
+ * rendered as escaped text inside a <pre>, never injected as markup.
  */
 export function OutputPanel({ title, tabs }: OutputPanelProps) {
   const [open, setOpen] = useState(false);
@@ -94,10 +182,18 @@ export function OutputPanel({ title, tabs }: OutputPanelProps) {
         {open &&
           tabs.map((tab) => (
             <TabsContent key={tab.id} value={tab.id} className="px-4 pb-4 sm:px-6">
-              <p className="mb-3 max-w-3xl text-sm text-muted-foreground">{tab.description}</p>
-              <pre className="max-h-[40vh] overflow-auto rounded-lg border bg-background p-4 text-xs leading-relaxed">
-                <code>{tab.content}</code>
-              </pre>
+              {tab.onApply ? (
+                // Keyed so switching selection or tab starts from a fresh draft
+                // rather than resurrecting a stale one.
+                <EditableOutput key={tab.id} tab={{ ...tab, onApply: tab.onApply }} />
+              ) : (
+                <>
+                  <p className="mb-3 max-w-3xl text-sm text-muted-foreground">{tab.description}</p>
+                  <pre className={cn(codeClass, 'max-h-[40vh]')}>
+                    <code>{tab.content}</code>
+                  </pre>
+                </>
+              )}
             </TabsContent>
           ))}
       </Tabs>

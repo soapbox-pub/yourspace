@@ -123,10 +123,21 @@ export function GrapesJSStudioDemo() {
       doc.head.appendChild(style);
     };
 
+    /*
+     * Serialized as one re-parseable document rather than two labelled
+     * sections, because this tab is editable: the exact string shown is the
+     * string handed back to `setComponents`.
+     *
+     * The CSS has to travel inside a `<style>` tag rather than being applied
+     * separately. GrapesJS keys component styles to generated ids (`#i3f`), and
+     * parsing markup and stylesheet together lets `Component.checkId` renumber
+     * both in lockstep if anything collides. Applying them in two calls would
+     * leave the rules pointing at ids the new components no longer have.
+     */
     const syncOutput = () => {
       const css = instance.getCss() ?? '';
       setOutput({
-        html: `<!-- index.html -->\n${instance.getHtml()}\n\n<!-- style.css -->\n<style>\n${css}\n</style>`,
+        html: `${instance.getHtml()}\n\n<style>\n${css}\n</style>`,
         json: JSON.stringify(instance.getProjectData(), null, 2),
       });
     };
@@ -158,6 +169,24 @@ export function GrapesJSStudioDemo() {
     };
     // `nostr` is the app's memoized pool, so this effect runs once.
   }, [nostr]);
+
+  /**
+   * Replaces the page with hand-edited markup.
+   *
+   * `setComponents` clears the existing components first, which releases their
+   * ids back to the pool before the new markup is parsed — so ids in the
+   * pasted HTML survive instead of every one colliding and being renumbered.
+   * The stylesheet is dropped first for the same reason: rules belonging to the
+   * outgoing components would otherwise linger and reattach to whatever
+   * inherited their ids.
+   */
+  const applyHtml = (value: string) => {
+    if (!editor) return;
+
+    editor.select();
+    editor.Css.clear();
+    editor.setComponents(value);
+  };
 
   return (
     <BuilderShell slug="grapesjs-studio" docsUrl="https://grapesjs.com/docs/">
@@ -227,8 +256,9 @@ export function GrapesJSStudioDemo() {
               label: 'HTML',
               language: 'html',
               description:
-                'GrapesJS exports plain HTML and CSS — the closest match to what an nsite actually needs on Blossom. No renderer or hydration step required.',
+                'Editable. This is the page as it would ship to Blossom — plain HTML with a stylesheet, no renderer or hydration step. Change it and Apply to rebuild the canvas from your markup; the Profile hero is recognised on the way back in.',
               content: output.html,
+              onApply: applyHtml,
             },
           ]}
         />
