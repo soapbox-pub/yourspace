@@ -62,7 +62,7 @@ const HERO_TYPE = 'nostr-profile-hero';
 const NPUB_ATTR = 'data-npub';
 
 /** Verified against relay.ditto.pub while writing this. */
-const DEMO_NPUB = 'npub108pv4cg5ag52nq082kd5leu9ffrn2gdg6g4xdwatn73y36uzplmq9uyev6';
+const DEMO_NPUB = 'npub1q3sle0kvfsehgsuexttt3ugjd8xdklxfwwkh559wxckmzddywnws6cd26p';
 
 const PROFILE_RELAY = 'wss://relay.ditto.pub';
 
