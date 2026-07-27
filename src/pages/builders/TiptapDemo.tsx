@@ -99,7 +99,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   };
 
   return (
-    <div className="sticky top-[61px] z-20 flex flex-wrap items-center gap-1 border-b bg-background/95 px-4 py-2 backdrop-blur sm:px-6">
+    <div className="z-20 flex shrink-0 flex-wrap items-center gap-1 border-b bg-background/95 px-4 py-2 backdrop-blur sm:px-6">
       <Button
         variant="ghost"
         size="icon"
@@ -283,8 +283,7 @@ export function TiptapDemo() {
     content: initialContent,
     editorProps: {
       attributes: {
-        class:
-          'prose-none mx-auto max-w-3xl px-6 py-10 focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-8 [&_h1]:mb-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_p]:text-lg [&_p]:leading-relaxed [&_p]:my-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-4 [&_li]:text-lg [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:my-4 [&_a]:underline [&_a]:underline-offset-4 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-base [&_hr]:my-8 [&_hr]:border-t [&_img]:rounded-xl',
+        class: 'nsite-prose mx-auto max-w-3xl px-6 py-10 focus:outline-none',
       },
     },
   });
@@ -300,7 +299,7 @@ export function TiptapDemo() {
       <div className="flex min-h-0 flex-1 flex-col">
         {editor && <Toolbar editor={editor} />}
 
-        <div className="flex-1 bg-muted/30 py-8">
+        <div className="min-h-0 flex-1 overflow-auto bg-muted/30 py-8">
           <div className="mx-auto max-w-4xl rounded-xl border bg-background shadow-sm">
             <EditorContent editor={editor} />
           </div>

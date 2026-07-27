@@ -3,6 +3,10 @@ import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
 
 import 'grapesjs/dist/css/grapes.min.css';
+// GrapesJS's panel buttons are Font Awesome 4.7 glyphs. It normally injects
+// them from a CDN, which the app's CSP blocks — so bundle them instead and
+// disable the CDN request via `cssIcons` below.
+import 'font-awesome/css/font-awesome.min.css';
 
 import { BuilderShell } from '@/components/builders/BuilderShell';
 import { OutputPanel } from '@/components/builders/OutputPanel';
@@ -88,29 +92,56 @@ const footerBlock = `
   </footer>
 `;
 
+/**
+ * Wraps SVG path data in the icon markup GrapesJS renders per block.
+ *
+ * `fill` must be set inline: grapes.min.css declares `.gjs-block svg{fill:
+ * currentColor}`, and a stylesheet rule beats a `fill="none"` attribute, which
+ * would otherwise render every outline icon as a solid block.
+ */
+function icon(paths: string): string {
+  return `<svg viewBox="0 0 24 24" width="28" height="28" style="fill:none;stroke:currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+
+const icons = {
+  hero: icon('<rect x="3" y="4" width="18" height="7" rx="2"/><circle cx="8" cy="15" r="2.5"/><path d="M13 14h6M13 18h4"/>'),
+  about: icon('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h6M7 13h10M7 17h8"/>'),
+  links: icon('<rect x="3" y="5" width="18" height="5" rx="2"/><rect x="3" y="14" width="18" height="5" rx="2"/>'),
+  notes: icon('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h10M7 17h5"/>'),
+  zap: icon('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'),
+  footer: icon('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18M7 18h10"/>'),
+  heading: icon('<path d="M6 4v16M18 4v16M6 12h12"/>'),
+  text: icon('<path d="M4 6h16M4 10h16M4 14h12M4 18h8"/>'),
+  columns: icon('<rect x="3" y="4" width="7.5" height="16" rx="1.5"/><rect x="13.5" y="4" width="7.5" height="16" rx="1.5"/>'),
+  image: icon('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 18 5-5 4 3 3-2 2 2"/>'),
+};
+
 const blocks = [
-  { id: 'hero', label: 'Profile hero', category: 'Nostr', content: heroBlock },
-  { id: 'about', label: 'About', category: 'Nostr', content: aboutBlock },
-  { id: 'links', label: 'Link list', category: 'Nostr', content: linksBlock },
-  { id: 'notes', label: 'Recent notes', category: 'Nostr', content: notesBlock },
-  { id: 'zap', label: 'Zap callout', category: 'Nostr', content: zapBlock },
-  { id: 'footer', label: 'Key footer', category: 'Nostr', content: footerBlock },
+  { id: 'hero', label: 'Profile hero', category: 'Nostr', media: icons.hero, content: heroBlock },
+  { id: 'about', label: 'About', category: 'Nostr', media: icons.about, content: aboutBlock },
+  { id: 'links', label: 'Link list', category: 'Nostr', media: icons.links, content: linksBlock },
+  { id: 'notes', label: 'Recent notes', category: 'Nostr', media: icons.notes, content: notesBlock },
+  { id: 'zap', label: 'Zap callout', category: 'Nostr', media: icons.zap, content: zapBlock },
+  { id: 'footer', label: 'Key footer', category: 'Nostr', media: icons.footer, content: footerBlock },
   {
     id: 'heading',
     label: 'Heading',
     category: 'Basic',
+    media: icons.heading,
     content: '<h2 style="font-size:24px;font-weight:600;">Section heading</h2>',
   },
   {
     id: 'text',
     label: 'Text',
     category: 'Basic',
+    media: icons.text,
     content: '<p style="font-size:18px;line-height:1.7;color:#475569;">Write something here.</p>',
   },
   {
     id: 'two-columns',
     label: '2 columns',
     category: 'Basic',
+    media: icons.columns,
     content:
       '<div style="display:flex;gap:16px;"><div style="flex:1;min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div><div style="flex:1;min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div></div>',
   },
@@ -118,6 +149,7 @@ const blocks = [
     id: 'image',
     label: 'Image',
     category: 'Basic',
+    media: icons.image,
     content: { type: 'image', style: { width: '100%', 'border-radius': '12px' } },
   },
 ];
@@ -153,8 +185,7 @@ export function GrapesJSDemo() {
       components: initialPage,
       // No backend in this demo, so keep everything in memory.
       storageManager: false,
-      // GrapesJS injects Font Awesome from a CDN by default; the app's CSP
-      // blocks it and none of these blocks use FA icons.
+      // Font Awesome is bundled above instead of fetched from a CDN.
       cssIcons: '',
       blockManager: { blocks },
       deviceManager: {
@@ -188,6 +219,9 @@ export function GrapesJSDemo() {
     editor.on('load', () => {
       styleCanvas();
       syncOutput();
+      // Show the block palette up front rather than behind a toolbar button,
+      // so the available blocks are visible on arrival.
+      editor.runCommand('open-blocks');
     });
     // Re-apply after device switches, which rebuild the canvas frame.
     editor.on('canvas:frame:load', styleCanvas);
@@ -199,8 +233,8 @@ export function GrapesJSDemo() {
   return (
     <BuilderShell slug="grapesjs" docsUrl="https://grapesjs.com/docs/">
       <div className="flex min-h-0 flex-1 flex-col">
-        {/* GrapesJS injects its own full-height UI, so give it a fixed frame. */}
-        <div className="h-[calc(100vh-61px)] min-h-[720px]">
+        {/* GrapesJS injects its own full-height UI, so give it a definite frame. */}
+        <div className="min-h-0 flex-1">
           <div ref={containerRef} className="h-full" />
         </div>
 

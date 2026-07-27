@@ -35,6 +35,14 @@ const config: Config<NsiteComponents> = {
     monetization: { title: 'Monetization', components: ['Zap'] },
   },
   root: {
+    fields: {
+      title: { type: 'text', label: 'Page title' },
+      description: { type: 'textarea', label: 'Meta description' },
+    },
+    defaultProps: {
+      title: `${demoProfile.name} — homepage`,
+      description: demoProfile.tagline,
+    },
     render: ({ children }) => (
       <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">{children}</div>
     ),
@@ -175,7 +183,7 @@ export function PuckDemo() {
   return (
     <BuilderShell slug="puck" docsUrl="https://puckeditor.com/docs">
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-[720px] flex-1">
+        <div className="min-h-0 flex-1">
           <Puck
             config={config}
             data={data}
@@ -183,6 +191,13 @@ export function PuckDemo() {
             height="100%"
             headerTitle="Ada's homepage"
             headerPath="/index.html"
+            // Puck's default viewports assume a wide desktop site, which makes
+            // it auto-zoom the canvas to ~58%. These preview the page 1:1.
+            viewports={[
+              { width: '100%', label: 'Fit' },
+              { width: 768, label: 'Page' },
+              { width: 375, label: 'Mobile' },
+            ]}
           />
         </div>
 

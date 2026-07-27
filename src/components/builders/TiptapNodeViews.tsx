@@ -43,15 +43,17 @@ export function BlockShell({
     <NodeViewWrapper
       contentEditable={false}
       className={cn(
-        'group relative my-4 rounded-xl outline-offset-4 transition-shadow',
-        selected && 'outline outline-2 outline-ring',
+        'group relative my-4 rounded-xl outline-offset-4',
+        selected && 'outline outline-2 outline-primary/40',
       )}
     >
       <div className="pointer-events-none absolute -top-2.5 left-3 z-10 rounded bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground opacity-0 transition-opacity group-hover:opacity-100">
         {label}
       </div>
       {children}
-      <div className="mt-2 grid gap-3 rounded-lg border border-dashed bg-muted/40 p-3 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+      {/* `hidden` rather than `opacity-0` so the panel claims no space until
+          it is actually revealed. */}
+      <div className="mt-2 hidden gap-3 rounded-lg border border-dashed bg-muted/40 p-3 group-focus-within:grid group-hover:grid">
         {controls}
       </div>
     </NodeViewWrapper>

@@ -177,6 +177,52 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
+/*
+ * Typography for the Tiptap demo's editable prose.
+ *
+ * Every rule is guarded with :not([data-node-view-wrapper] *) so it styles only
+ * the rich text the user types — never the custom layout blocks, which are
+ * React node views that bring their own styling.
+ */
+@layer components {
+  .nsite-prose :where(h1):not([data-node-view-wrapper] *) {
+    @apply mt-8 mb-4 text-4xl font-bold tracking-tight;
+  }
+  .nsite-prose :where(h2):not([data-node-view-wrapper] *) {
+    @apply mt-8 mb-3 text-2xl font-semibold tracking-tight;
+  }
+  .nsite-prose :where(h3):not([data-node-view-wrapper] *) {
+    @apply mt-6 mb-2 text-xl font-semibold;
+  }
+  .nsite-prose :where(p):not([data-node-view-wrapper] *) {
+    @apply my-4 text-lg leading-relaxed;
+  }
+  .nsite-prose :where(ul):not([data-node-view-wrapper] *) {
+    @apply my-4 list-disc pl-6;
+  }
+  .nsite-prose :where(ol):not([data-node-view-wrapper] *) {
+    @apply my-4 list-decimal pl-6;
+  }
+  .nsite-prose :where(li):not([data-node-view-wrapper] *) {
+    @apply my-1 text-lg;
+  }
+  .nsite-prose :where(blockquote):not([data-node-view-wrapper] *) {
+    @apply my-4 border-l-4 pl-4 text-muted-foreground italic;
+  }
+  .nsite-prose :where(a):not([data-node-view-wrapper] *) {
+    @apply underline underline-offset-4;
+  }
+  .nsite-prose :where(code):not([data-node-view-wrapper] *) {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-base;
+  }
+  .nsite-prose :where(hr):not([data-node-view-wrapper] *) {
+    @apply my-8 border-t;
+  }
+  .nsite-prose :where(img):not([data-node-view-wrapper] *) {
+    @apply rounded-xl;
+  }
+}
+
 @layer base {
   *,
   ::after,

@@ -24,8 +24,10 @@ export function BuilderShell({ slug, docsUrl, children }: BuilderShellProps) {
   if (!demo) throw new Error(`Unknown builder demo: ${slug}`);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+    // h-screen (not min-h-screen) gives the column a definite height, so
+    // editors below can size themselves with percentages and flex-1.
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
+      <header className="z-30 shrink-0 border-b bg-background/95 backdrop-blur">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
           <Link
             to="/"
