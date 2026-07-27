@@ -26,7 +26,8 @@ import { PageSwitcher } from '@/components/builders/studio/PageSwitcher';
 import { StudioToolbar } from '@/components/builders/studio/StudioToolbar';
 import { useToast } from '@/hooks/useToast';
 import {
-  canvasResetCss,
+  canvasFontFace,
+  canvasPageDefaults,
   initialPage,
   nostrComponents,
   nsiteBlockDefs,
@@ -123,10 +124,17 @@ function initialProject(): StudioProject {
  *
  * The app's CSP forbids `data:` stylesheets, so this is inline `<style>` rather
  * than `canvas.styles`. Both elements are prepended, in this order, so that
- * GrapesJS's own stylesheet stays last in the head: the imported site's CSS has
- * to beat the reset, and an edit made in the inspector has to beat both.
+ * GrapesJS's own stylesheet stays last in the head: the site's CSS has to beat
+ * the reset, and an edit made in the inspector has to beat both.
+ *
+ * The reset drops to bare infrastructure — the font face and the scrollbar —
+ * once a real site is loaded. Ordering isn't enough to keep it out of the way:
+ * `canvasPageDefaults` styles `body` directly, so it wins over a site that
+ * paints `html` instead, and over a font `body` inherits from `:root`. Both are
+ * how a site normally writes those, so the defaults have to be absent rather
+ * than merely overridable.
  */
-function styleCanvas(editor: Editor, siteCss: string) {
+function styleCanvas(editor: Editor, siteCss: string, imported: boolean) {
   const doc = editor.Canvas.getDocument();
   if (!doc?.head) return;
 
@@ -143,7 +151,8 @@ function styleCanvas(editor: Editor, siteCss: string) {
     doc.head.prepend(reset, site);
   }
 
-  reset.textContent = canvasResetCss(interLatin) + studioScrollbarCss;
+  reset.textContent =
+    canvasFontFace(interLatin) + studioScrollbarCss + (imported ? '' : canvasPageDefaults);
   site.textContent = siteCss;
 }
 
@@ -218,6 +227,11 @@ export function GrapesJSStudioDemo() {
   /** The active page's linked stylesheets, kept for canvas rebuilds. */
   const siteCssRef = useRef('');
 
+  /** Re-applies both canvas stylesheets from whatever the project holds now. */
+  const paintCanvas = useCallback((instance: Editor) => {
+    styleCanvas(instance, siteCssRef.current, projectRef.current.origin !== null);
+  }, []);
+
   /**
    * Parses a stored file into the canvas.
    *
@@ -236,9 +250,9 @@ export function GrapesJSStudioDemo() {
       instance.select();
       instance.Css.clear();
       instance.setComponents(html, { asDocument: isHtmlDocument(html) });
-      styleCanvas(instance, css);
+      paintCanvas(instance);
     },
-    [],
+    [paintCanvas],
   );
 
   useEffect(() => {
@@ -295,11 +309,11 @@ export function GrapesJSStudioDemo() {
 
     instance.on('update', queueSync);
     instance.on('load', () => {
-      styleCanvas(instance, siteCssRef.current);
+      paintCanvas(instance);
       syncOutput();
     });
     // Re-apply after device switches, which rebuild the canvas frame.
-    instance.on('canvas:frame:load', () => styleCanvas(instance, siteCssRef.current));
+    instance.on('canvas:frame:load', () => paintCanvas(instance));
 
     setEditor(instance);
     syncOutput();
@@ -310,7 +324,7 @@ export function GrapesJSStudioDemo() {
       instance.destroy();
     };
     // `nostr` is the app's memoized pool, so this effect runs once.
-  }, [nostr, commit]);
+  }, [nostr, commit, paintCanvas]);
 
   // Imported blobs outlive React state unless they are handed back explicitly.
   useEffect(() => () => releaseFiles(projectRef.current.files), []);

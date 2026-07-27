@@ -434,17 +434,30 @@ export const nsiteDevices = [
 ];
 
 /**
- * Styles the page being edited. The app's CSP forbids `data:` stylesheets, so
- * this is injected as an inline `<style>` into the canvas document rather than
- * passed to `canvas.styles`.
+ * Makes Inter available inside the canvas. The `@font-face` has to be
+ * redeclared there — the parent document's font registry is not shared across a
+ * document boundary. The file is served same-origin, so `font-src 'self'` is
+ * satisfied.
  *
- * The `@font-face` has to be redeclared inside the frame — the parent
- * document's font registry is not shared across a document boundary. The file
- * is served same-origin, so `font-src 'self'` is satisfied.
+ * The app's CSP forbids `data:` stylesheets, so this is injected as an inline
+ * `<style>` into the canvas document rather than passed to `canvas.styles`.
  */
+export function canvasFontFace(interFontUrl: string): string {
+  return `@font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interFontUrl}) format('woff2-variations');}`;
+}
+
+/**
+ * What makes the starting page look like a page. It is a bare fragment with no
+ * stylesheet of its own, so something has to supply the background and the font.
+ *
+ * A page that brings its own CSS must not get these. Both declarations sit
+ * directly on `body`, which beats a site's `html` background and beats the font
+ * `body` would otherwise inherit from `:root` — so imposing them on an imported
+ * site silently repaints and re-fonts it.
+ */
+export const canvasPageDefaults = `body{margin:0;background:#f8fafc;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}`;
+
+/** Both, for a canvas that only ever shows this app's own starting page. */
 export function canvasResetCss(interFontUrl: string): string {
-  return `
-    @font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interFontUrl}) format('woff2-variations');}
-    body{margin:0;background:#f8fafc;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}
-  `;
+  return `${canvasFontFace(interFontUrl)}\n${canvasPageDefaults}`;
 }
