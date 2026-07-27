@@ -1,0 +1,80 @@
+/*
+ * Fixes for running GrapesJS's stock UI inside a Tailwind app.
+ *
+ * Must be imported *after* `grapesjs/dist/css/grapes.min.css`.
+ */
+
+/*
+ * Tailwind's Preflight declares `img,svg,video,canvas,audio,iframe,embed,object
+ * { display: block }`. grapes.min.css never declares `display` on its icons, so
+ * there is no conflicting declaration for the cascade to resolve and Preflight
+ * applies even though it sits in `@layer base`.
+ *
+ * GrapesJS centers icons by leaving them inline and setting `text-align:center`
+ * on the ancestor, so `display:block` left-aligns every icon in the block
+ * palette, the layer manager, and the component badges. Restore the browser
+ * default within the editor chrome. The canvas is a separate document, so this
+ * cannot leak into the page being edited.
+ */
+.gjs-editor svg,
+.gjs-editor img {
+  display: inline;
+  vertical-align: middle;
+}
+
+/* Preflight also caps replaced elements, which squashes asset thumbnails. */
+.gjs-editor img {
+  max-width: none;
+}
+
+/*
+ * GrapesJS hardcodes `Helvetica, sans-serif` — which resolves to Nimbus Sans on
+ * Linux — for its chrome. Point its font variable at the app's typeface so the
+ * editor doesn't read as a foreign widget. Declared on `:root` because the
+ * modal and color picker mount outside `.gjs-editor`.
+ */
+:root {
+  --gjs-main-font: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* `.gjs-block-label` hardcodes the family instead of reading the variable. */
+.gjs-block-label {
+  font-family: var(--gjs-main-font);
+}
+
+/*
+ * Top bar alignment. The right rail's header is a 40px panel plus the 2px
+ * `border-bottom` on `.gjs-pn-views`, and `.gjs-pn-views-container` reserves
+ * 42px for it — but `--gjs-canvas-top` is 40px, so the command bar and the rail
+ * header sit 2px out of step and the seam runs crooked across the editor.
+ * Match the border and move the canvas down to agree with both.
+ */
+:root {
+  --gjs-canvas-top: 42px;
+}
+
+.gjs-pn-commands {
+  border-bottom: 2px solid var(--gjs-main-dark-color);
+}
+
+/*
+ * grapes.min.css reserves room for a dropdown's caret with
+ * `.gjs-select select { padding-right: 10px }`, but the later
+ * `.gjs-field select { padding: var(--gjs-input-padding) }` has equal
+ * specificity and resets it to 5px on all sides. The caret is drawn 5px from
+ * the right edge and is ~7px wide, and the <select> is transparent and stacked
+ * above it, so any option long enough to reach the edge is printed straight
+ * over the caret. Clear the full width of the caret.
+ */
+.gjs-select select {
+  padding-right: 18px;
+}
+
+/*
+ * `.gjs-pn-buttons` uses `justify-content: space-between`, which suits the
+ * four evenly-spread icons in the right rail but strands the device switcher
+ * at opposite ends of a bar spanning 85% of the editor.
+ */
+.gjs-pn-commands .gjs-pn-buttons {
+  justify-content: flex-start;
+}

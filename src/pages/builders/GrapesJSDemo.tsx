@@ -2,11 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
 
-import 'grapesjs/dist/css/grapes.min.css';
+// Inter, for the canvas iframe. Font faces don't cross a document boundary, so
+// the app's @fontsource import doesn't reach the page being edited.
+import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+
 // GrapesJS's panel buttons are Font Awesome 4.7 glyphs. It normally injects
 // them from a CDN, which the app's CSP blocks — so bundle them instead and
 // disable the CDN request via `cssIcons` below.
+//
+// Order matters: GrapesJS *prepends* the CDN stylesheet (`appendStyles(...,
+// { prepand: true })`) so that grapes.min.css can override it. Font Awesome's
+// `.fa { font: 14px/1 FontAwesome; font-size: inherit }` has the same
+// specificity as `.gjs-pn-btn { font-size: 18px; line-height: 21px }`, so
+// importing it second shrinks every toolbar glyph to the inherited 12px and
+// knocks it off-center inside its 30px button.
 import 'font-awesome/css/font-awesome.min.css';
+import 'grapesjs/dist/css/grapes.min.css';
+import '@/components/builders/grapesjs-overrides.css';
 
 import { BuilderShell } from '@/components/builders/BuilderShell';
 import { OutputPanel } from '@/components/builders/OutputPanel';
@@ -95,12 +107,16 @@ const footerBlock = `
 /**
  * Wraps SVG path data in the icon markup GrapesJS renders per block.
  *
+ * Sized to match `.gjs-block-svg { width: 54px }`, the convention GrapesJS's own
+ * block presets follow — the stroke lives in viewBox units, so scaling the
+ * viewport preserves the weight.
+ *
  * `fill` must be set inline: grapes.min.css declares `.gjs-block svg{fill:
  * currentColor}`, and a stylesheet rule beats a `fill="none"` attribute, which
  * would otherwise render every outline icon as a solid block.
  */
 function icon(paths: string): string {
-  return `<svg viewBox="0 0 24 24" width="28" height="28" style="fill:none;stroke:currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  return `<svg viewBox="0 0 24 24" width="54" height="54" style="fill:none;stroke:currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 }
 
 const icons = {
@@ -165,6 +181,112 @@ const initialPage = `
   </div>
 `;
 
+const devices = [
+  { id: 'desktop', name: 'Desktop', width: '', icon: 'fa fa-desktop' },
+  { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px', icon: 'fa fa-tablet' },
+  { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '575px', icon: 'fa fa-mobile' },
+];
+
+const deviceCommand = (id: string) => `set-device-${id}`;
+
+/**
+ * GrapesJS's stock top bar is `{ id: 'commands', buttons: [{}] }` — one button
+ * with no icon, label, or command, which renders as a blank box in the corner
+ * of an otherwise empty 85%-wide bar. Core also ships no device switcher (that
+ * lives in `grapesjs-preset-webpage`), so the breakpoints above would be
+ * unreachable. Put the switcher there.
+ *
+ * `panels.defaults` replaces the default list rather than merging into it, so
+ * the stock `options` and `views` panels have to be restated verbatim.
+ */
+const panels = {
+  defaults: [
+    {
+      id: 'commands',
+      buttons: devices.map((device, index) => ({
+        id: `device-${device.id}`,
+        className: device.icon,
+        // Buttons sharing a `context` deactivate one another, which is how
+        // GrapesJS spells "radio group".
+        context: 'device',
+        active: index === 0,
+        togglable: false,
+        // Registered against the editor instance below. Commands resolve by id
+        // at click time, so declaring them after `init` is fine.
+        command: deviceCommand(device.id),
+        attributes: { title: device.name },
+      })),
+    },
+    {
+      id: 'options',
+      buttons: [
+        {
+          id: 'sw-visibility',
+          className: 'fa fa-square-o',
+          command: 'core:component-outline',
+          context: 'sw-visibility',
+          active: true,
+          attributes: { title: 'View components' },
+        },
+        {
+          id: 'preview',
+          className: 'fa fa-eye',
+          command: 'preview',
+          context: 'preview',
+          attributes: { title: 'Preview' },
+        },
+        {
+          id: 'fullscreen',
+          className: 'fa fa-arrows-alt',
+          command: 'fullscreen',
+          context: 'fullscreen',
+          attributes: { title: 'Fullscreen' },
+        },
+        {
+          id: 'export-template',
+          className: 'fa fa-code',
+          command: 'export-template',
+          attributes: { title: 'View code' },
+        },
+      ],
+    },
+    {
+      id: 'views',
+      buttons: [
+        {
+          id: 'open-sm',
+          className: 'fa fa-paint-brush',
+          command: 'open-sm',
+          active: true,
+          togglable: false,
+          attributes: { title: 'Style Manager' },
+        },
+        {
+          id: 'open-tm',
+          className: 'fa fa-cog',
+          command: 'open-tm',
+          togglable: false,
+          attributes: { title: 'Settings' },
+        },
+        {
+          id: 'open-layers',
+          className: 'fa fa-bars',
+          command: 'open-layers',
+          togglable: false,
+          attributes: { title: 'Layer Manager' },
+        },
+        {
+          id: 'open-blocks',
+          className: 'fa fa-th-large',
+          command: 'open-blocks',
+          togglable: false,
+          attributes: { title: 'Blocks' },
+        },
+      ],
+    },
+  ],
+};
+
 export function GrapesJSDemo() {
   useSeoMeta({
     title: 'GrapesJS — nsite builder demo',
@@ -189,12 +311,29 @@ export function GrapesJSDemo() {
       cssIcons: '',
       blockManager: { blocks },
       deviceManager: {
-        devices: [
-          { id: 'desktop', name: 'Desktop', width: '' },
-          { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
-          { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '575px' },
-        ],
+        devices: devices.map(({ icon: _icon, ...device }) => device),
       },
+      panels,
+    });
+
+    // Set the *id*, not the name. `DeviceManager.get()` accepts either, but the
+    // Style Manager's device <select> builds its options with `value={id}` and
+    // initializes with `select.value = em.get('device')`. Storing the name
+    // leaves no option matching, so the select renders blank.
+    for (const device of devices) {
+      editor.Commands.add(deviceCommand(device.id), () => editor.setDevice(device.id));
+    }
+
+    // That <select> is a second device control, so keep the toolbar in step
+    // when the user switches from there. Activating the button re-runs its own
+    // command, but `setDevice` to the current device is a no-op, so this
+    // settles rather than looping. Deactivating siblings is handled by the
+    // shared `context`.
+    editor.on('change:device', () => {
+      const active = editor.getDevice();
+      const device = devices.find((d) => d.id === active || d.name === active);
+      if (!device) return;
+      editor.Panels.getButton('commands', `device-${device.id}`)?.set('active', true);
     });
 
     // The app's CSP forbids `data:` stylesheets, so style the canvas with an
@@ -205,8 +344,13 @@ export function GrapesJSDemo() {
 
       const style = doc.createElement('style');
       style.id = 'nsite-canvas-reset';
-      style.textContent =
-        "body{margin:0;background:#f8fafc;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}";
+      // The @font-face has to be redeclared here — the parent document's font
+      // registry is not shared with the frame. Same-origin, so `font-src
+      // 'self'` is satisfied.
+      style.textContent = `
+        @font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interLatin}) format('woff2-variations');}
+        body{margin:0;background:#f8fafc;font-family:'Inter Variable',system-ui,-apple-system,sans-serif;}
+      `;
       doc.head.appendChild(style);
     };
 
@@ -218,7 +362,16 @@ export function GrapesJSDemo() {
       });
     };
 
-    editor.on('update', syncOutput);
+    // `update` fires on every model change, including each keystroke while
+    // editing text. Serializing the whole project that often visibly janks the
+    // editor, and the output drawer only needs to settle.
+    let pending: number | undefined;
+    const queueSync = () => {
+      window.clearTimeout(pending);
+      pending = window.setTimeout(syncOutput, 250);
+    };
+
+    editor.on('update', queueSync);
     editor.on('load', () => {
       styleCanvas();
       syncOutput();
@@ -230,7 +383,10 @@ export function GrapesJSDemo() {
     editor.on('canvas:frame:load', styleCanvas);
     syncOutput();
 
-    return () => editor.destroy();
+    return () => {
+      window.clearTimeout(pending);
+      editor.destroy();
+    };
   }, []);
 
   return (
