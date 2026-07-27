@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Editor } from 'grapesjs';
 import { Eye, Monitor, Redo2, Smartphone, SquareDashed, Tablet, Undo2 } from 'lucide-react';
 
@@ -8,6 +8,11 @@ import { useEditorEvent } from './editorHooks';
 
 interface StudioToolbarProps {
   editor: Editor | null;
+  /**
+   * Site-level controls — which page is open, and where the site came from.
+   * A slot rather than props, because none of it is the editor's business.
+   */
+  leading?: ReactNode;
 }
 
 const deviceIcons = {
@@ -19,7 +24,7 @@ const deviceIcons = {
 const buttonClass =
   'flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40';
 
-export function StudioToolbar({ editor }: StudioToolbarProps) {
+export function StudioToolbar({ editor, leading }: StudioToolbarProps) {
   // Undo availability changes on every edit, and the device on every switch.
   useEditorEvent(editor, 'update change:device undo redo');
 
@@ -48,6 +53,13 @@ export function StudioToolbar({ editor }: StudioToolbarProps) {
 
   return (
     <div className="flex shrink-0 items-center gap-2 border-b bg-background px-3 py-2">
+      {leading && (
+        <>
+          {leading}
+          <div className="h-6 w-px bg-border" aria-hidden="true" />
+        </>
+      )}
+
       <div className="flex items-center gap-0.5">
         <button
           type="button"
