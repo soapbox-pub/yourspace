@@ -158,7 +158,7 @@ export function NappletPicker({ editor }: NappletPickerProps) {
         <button
           type="button"
           disabled={!editor}
-          className={cn(paletteCardClass, 'mb-4 disabled:pointer-events-none disabled:opacity-50')}
+          className={cn(paletteCardClass, 'disabled:pointer-events-none disabled:opacity-50')}
         >
           <span className={paletteIconClass}>
             <Blocks className="size-4" aria-hidden="true" />
