@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
-import { useNostr } from '@nostrify/react';
 import { Blocks, Images, Layers } from 'lucide-react';
 
 // Only the canvas tooling is used from GrapesJS's stylesheet — the selection
@@ -31,7 +30,6 @@ import { useUploadFile } from '@/hooks/useUploadFile';
 import {
   canvasResetCss,
   initialPage,
-  nostrComponents,
   nsiteBlockDefs,
   nsiteDevices,
   resizableComponents,
@@ -228,7 +226,6 @@ export function Edit() {
       'Build your homepage block by block: import a published nsite, switch between its pages, edit it, and read back the files it would ship.',
   });
 
-  const { nostr } = useNostr();
   const { toast } = useToast();
   const { user } = useCurrentUser();
   const { mutateAsync: uploadFile } = useUploadFile();
@@ -317,7 +314,7 @@ export function Edit() {
       // Drops the stock theme classes and lets the canvas fill its container
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
-      plugins: [nostrComponents(nostr), resizableComponents],
+      plugins: [resizableComponents],
       // Nothing at all while a signed-in key's site is on its way; the starting
       // template is seeded later, and only if there turns out to be no site.
       components: owner ? '' : initialPage,
@@ -392,9 +389,8 @@ export function Edit() {
       setEditor(null);
       instance.destroy();
     };
-    // `nostr` is the app's memoized pool and `owner` is read once, so this
-    // effect runs once.
-  }, [nostr, owner, commit, paintCanvas]);
+    // `owner` is read once, so this effect runs once.
+  }, [owner, commit, paintCanvas]);
 
   // Imported blobs outlive React state unless they are handed back explicitly.
   useEffect(() => () => releaseFiles(projectRef.current.files), []);
