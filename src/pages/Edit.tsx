@@ -16,6 +16,7 @@ import { EditorShell } from '@/components/editor/EditorShell';
 import { OutputPanel } from '@/components/editor/OutputPanel';
 import { AssetList } from '@/components/editor/AssetList';
 import { BlockPalette } from '@/components/editor/BlockPalette';
+import { GifPicker } from '@/components/editor/GifPicker';
 import { ImportNsiteDialog } from '@/components/editor/ImportNsiteDialog';
 import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
@@ -516,6 +517,7 @@ export function Edit() {
                 Components
               </h2>
               <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-3">
+                <GifPicker editor={editor} />
                 <BlockPalette editor={editor} />
               </div>
             </div>

@@ -13,8 +13,9 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { nsiteBlockDefs, type BlockContent, type NsiteBlockDef } from '@/lib/nsite/blocks';
+import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
+import { insertContent } from './insertContent';
 
 interface BlockPaletteProps {
   editor: Editor | null;
@@ -34,35 +35,6 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 const categories = ['Basic', 'Nostr'] as const;
-
-/**
- * Inserts a block without dragging — the keyboard and click path.
- *
- * Drops go next to the current selection, which is what someone who just
- * clicked a section and then clicked a block almost always means. With nothing
- * selected it appends to the page's root container rather than the wrapper, so
- * the new section inherits the page's max-width and gap instead of landing
- * outside it.
- */
-function insertBlock(editor: Editor, content: BlockContent) {
-  const selected = editor.getSelected();
-  const parent = selected?.parent();
-
-  if (selected && parent) {
-    const index = parent.components().indexOf(selected);
-    const [added] = parent.append(content, { at: index + 1 });
-    if (added) editor.select(added);
-    return;
-  }
-
-  const wrapper = editor.getWrapper();
-  if (!wrapper) return;
-
-  const children = wrapper.components();
-  const root = children.length === 1 ? (children.at(0) ?? wrapper) : wrapper;
-  const [added] = root.append(content);
-  if (added) editor.select(added);
-}
 
 function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null }) {
   const Icon = blockIcons[def.id] ?? Type;
@@ -97,7 +69,7 @@ function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null 
       }}
       onDrag={(event) => editor?.BlockManager.__drag(event.nativeEvent)}
       onDragEnd={() => editor?.BlockManager.__endDrag()}
-      onClick={() => editor && insertBlock(editor, def.content)}
+      onClick={() => editor && insertContent(editor, def.content)}
       className={cn(
         'group flex w-full cursor-grab items-start gap-3 rounded-lg border border-transparent bg-card p-2.5 text-left transition-all',
         'hover:border-border hover:bg-accent hover:shadow-sm',
