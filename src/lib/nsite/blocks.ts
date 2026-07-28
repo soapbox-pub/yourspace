@@ -239,13 +239,13 @@ const flexFill = 'flex-grow:1;flex-shrink:1;flex-basis:0%;';
 /**
  * An empty drop target.
  *
- * Dashed and given a minimum height because a div with no children is zero
- * tall and therefore impossible to drag anything onto — the outline is the
- * affordance, not decoration. Both are ordinary styles on an ordinary div, so
- * they can be cleared from the inspector once the slot has content.
+ * Given a minimum height because a div with no children is zero tall and
+ * therefore impossible to drag anything onto. Nothing marks it out visually:
+ * the "Show element outlines" toggle already draws a dashed box around every
+ * component while editing, and a border set here would survive into the
+ * published page, where an empty slot should look like empty space.
  */
-const dropZone = (style = flexFill) =>
-  `<div style="${style}min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div>`;
+const dropZone = (style = flexFill) => `<div style="${style}min-height:80px;"></div>`;
 
 const columnsBlock = (count: number) =>
   `<div style="display:flex;gap:16px;">${Array.from({ length: count }, () => dropZone()).join('')}</div>`;
@@ -275,7 +275,7 @@ const gridBlock = `
  * as a unit afterwards.
  */
 const freeAreaBlock = `
-  <div style="position:relative;min-height:320px;border:1px dashed #cbd5e1;border-radius:12px;"></div>
+  <div style="position:relative;min-height:320px;"></div>
 `;
 
 const spacerBlock = `<div style="height:64px;"></div>`;
