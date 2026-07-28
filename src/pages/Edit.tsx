@@ -384,6 +384,22 @@ export function Edit() {
     // Re-apply after device switches, which rebuild the canvas frame.
     instance.on('canvas:frame:load', () => paintCanvas(instance));
 
+    /*
+     * The parser retypes any element whose children are all text as `type:
+     * 'text'`, so that its text nodes stay editable. Parsing a document runs
+     * that over the `<body>` too, and the body's definition is then set onto
+     * the wrapper — which leaves the root of every text-bodied page named
+     * "Text" in the badge, the inspector and the layer tree. It also outranks
+     * the wrapper's own type when the frame picks a view class, so rebuilding
+     * the frame would hand the root a text view and make the page one big
+     * editable block. The type buys nothing here, since the wrapper is what
+     * decides whether its children are editable, so drop it.
+     */
+    instance.on('parse:html', ({ output }) => {
+      const { html } = output;
+      if (!Array.isArray(html) && html.tagName === 'body') delete html.type;
+    });
+
     setEditor(instance);
 
     // Whatever the project opened on: the starting page signed out, nothing at
