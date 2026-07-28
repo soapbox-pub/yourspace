@@ -148,7 +148,14 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={submit}>
+        {/*
+          `DialogContent` is a grid, so this form is a grid item and defaults to
+          `min-width: auto` — it refuses to be narrower than its widest
+          unbreakable content, and takes the column, the footer and the buttons
+          out past the dialog's edge with it. A published site's address is
+          exactly that kind of content.
+        */}
+        <form onSubmit={submit} className="min-w-0">
           <DialogHeader>
             <DialogTitle>{result ? 'Your site is live' : 'Publish your site'}</DialogTitle>
             <DialogDescription>
@@ -281,20 +288,24 @@ function PublishedSite({ event, failed, gatewayDomain }: PublishedSiteProps) {
       <div className="flex items-start gap-3 rounded-lg border bg-muted/40 px-4 py-3">
         <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden="true" />
         <div className="min-w-0 space-y-1">
-          <Link
-            to={`/${npub}`}
-            className="block truncate font-medium underline-offset-4 hover:underline"
-          >
+          <Link to={`/${npub}`} className="block font-medium underline-offset-4 hover:underline">
             View it here
           </Link>
+          {/*
+            The address is one unbreakable 80-character token — an npub is 63 of
+            them before the gateway domain. `break-all` lets it wrap, which also
+            drops its min-content width to a single character: the dialog is a
+            grid, and a child that refuses to be narrower than its text widens
+            the whole column past the dialog's own max width.
+          */}
           <a
             href={gateway}
             target="_blank"
             rel="noreferrer noopener"
-            className="flex items-center gap-1 truncate font-mono text-xs text-muted-foreground hover:text-foreground"
+            className="block break-all font-mono text-xs text-muted-foreground hover:text-foreground"
           >
             {gateway}
-            <ArrowUpRight className="size-3 shrink-0" aria-hidden="true" />
+            <ArrowUpRight className="ml-1 inline size-3 align-text-bottom" aria-hidden="true" />
           </a>
         </div>
       </div>
