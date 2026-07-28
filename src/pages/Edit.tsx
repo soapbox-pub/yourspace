@@ -301,8 +301,14 @@ export function Edit() {
         config.blossomServerMetadata,
         config.useAppBlossomServers,
       ),
+      sandboxDomain: config.sandboxDomain,
     }),
-    [config.relayMetadata, config.blossomServerMetadata, config.useAppBlossomServers],
+    [
+      config.relayMetadata,
+      config.blossomServerMetadata,
+      config.useAppBlossomServers,
+      config.sandboxDomain,
+    ],
   );
 
   const nappletConfigRef = useRef(nappletConfig);

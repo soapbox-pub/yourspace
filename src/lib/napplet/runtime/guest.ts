@@ -4,8 +4,8 @@
  * This is the only code the runtime adds inside a napplet, and NIP-5D is strict
  * about it: it must be installed before any napplet script runs, it must be
  * limited to the namespace, and it must sit outside the bytes the napplet's
- * content address is computed over. So it is injected at the top of `<head>`,
- * after the CSP, and never mixed into the verified blob.
+ * content address is computed over. So it is served at a path of its own and
+ * linked from the top of `<head>`, never mixed into the verified blob.
  *
  * The granted domains are baked in as a literal rather than learned from
  * `shell.init`, because NIP-5D makes the *presence* of a domain object the
@@ -44,9 +44,23 @@ const SHIM = `(function () {
     return 'n' + counter;
   }
 
+  /*
+   * NAP messages travel wrapped in a JSON-RPC envelope, because the frame
+   * between this document and the shell relays nothing else — it drops any
+   * message whose 'jsonrpc' is not '2.0', and relays upward only requests that
+   * carry an 'id'. So even a fire-and-forget NAP message is sent as a request;
+   * the reply is a bare acknowledgement, and real results arrive as pushes
+   * correlated by the NAP-level 'id' inside 'params'.
+   */
+  var wire = 0;
+
   function post(message) {
+    wire += 1;
     try {
-      host.postMessage(message, '*');
+      host.postMessage(
+        { jsonrpc: '2.0', id: 'nap-' + wire, method: 'napplet', params: message },
+        location.origin,
+      );
     } catch (err) {
       /* The host went away; every pending call will simply never settle. */
     }
@@ -224,14 +238,20 @@ const SHIM = `(function () {
 
   window.addEventListener('message', function (event) {
     /*
-     * Only the host that created this frame. A napplet has an opaque origin, so
-     * 'event.origin' is 'null' and useless for this; the Window reference is
-     * not forgeable and is what NIP-5D says to compare.
+     * Only the frame that owns this document, and only from its own origin.
+     * Both hold: the relaying frame is this document's parent and shares its
+     * origin, so anything failing either check came from somewhere else.
      */
     if (event.source !== host) return;
+    if (event.origin !== location.origin) return;
 
-    var message = event.data;
-    if (!message || typeof message !== 'object' || typeof message.type !== 'string') return;
+    var envelope = event.data;
+    if (!envelope || typeof envelope !== 'object' || envelope.jsonrpc !== '2.0') return;
+    // Acknowledgements of this document's own requests carry no NAP message.
+    if (envelope.method !== 'napplet' || !envelope.params) return;
+
+    var message = envelope.params;
+    if (typeof message.type !== 'string') return;
 
     switch (message.type) {
       case 'shell.init':

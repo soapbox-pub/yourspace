@@ -23,6 +23,15 @@ import { decodeNappletRef } from '../manifest';
 
 const CHROME_CLASS = 'napplet-status';
 
+/**
+ * Where napplets run when a page doesn't say otherwise.
+ *
+ * Baked in rather than read from app config, because by the time this matters
+ * there is no app — just a published page and whatever the runtime was built
+ * knowing.
+ */
+const DEFAULT_SANDBOX_DOMAIN = 'iframe.diy';
+
 /** Splits a whitespace/comma separated attribute into a list. */
 function list(value: string | null | undefined): string[] {
   return (value ?? '')
@@ -35,16 +44,20 @@ function list(value: string | null | undefined): string[] {
  * Relays and Blossom servers, from the script tag if it says, else the
  * defaults this app was built with.
  */
-function config(): { relays: string[]; blossomServers: string[] } {
+function config(): { relays: string[]; blossomServers: string[]; sandboxDomain: string } {
   const script = document.currentScript as HTMLScriptElement | null;
   const el = script ?? document.querySelector(`script[src$="${NAPPLET_RUNTIME_PATH}"]`);
 
   const relays = list(el?.getAttribute('data-relays')).filter(isRelayUrl);
   const servers = list(el?.getAttribute('data-blossom-servers'));
+  const domain = (el?.getAttribute('data-sandbox-domain') ?? '').trim();
 
   return {
     relays: relays.length ? relays : APP_RELAYS.relays.filter((r) => r.read).map((r) => r.url),
     blossomServers: servers.length ? servers : [...APP_BLOSSOM_SERVERS.servers],
+    // Only a bare hostname: this becomes the origin napplets run on, so a value
+    // carrying a scheme or a path would build a URL that means something else.
+    sandboxDomain: /^[a-z0-9.-]+$/i.test(domain) ? domain : DEFAULT_SANDBOX_DOMAIN,
   };
 }
 
@@ -108,7 +121,7 @@ export function bootNapplets(root: ParentNode = document): () => void {
   const hosts = [...root.querySelectorAll<HTMLElement>(`[${NAPPLET_ATTR}]`)];
   if (!hosts.length) return () => {};
 
-  const { relays, blossomServers } = config();
+  const { relays, blossomServers, sandboxDomain } = config();
   const theme = pageTheme();
 
   // Every relay any napplet on the page might need, so the shared pool has a
@@ -136,6 +149,7 @@ export function bootNapplets(root: ParentNode = document): () => void {
       mountNapplet(host, reference, {
         relays,
         blossomServers,
+        sandboxDomain,
         theme,
         pool,
         // Stable across reloads, and distinct between two copies of the same

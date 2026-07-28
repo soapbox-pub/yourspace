@@ -94,28 +94,66 @@ out of a visitor who came to look at a homepage. So `relay.publish` and
 `relay.publishEncrypted` return `{ ok: false, error }` — a truthful refusal
 rather than a capability quietly missing.
 
-**Consequence of the CSP baseline.** The runtime injects NIP-5D's recommended
-conservative policy verbatim, including `connect-src 'none'` and
-`img-src data: blob:`. That baseline assumes NAP-RESOURCE is available to
-deliver remote bytes to the napplet; this runtime does not implement
-NAP-RESOURCE, so a napplet here cannot display remote images. That is a smaller
-problem than handing untrusted code a network, and implementing NAP-RESOURCE is
-the way to fix it.
+### Sandboxing — a departure from NIP-5D
 
-### Sandboxing
+NIP-5D requires `srcdoc` with `sandbox="allow-scripts"` and **no**
+`allow-same-origin`, giving each napplet an opaque origin. **This app does not
+do that.** Each napplet instead runs on a private origin of its own behind
+`iframe.diy`, exactly as a published nsite does:
 
-Napplet frames use `srcdoc` with `sandbox="allow-scripts"` and **no**
-`allow-same-origin`, per NIP-5D. This gives each napplet an *opaque* origin: no
-`localStorage`, no IndexedDB, no cookies, no service worker, no way to reach the
-page around it except through `postMessage`.
+- the subdomain is an HMAC of a device-local secret over the napplet's
+  `(dTag, aggregateHash)` identity, so it is stable for one browser and
+  unguessable from outside;
+- every file the frame loads is served by this app over `postMessage` from the
+  verified manifest bytes — nothing is fetched from the network unchecked;
+- `allow-same-origin` is present, which is required for the Service Worker the
+  scheme depends on. It grants same-origin with the *napplet's own subdomain*,
+  never with this app, so the `nsec` in this app's `localStorage` stays out of
+  reach.
 
-This is deliberately different from how nsites are embedded. An nsite runs in an
-`iframe.diy` frame on a subdomain of its own, which *requires*
-`allow-same-origin` — without it the frame could not register the service worker
-that scheme depends on. A per-napplet `iframe.diy` origin would therefore be
-strictly *weaker* than what napplets get here, because a real origin has real
-storage to isolate, and NIP-5D forbids it outright.
+**What this costs.** An opaque origin is the stronger boundary: it has no
+storage, no Service Worker and no network at all. A real per-napplet origin has
+real `localStorage`, so NAP-STORAGE's `(dTag, aggregateHash)` scoping becomes
+advisory — a napplet can persist data outside the namespace the shell assigns
+it. Isolation *between* napplets, and between napplets and this app, still holds,
+because each origin is distinct and unguessable.
 
-Senders are identified by `MessageEvent.source` — an unforgeable `Window`
-reference — never by `event.origin`, which is `"null"` for an opaque origin.
-Messages from frames the runtime did not create are dropped without a reply.
+**What this buys.** A working web platform. Under NIP-5D's recommended CSP
+(`connect-src 'none'`, `img-src data: blob:`) a napplet cannot load so much as an
+avatar until NAP-RESOURCE exists to hand it bytes. Since this runtime does not
+implement NAP-RESOURCE, the conservative baseline would leave most real napplets
+visibly broken. No CSP is injected now; the origin is the boundary, which is the
+same bargain `NsiteFrame` already makes.
+
+Senders are identified by `MessageEvent.origin` matched against the napplet's
+derived origin, plus `event.source` matched against the frame's `contentWindow`.
+Both hold because the origin is unguessable. (NIP-5D specifies `event.source`
+alone, since an opaque origin has no origin string to compare.)
+
+### Wire format — a second departure
+
+NAP messages do **not** travel in NIP-5D's raw `{ "type": "domain.action", … }`
+envelope. `iframe.diy` runs the napplet in an inner frame and relays only
+JSON-RPC 2.0 messages between it and the shell — anything whose `jsonrpc` is not
+`"2.0"` is dropped, and upward it relays only requests carrying an `id`. A bare
+`shell.ready` notification would never arrive.
+
+The injected shim therefore wraps every NAP message:
+
+```jsonc
+// napplet -> shell: always a request, even for fire-and-forget messages
+{ "jsonrpc": "2.0", "id": "nap-1", "method": "napplet",
+  "params": { "type": "relay.query", "id": "a1", "filters": [...] } }
+
+// shell -> napplet: a notification; NAP results correlate by their own inner id
+{ "jsonrpc": "2.0", "method": "napplet",
+  "params": { "type": "relay.query.result", "id": "a1", "events": [...] } }
+```
+
+`ready`, `init` and `fetch` are reserved by `iframe.diy` and cannot be used. The
+JSON-RPC reply to a napplet request is a bare acknowledgement whose only job is
+to release the relay's routing slot.
+
+**Consequence:** napplets that use the injected `window.napplet` namespace work
+unchanged, because the shim hides all of this. A napplet that talks raw
+`postMessage` per NIP-5D does **not** work here.

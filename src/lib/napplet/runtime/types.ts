@@ -51,6 +51,11 @@ export interface NappletRuntimeConfig {
   relays: string[];
   /** Blossom servers tried after the manifest's own `server` hints. */
   blossomServers: string[];
+  /**
+   * The iframe.diy deployment napplets run on. Each napplet gets a subdomain of
+   * it, derived from its identity through a device-local secret.
+   */
+  sandboxDomain: string;
   /** The theme handed to napplets, and pushed on change. */
   theme?: NappletTheme;
 }

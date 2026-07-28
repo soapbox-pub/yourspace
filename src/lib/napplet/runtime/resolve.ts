@@ -27,6 +27,12 @@ export interface ResolvedNapplet {
   identity: NappletIdentity;
   /** The verified `/index.html`, decoded as UTF-8. */
   html: string;
+  /**
+   * The servers the entry came from, in the order they were tried. Kept so the
+   * frame can fetch the napplet's other files later without working the list
+   * out again.
+   */
+  servers: string[];
 }
 
 async function sha256Hex(bytes: BufferSource): Promise<string> {
@@ -56,7 +62,7 @@ function blobServers(manifest: NappletManifest, extra: string[]): string[] {
  * signed. A server that answers with anything else is treated exactly like one
  * that doesn't answer — which is what makes an untrusted server usable.
  */
-async function fetchVerifiedBlob(
+export async function fetchNappletBlob(
   sha256: string,
   servers: string[],
   signal?: AbortSignal,
@@ -157,7 +163,7 @@ export async function resolveNapplet(
   const servers = blobServers(manifest, options.blossomServers);
   if (!servers.length) throw new Error('The manifest names no Blossom server to fetch from.');
 
-  const bytes = await fetchVerifiedBlob(entry.sha256, servers, options.signal);
+  const bytes = await fetchNappletBlob(entry.sha256, servers, options.signal);
   if (!bytes) throw new Error('No Blossom server produced bytes matching the signed hash.');
 
   return {
@@ -167,5 +173,6 @@ export async function resolveNapplet(
       aggregateHash: await computeAggregate(manifest),
     },
     html: new TextDecoder().decode(bytes),
+    servers,
   };
 }

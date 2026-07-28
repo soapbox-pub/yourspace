@@ -25,6 +25,7 @@ export const NAPPLET_TYPE = 'napplet';
 export interface NappletCanvasConfig {
   relays: string[];
   blossomServers: string[];
+  sandboxDomain: string;
 }
 
 /** How a napplet with no reference yet, or one that failed, presents itself. */
