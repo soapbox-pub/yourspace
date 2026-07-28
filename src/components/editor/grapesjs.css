@@ -104,6 +104,59 @@
 }
 
 /*
+ * The toolbar that appears over selected text.
+ *
+ * Stock is a `.gjs-one-bg` panel — a flat #444 — that sets no colour of its
+ * own, so the buttons inherit the app's near-black foreground and end up black
+ * on dark grey. Rebuilt here as a popover on the app's surface, with the row of
+ * buttons treated like the inspector's `SegmentedControl`: no dividers, small
+ * gaps, and the same hover and active fills.
+ */
+.nsite-studio .gjs-rte-toolbar-ui {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 4px 16px rgb(15 23 42 / 0.14);
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: 13px;
+}
+
+.nsite-studio .gjs-rte-actionbar {
+  gap: 2px;
+  padding: 3px;
+}
+
+.nsite-studio .gjs-rte-action {
+  width: 28px;
+  height: 28px;
+  border-right: none;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.nsite-studio .gjs-rte-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nsite-studio .gjs-rte-action:hover,
+.nsite-studio .gjs-rte-active {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.nsite-studio .gjs-rte-disabled,
+.nsite-studio .gjs-rte-disabled:hover {
+  background-color: transparent;
+  color: var(--muted-foreground);
+  opacity: 0.4;
+}
+
+/*
  * The sorter's insertion indicator — the line showing where a dragged block
  * will land. Stock is a 1px green line that is easy to miss against content.
  */

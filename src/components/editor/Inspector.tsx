@@ -1,5 +1,13 @@
 import type { Component, Editor, Trait } from 'grapesjs';
-import { Copy, MousePointerSquareDashed, Trash2 } from 'lucide-react';
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Copy,
+  MousePointerSquareDashed,
+  Trash2,
+} from 'lucide-react';
 
 import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
 import { parseCssUrl, toCssUrl } from '@/lib/nsite/siteHtml';
@@ -471,6 +479,22 @@ const positionOptions: Option[] = [
   { value: 'fixed', label: 'Fixed' },
   { value: 'sticky', label: 'Sticky' },
 ];
+
+/**
+ * Four labels do not fit the panel's width, so these are drawn rather than
+ * named — the icons are the same ones the text toolbar uses over the canvas,
+ * which writes this very property.
+ */
+const textAlignOptions = [
+  { value: 'left', label: 'Left', icon: AlignLeft },
+  { value: 'center', label: 'Center', icon: AlignCenter },
+  { value: 'right', label: 'Right', icon: AlignRight },
+  { value: 'justify', label: 'Justify', icon: AlignJustify },
+].map(({ value, label, icon: Icon }) => ({
+  value,
+  label,
+  icon: <Icon className="size-3.5" aria-hidden="true" />,
+}));
 
 const weightOptions: Option[] = [
   { value: '400', label: 'Regular' },
@@ -944,11 +968,7 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
         <SegmentedControl
           label="Align"
           value={styleValue(selected, 'text-align')}
-          options={[
-            { value: 'left', label: 'Left' },
-            { value: 'center', label: 'Center' },
-            { value: 'right', label: 'Right' },
-          ]}
+          options={textAlignOptions}
           onChange={(value) => setStyle(selected, { 'text-align': value })}
         />
 

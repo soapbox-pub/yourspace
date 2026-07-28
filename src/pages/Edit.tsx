@@ -23,6 +23,7 @@ import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { registerTextAlign } from '@/components/editor/richText';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOwnNsite } from '@/hooks/useOwnNsite';
 import { useToast } from '@/hooks/useToast';
@@ -365,6 +366,8 @@ export function Edit() {
 
     instance.on('update', queueSync);
     instance.on('load', () => {
+      // The text toolbar exists by now, so this is where its extra buttons go.
+      registerTextAlign(instance);
       paintCanvas(instance);
       syncOutput();
     });
