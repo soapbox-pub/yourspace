@@ -1,14 +1,17 @@
 import type { NostrEvent } from '@nostrify/nostrify';
-import { useCallback, useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { SandboxFrame } from '@/components/SandboxFrame';
 import { useAppContext } from '@/hooks/useAppContext';
 import { getEffectiveBlossomServers } from '@/lib/appBlossom';
 import { deriveIframeSubdomain } from '@/lib/iframeSubdomain';
-import { extensionOf, mimeForPath } from '@/lib/nsite/files';
-import { blobServers, fetchBlob } from '@/lib/nsite/blobs';
+import { extensionOf, isPagePath, mimeForPath } from '@/lib/nsite/files';
+import { blobServers } from '@/lib/nsite/blobs';
+import { loadBlob, prefetchSite } from '@/lib/nsite/blobStore';
 import { parseManifest, type NsiteRef } from '@/lib/nsite/manifest';
 import { getNsiteSubdomain } from '@/lib/nsite/subdomain';
+import { cn } from '@/lib/utils';
 import type { FileResponse, InjectedScript } from '@/lib/sandbox';
 
 /**
@@ -36,16 +39,28 @@ interface NsiteFrameProps {
   className?: string;
 }
 
+/** Long enough that a site which is simply fast never shows a spinner. */
+const SPINNER_DELAY = 400;
+
 /**
  * Renders a published nsite.
  *
- * Files are pulled from Blossom on demand rather than downloaded up front, so
- * a large site starts painting as soon as its entry page arrives. Everything
- * runs inside `SandboxFrame` on an origin of its own — the site's scripts are
- * the author's, not ours, and this app's localStorage holds nsec.
+ * The site's files start downloading the moment the manifest is in hand, in
+ * parallel with the sandbox booting its Service Worker, so the frame's own
+ * requests are answered from bytes already fetched or from a request already
+ * in flight rather than starting one. Past that first page it is the browser's
+ * job: the frame paints as its files arrive, the way any other page does.
+ *
+ * Everything runs inside `SandboxFrame` on an origin of its own — the site's
+ * scripts are the author's, not ours, and this app's localStorage holds nsec.
  */
 export function NsiteFrame({ event, siteRef, title, className }: NsiteFrameProps) {
   const { config } = useAppContext();
+
+  // The subdomain the entry page has been handed to, rather than a flag, so
+  // moving to another site puts the veil back without anything to reset.
+  const [served, setServed] = useState<string | null>(null);
+  const [waited, setWaited] = useState<string | null>(null);
 
   const manifest = useMemo(() => parseManifest(event, siteRef), [event, siteRef]);
 
@@ -73,6 +88,15 @@ export function NsiteFrame({ event, siteRef, title, className }: NsiteFrameProps
     [event],
   );
 
+  // Everything, straight away. The frame is booting a Service Worker on a cold
+  // origin meanwhile, and none of these fetches needed to wait for that.
+  useEffect(() => prefetchSite(manifest.paths, servers), [manifest, servers]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWaited(subdomain), SPINNER_DELAY);
+    return () => clearTimeout(timer);
+  }, [subdomain]);
+
   const resolveFile = useCallback(
     async (pathname: string): Promise<FileResponse | null> => {
       let servingPath = pathname;
@@ -88,8 +112,13 @@ export function NsiteFrame({ event, siteRef, title, className }: NsiteFrameProps
       }
       if (!sha256) return null;
 
-      const bytes = await fetchBlob(sha256, extensionOf(servingPath), servers);
+      const bytes = await loadBlob(sha256, extensionOf(servingPath), servers);
       if (!bytes) return null;
+
+      // The page is on its way to the frame, which will start painting it and
+      // asking for the rest. Watching that happen beats watching a spinner
+      // until it finishes, so the veil comes off here rather than at load.
+      if (isPagePath(servingPath)) setServed(subdomain);
 
       return {
         status: 200,
@@ -99,17 +128,38 @@ export function NsiteFrame({ event, siteRef, title, className }: NsiteFrameProps
         body: new Uint8Array(bytes),
       };
     },
-    [paths, servers],
+    [paths, servers, subdomain],
   );
 
   return (
-    <SandboxFrame
-      key={subdomain}
-      id={subdomain}
-      resolveFile={resolveFile}
-      injectedScripts={[PATH_FIXUP]}
-      className={className}
-      title={title}
-    />
+    <div className={cn('relative overflow-hidden', className)}>
+      <SandboxFrame
+        key={subdomain}
+        id={subdomain}
+        resolveFile={resolveFile}
+        injectedScripts={[PATH_FIXUP]}
+        className="size-full border-0"
+        title={title}
+      />
+
+      {served !== subdomain && (
+        // Opaque, because the sandbox shell underneath is a blank white page
+        // and this app may be in dark mode. The spinner arrives later than the
+        // veil does: a site that opens quickly should look like it opened, not
+        // like it was loading.
+        <div
+          role="status"
+          aria-label="Loading site"
+          className="absolute inset-0 flex items-center justify-center bg-background"
+        >
+          {waited === subdomain && (
+            <Loader2
+              className="size-12 text-muted-foreground/60 motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }
