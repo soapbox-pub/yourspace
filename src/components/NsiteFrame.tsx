@@ -1,8 +1,8 @@
 import type { NostrEvent } from '@nostrify/nostrify';
-import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { SandboxFrame } from '@/components/SandboxFrame';
+import { Spinner } from '@/components/Spinner';
 import { useAppContext } from '@/hooks/useAppContext';
 import { getEffectiveBlossomServers } from '@/lib/appBlossom';
 import { deriveIframeSubdomain } from '@/lib/iframeSubdomain';
@@ -147,17 +147,8 @@ export function NsiteFrame({ event, siteRef, title, className }: NsiteFrameProps
         // and this app may be in dark mode. The spinner arrives later than the
         // veil does: a site that opens quickly should look like it opened, not
         // like it was loading.
-        <div
-          role="status"
-          aria-label="Loading site"
-          className="absolute inset-0 flex items-center justify-center bg-background"
-        >
-          {waited === subdomain && (
-            <Loader2
-              className="size-12 text-muted-foreground/60 motion-safe:animate-spin"
-              aria-hidden="true"
-            />
-          )}
+        <div className="absolute inset-0 bg-background">
+          {waited === subdomain && <Spinner className="size-full" />}
         </div>
       )}
     </div>

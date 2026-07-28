@@ -4,9 +4,9 @@ import { Link, useParams } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 
 import { NsiteFrame } from '@/components/NsiteFrame';
+import { Spinner } from '@/components/Spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useNip05 } from '@/hooks/useNip05';
 import { useNsite } from '@/hooks/useNsite';
@@ -59,16 +59,10 @@ export function UserPage() {
   // Nothing that names a page — an nsec, a note id, a typo.
   if (!parsed) return <NotFound />;
 
+  // Both of these are waits for a site to appear, so they look like the one
+  // the frame shows rather than like a document that isn't coming.
   if (nip05.isPending && parsed.kind === 'nip05') {
-    return (
-      <Shell>
-        <div className="space-y-3">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </Shell>
-    );
+    return <Spinner className="ys-below-bar" />;
   }
 
   if (parsed.kind === 'nip05' && !pubkey) {
@@ -88,15 +82,7 @@ export function UserPage() {
   }
 
   if (nsite.isPending) {
-    return (
-      <Shell>
-        <div className="space-y-3">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      </Shell>
-    );
+    return <Spinner className="ys-below-bar" />;
   }
 
   if (!nsite.data) {
