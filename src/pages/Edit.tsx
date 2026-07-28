@@ -24,6 +24,7 @@ import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOwnNsite } from '@/hooks/useOwnNsite';
 import { useToast } from '@/hooks/useToast';
+import { useUploadFile } from '@/hooks/useUploadFile';
 import {
   canvasResetCss,
   initialPage,
@@ -32,10 +33,13 @@ import {
   nsiteDevices,
 } from '@/lib/nsite/blocks';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
+import { sha256Hex } from '@/lib/nsite/blobs';
 import {
+  assetPath,
   assetsOf,
   blankPage,
   isImageFile,
+  mimeForPath,
   pagesOf,
   releaseFiles,
   sortFiles,
@@ -226,6 +230,7 @@ export function Edit() {
   const { nostr } = useNostr();
   const { toast } = useToast();
   const { user } = useCurrentUser();
+  const { mutateAsync: uploadFile } = useUploadFile();
   const containerRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [html, setHtml] = useState('');
@@ -460,6 +465,53 @@ export function Edit() {
     }
   }, [editor, ownSite.isPending, ownSite.data, ownSite.error, importSite, toast]);
 
+  /**
+   * Puts an image on Blossom and into the site.
+   *
+   * Both halves are needed: the upload is what makes the bytes fetchable by
+   * anyone else, and the file entry is what puts the path in a manifest and the
+   * thumbnail in the assets rail. The bytes also stay here as an object URL, so
+   * the canvas paints straight away and `toSiteHtml` has something to map back
+   * to a site path — the same shape an imported file has.
+   *
+   * The hash is digested from the bytes rather than read out of the upload's
+   * `x` tag. It is what a manifest would have to carry, and the point of a
+   * hash-addressed store is that the server doesn't get to say what it holds.
+   */
+  const addImage = useCallback(
+    async (file: File): Promise<string | null> => {
+      try {
+        await uploadFile(file);
+
+        const sha256 = await sha256Hex(await file.arrayBuffer());
+        const path = assetPath(projectRef.current.files, file.name, file.type);
+        const url = URL.createObjectURL(file);
+        const asset: NsiteFile = {
+          path,
+          url,
+          type: file.type || mimeForPath(path),
+          size: file.size,
+          sha256,
+        };
+
+        const files = sortFiles([...projectRef.current.files, asset]);
+        commit({ ...projectRef.current, files });
+        if (editor) registerAssets(editor, files);
+
+        return url;
+      } catch (error) {
+        toast({
+          title: 'Upload failed',
+          description:
+            error instanceof Error ? error.message : 'No Blossom server accepted the image.',
+          variant: 'destructive',
+        });
+        return null;
+      }
+    },
+    [editor, uploadFile, commit, toast],
+  );
+
   /** Replaces the active page with hand-edited markup from the HTML tab. */
   const applyHtml = useCallback(
     (value: string) => {
@@ -569,7 +621,13 @@ export function Edit() {
             aria-label="Page and element settings"
             className="w-[19rem] shrink-0 overflow-y-auto border-l bg-sidebar"
           >
-            <Inspector editor={editor} files={project.files} />
+            <Inspector
+              editor={editor}
+              files={project.files}
+              // Blossom uploads are signed, so this is the one editor action
+              // that needs an account rather than just offering one.
+              onUploadImage={user ? addImage : undefined}
+            />
           </aside>
         </div>
 

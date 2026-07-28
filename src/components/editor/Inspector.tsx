@@ -21,6 +21,8 @@ interface InspectorProps {
   editor: Editor | null;
   /** Every file in the site, for the background image picker. */
   files?: NsiteFile[];
+  /** Adds an uploaded image to the site. Absent when nobody is signed in. */
+  onUploadImage?: (file: File) => Promise<string | null>;
 }
 
 /* --------------------------------------------------------------------------
@@ -230,10 +232,11 @@ interface BackgroundFieldsProps {
   target: StyleTarget;
   fieldKey: string;
   images: { url: string; label: string }[];
+  onUpload?: (file: File) => Promise<string | null>;
 }
 
 /** Colour, image, and how the image is laid out. Shared by pages and elements. */
-function BackgroundFields({ target, fieldKey, images }: BackgroundFieldsProps) {
+function BackgroundFields({ target, fieldKey, images, onUpload }: BackgroundFieldsProps) {
   const { color, image } = backgroundValues(target);
   const url = parseCssUrl(image);
   const fit = backgroundFit(target);
@@ -253,10 +256,11 @@ function BackgroundFields({ target, fieldKey, images }: BackgroundFieldsProps) {
         preview={url}
         fieldKey={`${fieldKey}:background-image`}
         options={images}
+        onUpload={onUpload}
         hint={
           images.length
-            ? 'An https:// address, a gradient, or one of the images below.'
-            : 'An https:// address, or a gradient.'
+            ? 'Upload one, paste an https:// address or a gradient, or reuse an image below.'
+            : 'Upload one, or paste an https:// address or a gradient.'
         }
         onChange={(value) => setBackground(target, { 'background-image': toBackgroundImage(value) })}
       />
@@ -443,9 +447,11 @@ function EmptyState() {
 function PagePanel({
   editor,
   images,
+  onUpload,
 }: {
   editor: Editor;
   images: { url: string; label: string }[];
+  onUpload?: (file: File) => Promise<string | null>;
 }) {
   return (
     <div>
@@ -455,7 +461,12 @@ function PagePanel({
       </header>
 
       <PanelSection title="Background">
-        <BackgroundFields target={pageTarget(editor)} fieldKey="page" images={images} />
+        <BackgroundFields
+          target={pageTarget(editor)}
+          fieldKey="page"
+          images={images}
+          onUpload={onUpload}
+        />
         <p className="text-xs leading-relaxed text-muted-foreground">
           Sits behind every block on this page. Each page in the site keeps its own, since each
           ships as its own file.
@@ -474,7 +485,7 @@ function PagePanel({
  * button, so editing the one field a component actually exposes — the hero's
  * npub — costs two clicks and a scroll.
  */
-export function Inspector({ editor, files = [] }: InspectorProps) {
+export function Inspector({ editor, files = [], onUploadImage }: InspectorProps) {
   const selected = useSelectedComponent(editor);
   // `styleable:change` is the one a bare CSS rule fires — the page background
   // is written through the CssComposer rather than onto a component.
@@ -486,7 +497,9 @@ export function Inspector({ editor, files = [] }: InspectorProps) {
     file.url && isImageFile(file) ? [{ url: file.url, label: file.path }] : [],
   );
 
-  if (selected === editor.getWrapper()) return <PagePanel editor={editor} images={images} />;
+  if (selected === editor.getWrapper()) {
+    return <PagePanel editor={editor} images={images} onUpload={onUploadImage} />;
+  }
 
   const id = selected.getId();
   const traits = selected.getTraits();
@@ -707,7 +720,12 @@ export function Inspector({ editor, files = [] }: InspectorProps) {
       </PanelSection>
 
       <PanelSection title="Background">
-        <BackgroundFields target={selected} fieldKey={id} images={images} />
+        <BackgroundFields
+          target={selected}
+          fieldKey={id}
+          images={images}
+          onUpload={onUploadImage}
+        />
       </PanelSection>
 
       <PanelSection title="Appearance">
