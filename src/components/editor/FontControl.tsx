@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Loader2, Search } from 'lucide-react';
 
 import {
@@ -167,6 +167,7 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
   const [installing, setInstalling] = useState(false);
   const [shown, setShown] = useState(PAGE_SIZE);
   const list = useRef<HTMLDivElement>(null);
+  const triggerId = useId();
 
   const current = primaryFamily(value);
 
@@ -211,11 +212,19 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
   };
 
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} htmlFor={triggerId} hint={hint}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
+          id={triggerId}
           className={cn(
-            'flex h-8 w-full items-center gap-1.5 rounded-md border border-input bg-background px-2 text-sm text-foreground shadow-sm transition-colors',
+            // `relative` is load-bearing. The status text below is `sr-only`,
+            // which is `position:absolute` — with no positioned ancestor its
+            // containing block would be the page itself, so it would neither be
+            // clipped by the panel's scroll container nor by the editor shell's
+            // `overflow:hidden`, and a 1px span sitting wherever this control
+            // happened to land would stretch the document's scroll height. That
+            // is invisible except as a scrollbar for the whole page.
+            'relative flex h-8 w-full items-center gap-1.5 rounded-md border border-input bg-background px-2 text-sm text-foreground shadow-sm transition-colors',
             'hover:border-ring/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
           )}
         >
