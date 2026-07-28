@@ -32,27 +32,41 @@ const deviceIcons = {
   mobile: Smartphone,
 } as const;
 
+/** Togglable core commands: run to turn on, stop to turn off. */
+const outlineCommand = 'core:component-outline';
+const previewCommand = 'preview';
+
+/**
+ * Neither command is this bar's to own. Preview stops the outline command on
+ * its way in and restarts it on the way out, and its own eye-slash button
+ * leaves preview without touching this bar — so a `useState` mirror of either
+ * one goes stale, and the next click is spent undoing a state the editor was
+ * never in. Read the live state instead, and re-render when it changes.
+ */
+const commandEvents = [outlineCommand, previewCommand]
+  .flatMap((id) => [`command:run:${id}`, `command:stop:${id}`])
+  .join(' ');
+
 const buttonClass =
   'flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40';
 
 export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps) {
   // Undo availability changes on every edit, and the device on every switch.
   useEditorEvent(editor, 'update change:device undo redo');
+  useEditorEvent(editor, commandEvents);
 
-  const [outlines, setOutlines] = useState(true);
-  const [preview, setPreview] = useState(false);
   const [freeLayout, setFreeLayout] = useState(false);
 
   const undoManager = editor?.UndoManager;
   const activeDevice = editor?.getDevice();
 
-  const toggleOutlines = () => {
+  const outlines = editor?.Commands.isActive(outlineCommand) ?? false;
+  const preview = editor?.Commands.isActive(previewCommand) ?? false;
+
+  const toggleCommand = (id: string, active: boolean) => {
     if (!editor) return;
-    const next = !outlines;
-    setOutlines(next);
-    // A togglable core command: run to draw the dashed boxes, stop to hide them.
-    if (next) editor.runCommand('core:component-outline');
-    else editor.stopCommand('core:component-outline');
+    if (active) editor.stopCommand(id);
+    else editor.runCommand(id);
   };
 
   /**
@@ -70,14 +84,6 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
     const next = !freeLayout;
     setFreeLayout(next);
     editor.setDragMode(next ? 'absolute' : '');
-  };
-
-  const togglePreview = () => {
-    if (!editor) return;
-    const next = !preview;
-    setPreview(next);
-    if (next) editor.runCommand('preview');
-    else editor.stopCommand('preview');
   };
 
   return (
@@ -161,7 +167,7 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
         </button>
         <button
           type="button"
-          onClick={toggleOutlines}
+          onClick={() => toggleCommand(outlineCommand, outlines)}
           aria-pressed={outlines}
           title="Show element outlines"
           className={cn(buttonClass, outlines && 'bg-accent text-foreground')}
@@ -171,7 +177,7 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
         </button>
         <button
           type="button"
-          onClick={togglePreview}
+          onClick={() => toggleCommand(previewCommand, preview)}
           aria-pressed={preview}
           title="Preview"
           className={cn(buttonClass, preview && 'bg-accent text-foreground')}

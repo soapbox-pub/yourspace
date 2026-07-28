@@ -378,6 +378,11 @@ export function Edit() {
     instance.on('load', () => {
       // The text toolbar exists by now, so this is where its extra buttons go.
       registerTextAlign(instance);
+      // Dashed boxes around every element, on by default — an empty region of
+      // a page is otherwise indistinguishable from the page itself. Stock
+      // GrapesJS turns this on through its options panel, which `customUI`
+      // and the emptied `panels.defaults` above throw away.
+      instance.runCommand('core:component-outline');
       paintCanvas(instance);
       syncOutput();
     });
