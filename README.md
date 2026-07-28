@@ -15,6 +15,8 @@ addressed by your own key, that no platform can suspend, rank, or wrap in ads.
 - **Real files out.** What you build is ordinary HTML and CSS. Read it back at any time, or import a
   published nsite and keep editing it.
 - **Yours to keep.** The page belongs to a keypair, not an account. Nothing here is a lock-in.
+- **Browsing.** A showcase of homepages people have published, and a viewer that renders any of them
+  at `/<name>` — sandboxed, so a site's scripts can't reach this app.
 
 ## nsites (NIP-5A)
 
@@ -40,9 +42,16 @@ npm test       # typecheck, lint, unit tests, production build
 npm run build  # production build
 ```
 
-- `/` — the landing page
+- `/` — the landing page, with a feed of recently published homepages
 - `/edit` — the editor
-- `/:nip19` — NIP-19 identifiers (`npub1`, `note1`, `naddr1`, …)
+- `/:user` — someone's homepage, addressed by npub, NIP-05 (`alex@gleasonator.com`), or bare
+  domain (`soapbox.pub`)
+
+Published sites are rendered inside a frame served from a subdomain of `iframe.diy`, which
+proxies every request back to the app over `postMessage` so the files can come from Blossom. The
+subdomain is an HMAC of a device-local secret, so each site gets an origin of its own that no
+other page can guess — this app's `localStorage` holds nsec, and untrusted scripts must never
+share an origin with it.
 
 ## Stack
 

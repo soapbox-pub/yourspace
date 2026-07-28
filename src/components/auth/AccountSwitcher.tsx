@@ -11,12 +11,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useLoggedInAccounts, type Account } from '@/hooks/useLoggedInAccounts';
+import { cn } from '@/lib/utils';
 
 interface AccountSwitcherProps {
   onAddAccountClick: () => void;
+  /** Shrinks the trigger to fit inside the fixed top bar. */
+  compact?: boolean;
 }
 
-export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
+export function AccountSwitcher({ onAddAccountClick, compact }: AccountSwitcherProps) {
   const { currentUser, otherUsers, isLoading, setLogin, removeLogin } = useLoggedInAccounts();
 
   if (!currentUser) return null;
@@ -32,8 +35,13 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <button className='flex items-center gap-2 h-10 p-1 pr-2.5 rounded-full hover:bg-accent transition-all text-foreground'>
-          <Avatar className='w-8 h-8'>
+        <button
+          className={cn(
+            'flex items-center gap-2 p-1 rounded-full hover:bg-accent transition-all text-foreground',
+            compact ? 'h-8 pr-1.5' : 'h-10 pr-2.5',
+          )}
+        >
+          <Avatar className={compact ? 'w-6 h-6' : 'w-8 h-8'}>
             <AvatarImage
               src={currentUser.metadata.picture}
               alt={isCurrentUserPending ? '' : getDisplayName(currentUser)}
@@ -46,7 +54,9 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
               )}
             </AvatarFallback>
           </Avatar>
-          <ChevronDown className='w-4 h-4 text-muted-foreground' />
+          <ChevronDown
+            className={cn('text-muted-foreground', compact ? 'w-3.5 h-3.5' : 'w-4 h-4')}
+          />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56 p-2 animate-scale-in'>

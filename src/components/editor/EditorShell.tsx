@@ -1,28 +1,16 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 
-import { LoginArea } from '@/components/auth/LoginArea';
-import { Logo } from '@/components/Logo';
-
-/** Chrome around the editor: the YourSpace mark, a way home, and the account menu. */
+/**
+ * The editor's outer column.
+ *
+ * There's no header here — the global `TopBar` is the app's only chrome, and a
+ * second one would cost the canvas 60px for a duplicate of the same two
+ * controls. A definite height (rather than a minimum) is what lets the panels
+ * below size themselves with percentages and `flex-1`.
+ */
 export function EditorShell({ children }: { children: ReactNode }) {
   return (
-    // h-screen (not min-h-screen) gives the column a definite height, so the
-    // editor below can size itself with percentages and flex-1.
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <header className="z-30 shrink-0 border-b bg-background/95 backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
-          <Link
-            to="/"
-            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Logo className="text-lg" />
-          </Link>
-
-          <LoginArea className="max-w-60" />
-        </div>
-      </header>
-
+    <div className="ys-below-bar flex flex-col overflow-hidden bg-background">
       <main className="flex min-h-0 flex-1 flex-col">{children}</main>
     </div>
   );

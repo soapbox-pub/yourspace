@@ -30,6 +30,14 @@ export interface AppConfig {
    * are used.
    */
   useAppBlossomServers: boolean;
+  /**
+   * The domain sandboxed nsites are framed from. Each site gets its own
+   * subdomain of it, which is what keeps sites isolated from this app and from
+   * each other, so it must never be a domain this app is served from.
+   */
+  sandboxDomain: string;
+  /** The follow pack (kind 39089) whose members fill the Discover feed. */
+  discoverPackNaddr: string;
 }
 
 export interface AppContextType {

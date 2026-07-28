@@ -18,6 +18,7 @@ import {
 
 import { LoginArea } from '@/components/auth/LoginArea';
 import { Logo } from '@/components/Logo';
+import { NsiteShowcase } from '@/components/NsiteShowcase';
 import { Button } from '@/components/ui/button';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
@@ -80,7 +81,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="ys-min-below-bar bg-slate-950 text-white">
       {/* Hero */}
       <div className="ys-aurora relative overflow-hidden">
         {/* Drifting sparks. Decorative, so hidden from the accessibility tree. */}
@@ -94,14 +95,7 @@ const Index = () => {
           ))}
         </div>
 
-        <header className="relative z-10">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
-            <Logo className="text-xl" onAurora />
-            <LoginArea className="max-w-60" />
-          </div>
-        </header>
-
-        <div className="relative z-10 mx-auto max-w-4xl px-6 pt-12 pb-24 text-center sm:pt-20 sm:pb-32">
+        <div className="relative z-10 mx-auto max-w-4xl px-6 pt-16 pb-24 text-center sm:pt-24 sm:pb-32">
           <div className="ys-glass rounded-3xl p-8 shadow-2xl sm:p-12">
             <div className="mb-8 flex items-center justify-center gap-4">
               <Globe className="ys-float size-9 text-violet-400" aria-hidden="true" />
@@ -151,6 +145,25 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/*
+        Published homepages, on the app's own surface rather than the dark
+        marketing one — these are other people's pages, and they read better
+        against a neutral background than inside the aurora.
+      */}
+      <section className="bg-background px-6 py-20 text-foreground">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10">
+            <h2 className="mb-3 text-3xl font-bold sm:text-4xl">Fresh off the press</h2>
+            <p className="max-w-2xl text-lg text-muted-foreground">
+              Homepages published to Nostr, newest first. Every one of them is a real
+              site owned by the person who made it.
+            </p>
+          </div>
+
+          <NsiteShowcase />
+        </div>
+      </section>
 
       {/* Features */}
       <section className="bg-linear-to-b from-slate-950 to-indigo-950 px-6 py-24">

@@ -189,6 +189,25 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+
+  :root {
+    /*
+     * Height of the fixed YourSpace bar. Every page sits below it, and the
+     * full-height ones (the editor, an embedded nsite) subtract it rather than
+     * using 100vh, so nothing is pushed off the bottom of the screen.
+     */
+    --ys-bar: 2.5rem;
+  }
+}
+
+/* A pane filling exactly what the bar leaves, for content that scrolls itself. */
+.ys-below-bar {
+  height: calc(100dvh - var(--ys-bar));
+}
+
+/* The same, as a floor rather than a fixed height, for pages that grow. */
+.ys-min-below-bar {
+  min-height: calc(100dvh - var(--ys-bar));
 }
 
 /*

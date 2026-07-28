@@ -43,6 +43,10 @@ const defaultConfig: AppConfig = {
     updatedAt: 0,
   },
   useAppBlossomServers: true,
+  sandboxDomain: 'iframe.diy',
+  // Team Soapbox — kind 39089, `k4p5w0n22suf`.
+  discoverPackNaddr:
+    'naddr1qvzqqqyckypzpyexz3t34l966ngh5xg7u2q788hthdqmj0av3lv8s2tz9t43zt6dqqxxkdrsx4mnqm3jxfeh2ess5pyrw',
 };
 
 export function App() {

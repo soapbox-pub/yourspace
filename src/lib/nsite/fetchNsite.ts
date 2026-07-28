@@ -1,6 +1,7 @@
 import type { NostrEvent, NPool } from '@nostrify/nostrify';
 
-import { APP_BLOSSOM_SERVERS, parseBlossomServerList } from '@/lib/appBlossom';
+import { parseBlossomServerList } from '@/lib/appBlossom';
+import { blobServers, fetchBlob } from './blobs';
 import {
   extensionOf,
   isPagePath,
@@ -34,7 +35,6 @@ const BLOSSOM_SERVER_LIST_KIND = 10063;
 const CONCURRENCY = 6;
 
 const RELAY_TIMEOUT = 8000;
-const BLOB_TIMEOUT = 15000;
 
 export interface NsiteImportProgress {
   loaded: number;
@@ -63,76 +63,6 @@ function latest(events: NostrEvent[], kind: number): NostrEvent | undefined {
       (best, event) => (!best || event.created_at > best.created_at ? event : best),
       undefined,
     );
-}
-
-function normalizeServer(url: string): string {
-  return url.replace(/\/+$/, '');
-}
-
-/**
- * Where to look for blobs, most specific first: the manifest's own hints, then
- * the author's BUD-03 list, then this app's defaults as a last resort. Order
- * matters — each is tried in turn until one produces bytes that verify.
- */
-function blobServers(manifest: NsiteManifest, serverList: NostrEvent | undefined): string[] {
-  const candidates = [
-    ...manifest.servers,
-    ...(serverList ? parseBlossomServerList(serverList) : []),
-    ...APP_BLOSSOM_SERVERS.servers,
-  ];
-
-  const seen = new Set<string>();
-  return candidates.map(normalizeServer).filter((url) => {
-    if (!url || seen.has(url.toLowerCase())) return false;
-    seen.add(url.toLowerCase());
-    return true;
-  });
-}
-
-async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/**
- * Fetches one blob, trying each server until the bytes verify.
- *
- * A server that answers with the wrong content is treated exactly like one that
- * doesn't answer at all: move on. The extension is appended because BUD-01
- * allows it and several servers use it to pick a Content-Type — which is
- * irrelevant here, since the type is derived from the path either way.
- */
-async function fetchBlob(
-  sha256: string,
-  extension: string,
-  servers: string[],
-  signal: AbortSignal | undefined,
-): Promise<ArrayBuffer | null> {
-  const suffix = extension ? `.${extension}` : '';
-
-  for (const server of servers) {
-    signal?.throwIfAborted();
-
-    try {
-      const response = await fetch(`${server}/${sha256}${suffix}`, {
-        signal: AbortSignal.any([
-          AbortSignal.timeout(BLOB_TIMEOUT),
-          ...(signal ? [signal] : []),
-        ]),
-      });
-      if (!response.ok) continue;
-
-      const bytes = await response.arrayBuffer();
-      if ((await sha256Hex(bytes)) === sha256) return bytes;
-    } catch {
-      // Unreachable server, CORS refusal, timeout — all the same answer here.
-      signal?.throwIfAborted();
-    }
-  }
-
-  return null;
 }
 
 /** Runs `worker` over `items`, at most `CONCURRENCY` at a time. */
@@ -182,7 +112,8 @@ export async function fetchNsite(
   const manifest = parseManifest(event, ref);
   if (!manifest.paths.length) throw new Error('That manifest lists no files.');
 
-  const servers = blobServers(manifest, latest(events, BLOSSOM_SERVER_LIST_KIND));
+  const serverList = latest(events, BLOSSOM_SERVER_LIST_KIND);
+  const servers = blobServers(manifest, serverList ? parseBlossomServerList(serverList) : []);
   if (!servers.length) throw new Error('No Blossom servers to fetch the files from.');
 
   // Several paths can share a hash — a repeated icon, or two copies of the same

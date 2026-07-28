@@ -25,9 +25,11 @@ function getNip07Provider(): Nip07Provider | undefined {
 
 export interface LoginAreaProps {
   className?: string;
+  /** Shrinks the controls to fit inside the fixed top bar. */
+  compact?: boolean;
 }
 
-export function LoginArea({ className }: LoginAreaProps) {
+export function LoginArea({ className, compact }: LoginAreaProps) {
   const { currentUser } = useLoggedInAccounts();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quickLoginPubkey, setQuickLoginPubkey] = useState<string | null>(null);
@@ -51,11 +53,14 @@ export function LoginArea({ className }: LoginAreaProps) {
   return (
     <div className={cn('inline-flex items-center justify-center', className)}>
       {currentUser ? (
-        <AccountSwitcher onAddAccountClick={() => setAuthDialogOpen(true)} />
+        <AccountSwitcher compact={compact} onAddAccountClick={() => setAuthDialogOpen(true)} />
       ) : (
         <Button
           onClick={handleJoin}
-          className="flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-primary-foreground font-medium transition-all hover:bg-primary/90 animate-scale-in"
+          className={cn(
+            'flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-medium transition-all hover:bg-primary/90 animate-scale-in',
+            compact ? 'h-7 px-3.5 text-sm' : 'px-5 py-2',
+          )}
         >
           <span className="truncate">Join</span>
         </Button>
