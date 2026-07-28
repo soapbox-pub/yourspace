@@ -95,7 +95,21 @@ export function mountNapplet(
     if (!destroyed) options.onStatus?.(status);
   };
 
+  /** Silenced with `localStorage['napplet:quiet'] = '1'`. */
+  const log = (...parts: unknown[]) => {
+    try {
+      if (localStorage.getItem('napplet:quiet')) return;
+    } catch {
+      // No storage here; log anyway.
+    }
+    console.info('[napplet]', ...parts);
+  };
+
   report({ state: 'loading' });
+  log('mounting', reference.slice(0, 24) + '…', {
+    inCanvas: (host.ownerDocument.defaultView ?? window) !== window,
+    hostConnected: host.isConnected,
+  });
 
   const ref = decodeNappletRef(reference);
   if (!ref) {
@@ -116,6 +130,7 @@ export function mountNapplet(
         signal: controller.signal,
       });
     } catch (error) {
+      log('resolve failed:', error);
       report({
         state: 'error',
         message: error instanceof Error ? error.message : 'The napplet could not be loaded.',
@@ -123,7 +138,16 @@ export function mountNapplet(
       return;
     }
 
-    if (destroyed) return;
+    if (destroyed) {
+      log('resolved, but the mount was torn down first');
+      return;
+    }
+
+    log('resolved', {
+      title: resolved.manifest.title,
+      files: resolved.manifest.paths.length,
+      bytes: resolved.html.length,
+    });
 
     const { manifest, identity, html, servers } = resolved;
 
@@ -212,6 +236,13 @@ export function mountNapplet(
     });
 
     host.appendChild(frame);
+    log('frame appended', {
+      origin,
+      hostConnected: host.isConnected,
+      // If these disagree, the frame is parented by a window the listener may
+      // not have been on when it was bound.
+      ownerIsApp: (frame.ownerDocument.defaultView ?? window) === window,
+    });
 
     const missing = manifest.requires.filter(
       (domain) => !GRANTED_DOMAINS.includes(domain as (typeof GRANTED_DOMAINS)[number]),
