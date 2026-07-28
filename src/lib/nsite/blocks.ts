@@ -164,29 +164,39 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
   },
 ];
 
-/*
- * An empty page, and a whole document rather than a fragment.
+/**
+ * A page of this site: the given body inside the head every page needs.
  *
- * Empty because everything here is the user's to write: a page that opens
- * holding someone else's sections is a page whose first editing session is
- * spent deleting them, and the palette is right there.
- *
- * A document because that is what a site ships, and because the doctype is what
- * `serializePage` reads to decide whether to serialize one — starting without
- * it means the `<head>` only appears once something else puts it there. What is
- * in the head is the minimum a published page needs and nothing that would
- * render: a charset so the bytes are read as UTF-8, and a viewport so phones
- * lay the page out at their own width instead of zooming out from 980px.
+ * A whole document rather than a fragment, because that is what a site ships,
+ * and because the doctype is what `serializePage` reads to decide whether to
+ * serialize one — starting without it means the `<head>` only appears once
+ * something else puts it there. What is in the head is the minimum a published
+ * page needs and nothing that would render: a charset so the bytes are read as
+ * UTF-8, and a viewport so phones lay the page out at their own width instead
+ * of zooming out from 980px.
  */
-export const initialPage = `<!DOCTYPE html>
+export function sitePage(body = ''): string {
+  return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
-  <body></body>
+  <body>${body}</body>
 </html>
 `;
+}
+
+/*
+ * The page the editor opens on, empty.
+ *
+ * Empty because everything on it is the user's to write: a page that opens
+ * holding someone else's sections is a page whose first editing session is
+ * spent deleting them, and the palette is right there. A page can be given a
+ * shape without being given content, which is what the starter layouts offer
+ * instead — see `starters.ts`.
+ */
+export const initialPage = sitePage();
 
 /**
  * Resize handles on everything.

@@ -22,6 +22,7 @@ import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
+import { StarterPicker } from '@/components/editor/StarterPicker';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { registerTextAlign } from '@/components/editor/richText';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -50,6 +51,7 @@ import {
 } from '@/lib/fonts/install';
 import { foreignComponents, foreignPlaceholderCss } from '@/lib/nsite/foreign';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
+import type { StarterLayout } from '@/lib/nsite/starters';
 import { sha256Hex } from '@/lib/nsite/blobs';
 import {
   assetPath,
@@ -126,10 +128,10 @@ interface StudioProject {
   origin: string | null;
 }
 
-/** A one-page site holding the blank starting page. */
-function initialProject(): StudioProject {
+/** A one-page site holding the starting page, blank unless a starter is given. */
+function initialProject(page = initialPage): StudioProject {
   return {
-    files: [textFile(ENTRY_PATH, initialPage)],
+    files: [textFile(ENTRY_PATH, page)],
     activePath: ENTRY_PATH,
     origin: null,
   };
@@ -266,6 +268,16 @@ export function Edit() {
    * page and taking it away again.
    */
   const [awaitingOwnSite, setAwaitingOwnSite] = useState(() => !!owner);
+
+  /**
+   * Whether the starter layouts are on offer over the canvas.
+   *
+   * Only for a site that doesn't exist yet, which signed out is every site and
+   * signed in is one the key has published nothing for. An imported site has a
+   * shape already, and offering to replace it with an empty one would be
+   * offering to throw it away.
+   */
+  const [choosingStarter, setChoosingStarter] = useState(() => !owner);
 
   /*
    * The project is held in a ref as well as in state, because the editor's
@@ -421,11 +433,32 @@ export function Edit() {
     instance.on('load', () => {
       // The text toolbar exists by now, so this is where its extra buttons go.
       registerTextAlign(instance);
+      // Dashed boxes around every element, on by default — an empty region of
+      // a page is otherwise indistinguishable from the page itself. Stock
+      // GrapesJS turns this on through its options panel, which `customUI`
+      // and the emptied `panels.defaults` above throw away.
+      instance.runCommand('core:component-outline');
       paintCanvas(instance);
       syncOutput();
     });
     // Re-apply after device switches, which rebuild the canvas frame.
     instance.on('canvas:frame:load', () => paintCanvas(instance));
+
+    /*
+     * The parser retypes any element whose children are all text as `type:
+     * 'text'`, so that its text nodes stay editable. Parsing a document runs
+     * that over the `<body>` too, and the body's definition is then set onto
+     * the wrapper — which leaves the root of every text-bodied page named
+     * "Text" in the badge, the inspector and the layer tree. It also outranks
+     * the wrapper's own type when the frame picks a view class, so rebuilding
+     * the frame would hand the root a text view and make the page one big
+     * editable block. The type buys nothing here, since the wrapper is what
+     * decides whether its children are editable, so drop it.
+     */
+    instance.on('parse:html', ({ output }) => {
+      const { html } = output;
+      if (!Array.isArray(html) && html.tagName === 'body') delete html.type;
+    });
 
     setEditor(instance);
 
@@ -476,6 +509,10 @@ export function Edit() {
     (path: string) => {
       if (!editor) return;
 
+      // A starter replaces the whole project, so it can't still be on offer
+      // once there is work in it that replacing would discard.
+      setChoosingStarter(false);
+
       const page = blankPage(path);
       const files = sortFiles([...flush(editor), page]);
       commit({ ...projectRef.current, files, activePath: path });
@@ -489,6 +526,8 @@ export function Edit() {
     (result: NsiteImport) => {
       if (!editor) return;
 
+      // This site has a shape of its own now.
+      setChoosingStarter(false);
       releaseFiles(projectRef.current.files);
 
       const { files, entry, manifest, missing } = result;
@@ -508,20 +547,23 @@ export function Edit() {
   );
 
   /**
-   * Puts the starting page on the canvas.
+   * Puts the starting page on the canvas, or a starter layout in its place.
    *
    * For a key with no site of its own, which is the point at which a blank
    * canvas stops being a placeholder for something incoming and becomes the
    * thing you're meant to edit.
    */
-  const startFresh = useCallback(() => {
-    if (!editor) return;
+  const startFresh = useCallback(
+    (page?: string) => {
+      if (!editor) return;
 
-    const fresh = initialProject();
-    commit(fresh);
-    renderPage(editor, fresh.files[0].text ?? '', fresh.files, fresh.activePath);
-    editor.UndoManager.clear();
-  }, [editor, commit, renderPage]);
+      const fresh = initialProject(page);
+      commit(fresh);
+      renderPage(editor, fresh.files[0].text ?? '', fresh.files, fresh.activePath);
+      editor.UndoManager.clear();
+    },
+    [editor, commit, renderPage],
+  );
 
   useEffect(() => {
     // `isPending` stays true while the query is disabled, which is the signed
@@ -543,6 +585,10 @@ export function Edit() {
       return;
     }
 
+    // Held back until now precisely so it couldn't be mistaken for the site
+    // being fetched. This key has none, so the template is what it should get.
+    startFresh();
+
     if (ownSite.error) {
       // Not for the absence of a site — that resolves rather than rejects, and
       // the starting page is the right thing to offer someone who hasn't
@@ -552,12 +598,28 @@ export function Edit() {
         description: `${ownSite.error.message} The editor has opened on the starting page instead.`,
         variant: 'destructive',
       });
+      // No starters here. The blank page is standing in for a site that does
+      // exist, and being asked to lay out a new one is the wrong reading of
+      // what just happened.
+      return;
     }
 
-    // Held back until now precisely so it couldn't be mistaken for the site
-    // being fetched. This key has none, so the template is what it should get.
-    startFresh();
+    setChoosingStarter(true);
   }, [editor, ownSite.isPending, ownSite.data, ownSite.error, importSite, startFresh, toast]);
+
+  /**
+   * Takes a starter layout, or dismisses the offer.
+   *
+   * Blank has no page of its own: the canvas is already showing the blank
+   * starting page, so choosing it is nothing but closing this.
+   */
+  const chooseStarter = useCallback(
+    (starter: StarterLayout) => {
+      setChoosingStarter(false);
+      if (starter.page) startFresh(starter.page);
+    },
+    [startFresh],
+  );
 
   /**
    * Puts an image on Blossom and into the site.
@@ -807,6 +869,9 @@ export function Edit() {
                 <p className="text-sm text-muted-foreground">Loading your published site…</p>
               </div>
             )}
+
+            {/* Held until the editor exists, since a starter is parsed into it. */}
+            {editor && choosingStarter && <StarterPicker onSelect={chooseStarter} />}
           </main>
 
           <aside
