@@ -411,9 +411,16 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
  *
  * The column itself stays: it is how the blocks below want to be arranged, and
  * anything taken out of flow leaves it without disturbing the rest.
+ *
+ * The typeface is set on `body` rather than inline on the root, because that is
+ * the rule the inspector's page-level font control writes to. Inline it would
+ * win against anything chosen there, and picking a font for the page would
+ * appear to do nothing. GrapesJS lifts a `<style>` into the stylesheet whether
+ * the page is a document or a fragment, so this survives the round trip.
  */
 export const initialPage = `
-  <div style="position:relative;max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;">
+  <style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}</style>
+  <div style="position:relative;max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;color:#0f172a;">
     ${heroBlock}
     ${aboutBlock}
     ${linksBlock}

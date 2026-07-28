@@ -36,11 +36,21 @@ import {
   nsiteDevices,
   resizableComponents,
 } from '@/lib/nsite/blocks';
+import type { FontFamily } from '@/lib/fonts/catalogue';
+import { addFontFace, pruneFontFaces } from '@/lib/fonts/faces';
+import {
+  fetchFontFile,
+  fontFileUrl,
+  fontFilePath,
+  installWeights,
+  pruneFontFiles,
+} from '@/lib/fonts/install';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import { sha256Hex } from '@/lib/nsite/blobs';
 import {
   assetPath,
   assetsOf,
+  binaryFile,
   blankPage,
   isImageFile,
   mimeForPath,
@@ -547,18 +557,86 @@ export function Edit() {
   );
 
   /**
+   * Puts a chosen font into the site.
+   *
+   * Downloaded rather than linked. A `<link>` to a font CDN would make every
+   * published page depend forever on a host its author has no claim on, so the
+   * `.woff2` files become files of the site like any image — which is also what
+   * lets them be served from wherever the nsite is.
+   *
+   * Weights already present are not fetched again: picking the same family for
+   * a second element is free, and so is picking one back after changing your
+   * mind, since the fetch cache outlives the files.
+   */
+  const addFont = useCallback(
+    async (font: FontFamily): Promise<boolean> => {
+      if (!editor) return false;
+
+      const wanted = installWeights(font).map((weight) => ({
+        weight,
+        path: fontFilePath(font, weight),
+      }));
+
+      try {
+        const present = new Set(projectRef.current.files.map((file) => file.path));
+        const added: NsiteFile[] = [];
+
+        for (const { weight, path } of wanted) {
+          if (present.has(path)) continue;
+          added.push(binaryFile(path, await fetchFontFile(fontFileUrl(font, weight))));
+        }
+
+        const files = added.length
+          ? sortFiles([...projectRef.current.files, ...added])
+          : projectRef.current.files;
+
+        if (added.length) commit({ ...projectRef.current, files });
+
+        // Declared against the object URLs, so the canvas renders the font now;
+        // `toSiteHtml` turns them back into site paths when the page is saved.
+        const byPath = new Map(files.map((file) => [file.path, file]));
+        for (const { weight, path } of wanted) {
+          const url = byPath.get(path)?.url;
+          if (url) addFontFace(editor, { family: font.family, weight, src: url });
+        }
+
+        return true;
+      } catch (error) {
+        toast({
+          title: 'Could not add that font',
+          description:
+            error instanceof Error ? error.message : 'The font files could not be downloaded.',
+          variant: 'destructive',
+        });
+        return false;
+      }
+    },
+    [editor, commit, toast],
+  );
+
+  /** Drops faces the page stopped using, once a font change has been written. */
+  const tidyFonts = useCallback(() => {
+    if (editor) pruneFontFaces(editor);
+  }, [editor]);
+
+  /**
    * The site as it stands, for publishing.
    *
    * The canvas is written back into its file first: `update` is debounced, so
    * the last few seconds of editing may not have reached the project yet, and
    * deploying a page without them would silently drop work the user can see.
+   *
+   * Unused fonts are dropped from what ships, but not from the project: their
+   * object URLs may still be named by an `@font-face` an undo would bring back,
+   * and a file removed here would leave that rule pointing at a `blob:` URL
+   * with nothing left to map it back to a site path.
    */
   const publishableFiles = useCallback((): NsiteFile[] => {
-    if (!editor) return projectRef.current.files;
+    if (!editor) return pruneFontFiles(projectRef.current.files);
 
     const files = flush(editor);
     commit({ ...projectRef.current, files });
-    return files;
+    return pruneFontFiles(files);
   }, [editor, flush, commit]);
 
   /** Replaces the active page with hand-edited markup from the HTML tab. */
@@ -687,6 +765,8 @@ export function Edit() {
               // Blossom uploads are signed, so this is the one editor action
               // that needs an account rather than just offering one.
               onUploadImage={user ? addImage : undefined}
+              onInstallFont={addFont}
+              onFontChanged={tidyFonts}
             />
           </aside>
         </div>

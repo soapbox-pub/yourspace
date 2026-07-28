@@ -9,6 +9,8 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import type { FontFamily } from '@/lib/fonts/catalogue';
+import { fontFamilyValue } from '@/lib/fonts/install';
 import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
 import { parseCssUrl, toCssUrl } from '@/lib/nsite/siteHtml';
 import { cn } from '@/lib/utils';
@@ -23,6 +25,7 @@ import {
   TextControl,
   type Option,
 } from './fields';
+import { FontControl } from './FontControl';
 import { componentName, useEditorEvent, useSelectedComponent } from './editorHooks';
 
 interface InspectorProps {
@@ -31,6 +34,10 @@ interface InspectorProps {
   files?: NsiteFile[];
   /** Adds an uploaded image to the site. Absent when nobody is signed in. */
   onUploadImage?: (file: File) => Promise<string | null>;
+  /** Downloads a font into the site. Resolves false if it couldn't be fetched. */
+  onInstallFont?: (font: FontFamily) => Promise<boolean>;
+  /** Called after a font is set or cleared, so unused faces can be dropped. */
+  onFontChanged?: () => void;
 }
 
 /* --------------------------------------------------------------------------
@@ -350,6 +357,39 @@ function BackgroundFields({ target, fieldKey, images, onUpload }: BackgroundFiel
   );
 }
 
+interface FontFieldsProps {
+  target: StyleTarget;
+  onInstallFont?: (font: FontFamily) => Promise<boolean>;
+  onFontChanged?: () => void;
+}
+
+/**
+ * The typeface picker. Shared by pages and elements, like `BackgroundFields`.
+ *
+ * The declaration is written only once the files are in the site, so a font
+ * that couldn't be downloaded leaves the page exactly as it was rather than
+ * naming a family nothing can load.
+ */
+function FontFields({ target, onInstallFont, onFontChanged }: FontFieldsProps) {
+  const change = (value: string) => {
+    setStyle(target, { 'font-family': value });
+    onFontChanged?.();
+  };
+
+  return (
+    <FontControl
+      label="Font"
+      value={styleValue(target, 'font-family')}
+      hint="Downloaded into the site, so the published page serves its own fonts."
+      onPick={async (font) => {
+        if (onInstallFont && !(await onInstallFont(font))) return;
+        change(fontFamilyValue(font));
+      }}
+      onClear={() => change('')}
+    />
+  );
+}
+
 /* --------------------------------------------------------------------------
  * Traits
  * ------------------------------------------------------------------------ */
@@ -546,10 +586,14 @@ function PagePanel({
   editor,
   images,
   onUpload,
+  onInstallFont,
+  onFontChanged,
 }: {
   editor: Editor;
   images: { url: string; label: string }[];
   onUpload?: (file: File) => Promise<string | null>;
+  onInstallFont?: (font: FontFamily) => Promise<boolean>;
+  onFontChanged?: () => void;
 }) {
   return (
     <div>
@@ -557,6 +601,17 @@ function PagePanel({
         <h2 className="truncate text-sm font-semibold text-foreground">Page</h2>
         <code className="mt-0.5 block truncate text-[11px] text-muted-foreground">body</code>
       </header>
+
+      <PanelSection title="Typography">
+        <FontFields
+          target={pageTarget(editor)}
+          onInstallFont={onInstallFont}
+          onFontChanged={onFontChanged}
+        />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          The starting typeface for this page. Anything that doesn’t set its own inherits it.
+        </p>
+      </PanelSection>
 
       <PanelSection title="Background">
         <BackgroundFields
@@ -583,7 +638,13 @@ function PagePanel({
  * button, so editing the one field a component actually exposes — the hero's
  * npub — costs two clicks and a scroll.
  */
-export function Inspector({ editor, files = [], onUploadImage }: InspectorProps) {
+export function Inspector({
+  editor,
+  files = [],
+  onUploadImage,
+  onInstallFont,
+  onFontChanged,
+}: InspectorProps) {
   const selected = useSelectedComponent(editor);
   // `styleable:change` is the one a bare CSS rule fires — the page background
   // is written through the CssComposer rather than onto a component.
@@ -596,7 +657,15 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
   );
 
   if (selected === editor.getWrapper()) {
-    return <PagePanel editor={editor} images={images} onUpload={onUploadImage} />;
+    return (
+      <PagePanel
+        editor={editor}
+        images={images}
+        onUpload={onUploadImage}
+        onInstallFont={onInstallFont}
+        onFontChanged={onFontChanged}
+      />
+    );
   }
 
   const id = selected.getId();
@@ -941,6 +1010,12 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
       </PanelSection>
 
       <PanelSection title="Typography">
+        <FontFields
+          target={selected}
+          onInstallFont={onInstallFont}
+          onFontChanged={onFontChanged}
+        />
+
         <div className="grid grid-cols-2 gap-2">
           <TextControl
             label="Size"

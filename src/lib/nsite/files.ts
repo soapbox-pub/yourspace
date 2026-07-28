@@ -211,11 +211,31 @@ export function textFile(path: string, text: string): NsiteFile {
   return { path, text, type: mimeForPath(path), size: new Blob([text]).size };
 }
 
-/** The starting point for a page created in the editor rather than imported. */
+/**
+ * A binary file added here rather than imported — a downloaded font, say.
+ *
+ * Unlike a page it gets an object URL, because the canvas loads it by
+ * reference: the site path it will ship under resolves against the app origin
+ * inside the frame and would 404. `toSiteHtml` turns the URL back into the path
+ * on the way out.
+ */
+export function binaryFile(path: string, bytes: ArrayBuffer): NsiteFile {
+  const type = mimeForPath(path);
+  const blob = new Blob([bytes], { type });
+  return { path, url: URL.createObjectURL(blob), type, size: blob.size };
+}
+
+/**
+ * The starting point for a page created in the editor rather than imported.
+ *
+ * The typeface goes on `body`, not inline on the wrapper, so that the page-level
+ * font control in the inspector — which writes that same rule — can change it.
+ */
 export function blankPage(path: string): NsiteFile {
   return textFile(
     path,
-    `<div style="max-width:768px;margin:0 auto;padding:24px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;">
+    `<style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}</style>
+<div style="max-width:768px;margin:0 auto;padding:24px;color:#0f172a;">
   <h1 style="font-size:40px;font-weight:700;letter-spacing:-0.02em;margin:0 0 16px;">${pageLabel(path)}</h1>
   <p style="font-size:18px;line-height:1.7;color:#475569;margin:0;">Drop a block here to get started.</p>
 </div>`,
