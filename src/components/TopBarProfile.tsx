@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useNip05 } from '@/hooks/useNip05';
-import { parseUserParam } from '@/lib/userParam';
+import { tryParseUserParam } from '@/lib/userParam';
 import { sanitizeUrl } from '@/lib/urlTemplate';
 
 /**
@@ -17,16 +17,11 @@ import { sanitizeUrl } from '@/lib/urlTemplate';
  * from the URL rather than from anything the site says.
  */
 export function TopBarProfile({ param }: { param: string }) {
-  const parsed = useMemo(() => parseUserParam(param), [param]);
+  const parsed = useMemo(() => tryParseUserParam(param), [param]);
 
   const nip05 = useNip05(parsed?.kind === 'nip05' ? parsed.identifier : undefined);
 
-  const pubkey =
-    parsed?.kind === 'pubkey'
-      ? parsed.pubkey
-      : parsed?.kind === 'site'
-        ? parsed.ref.pubkey
-        : nip05.data ?? undefined;
+  const pubkey = parsed?.kind === 'ref' ? parsed.ref.pubkey : nip05.data ?? undefined;
 
   const author = useAuthor(pubkey);
   const metadata = author.data?.metadata;

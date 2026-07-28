@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { fetchNsite, type NsiteImport, type NsiteImportProgress } from '@/lib/nsite/fetchNsite';
-import { parseNsiteRef } from '@/lib/nsite/manifest';
+import { resolveNsiteRef } from '@/lib/userParam';
 
 /** The site the NIP-5A draft is written against — a real, complete nsite. */
 const EXAMPLE = 'npub1ye5ptcxfyyxl5vjvdjar2ua3f0hynkjzpx552mu5snj3qmx5pzjscpknpr';
@@ -31,10 +31,11 @@ interface ImportNsiteDialogProps {
 /**
  * Loads a published nsite into the editor.
  *
- * The two identifier types answer different questions. An npub names a person,
- * so it resolves to their root site — the single kind 15128 a pubkey may have.
- * An naddr names one addressable event, so it resolves to exactly that named
- * site, kind 35128 with its `d` tag.
+ * The identifier types answer different questions. An npub, nprofile or NIP-05
+ * address names a person, so each resolves to their root site — the single kind
+ * 15128 a pubkey may have. An naddr names one addressable event, so it resolves
+ * to exactly that named site, kind 35128 with its `d` tag. These are the same
+ * spellings the `/:user` route takes, by way of the same parser.
  */
 export function ImportNsiteDialog({ onImport, disabled }: ImportNsiteDialogProps) {
   const { nostr } = useNostr();
@@ -45,15 +46,16 @@ export function ImportNsiteDialog({ onImport, disabled }: ImportNsiteDialogProps
 
   const importSite = useMutation({
     mutationFn: async (input: string) => {
-      // Parsing first means a typo fails instantly with a specific message
-      // instead of after an eight second relay timeout.
-      const ref = parseNsiteRef(input);
-
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-
       setProgress(null);
+
+      // Resolving first means a typo fails with a specific message instead of
+      // after an eight second relay timeout. Only a NIP-05 address costs a
+      // round-trip here; every other spelling settles offline.
+      const ref = await resolveNsiteRef(input, controller.signal);
+
       return fetchNsite(nostr, ref, { signal: controller.signal, onProgress: setProgress });
     },
     onSuccess: (result) => {
@@ -101,20 +103,20 @@ export function ImportNsiteDialog({ onImport, disabled }: ImportNsiteDialogProps
           </DialogHeader>
 
           <div className="space-y-2 py-6">
-            <Label htmlFor="nsite-identifier">npub or naddr</Label>
+            <Label htmlFor="nsite-identifier">npub, naddr, or NIP-05 address</Label>
             <Input
               id="nsite-identifier"
               value={value}
               autoFocus
               spellCheck={false}
               autoComplete="off"
-              placeholder="npub1… or naddr1…"
+              placeholder="npub1…, naddr1…, or alex@example.com"
               onChange={(event) => setValue(event.target.value)}
               aria-invalid={Boolean(error)}
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              An npub loads that key’s root site. An naddr loads one named site.{' '}
+              A key or address loads that person’s root site. An naddr loads one named site.{' '}
               <button
                 type="button"
                 onClick={() => setValue(EXAMPLE)}

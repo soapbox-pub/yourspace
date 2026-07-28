@@ -35,49 +35,6 @@ export interface NsiteManifest {
 
 const SHA256 = /^[0-9a-f]{64}$/;
 
-/**
- * Turns whatever the user pasted into an addressable reference.
- *
- * An npub identifies a person, not a site, so it resolves to that person's root
- * site — the one manifest a pubkey can only have one of. An naddr already
- * carries the kind and identifier, so it is taken at face value, with the kind
- * checked so an naddr for some unrelated addressable event fails here rather
- * than as a confusing empty result.
- */
-export function parseNsiteRef(input: string): NsiteRef {
-  const value = input.trim().replace(/^nostr:/i, '');
-  if (!value) throw new Error('Enter an npub or naddr.');
-
-  let decoded: nip19.DecodedResult;
-  try {
-    decoded = nip19.decode(value);
-  } catch {
-    throw new Error("That doesn't decode as a NIP-19 identifier.");
-  }
-
-  switch (decoded.type) {
-    case 'npub':
-      return { kind: ROOT_SITE_KIND, pubkey: decoded.data };
-    case 'nprofile':
-      return { kind: ROOT_SITE_KIND, pubkey: decoded.data.pubkey };
-    case 'naddr': {
-      const { kind, pubkey, identifier } = decoded.data;
-      // A root site is replaceable, so an naddr for one is unusual but
-      // unambiguous — the identifier is simply ignored, as it must be empty.
-      if (kind === ROOT_SITE_KIND) return { kind, pubkey };
-      if (kind !== NAMED_SITE_KIND) {
-        throw new Error(
-          `That naddr points at kind ${kind}. Named nsites are kind ${NAMED_SITE_KIND}.`,
-        );
-      }
-      if (!identifier) throw new Error('That naddr carries no site identifier.');
-      return { kind, pubkey, identifier };
-    }
-    default:
-      throw new Error(`An ${decoded.type} doesn't address an nsite. Use an npub or an naddr.`);
-  }
-}
-
 /** The relay filter for a reference. Always constrained to the author. */
 export function nsiteFilter(ref: NsiteRef) {
   return ref.kind === NAMED_SITE_KIND

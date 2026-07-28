@@ -11,7 +11,7 @@ import { useAuthor } from '@/hooks/useAuthor';
 import { useNip05 } from '@/hooks/useNip05';
 import { useNsite } from '@/hooks/useNsite';
 import { ROOT_SITE_KIND, type NsiteRef } from '@/lib/nsite/manifest';
-import { parseUserParam } from '@/lib/userParam';
+import { tryParseUserParam } from '@/lib/userParam';
 import NotFound from './NotFound';
 
 /** A page filling everything below the bar, for the states that aren't a site. */
@@ -26,19 +26,15 @@ function Shell({ children }: { children: React.ReactNode }) {
 export function UserPage() {
   const { user = '' } = useParams<{ user: string }>();
 
-  const parsed = useMemo(() => parseUserParam(user), [user]);
+  const parsed = useMemo(() => tryParseUserParam(user), [user]);
 
   // Only a NIP-05 needs the network before we know whose page this is.
   const nip05 = useNip05(parsed?.kind === 'nip05' ? parsed.identifier : undefined);
 
-  const pubkey = parsed?.kind === 'pubkey'
-    ? parsed.pubkey
-    : parsed?.kind === 'site'
-      ? parsed.ref.pubkey
-      : nip05.data ?? undefined;
+  const pubkey = parsed?.kind === 'ref' ? parsed.ref.pubkey : nip05.data ?? undefined;
 
   const siteRef: NsiteRef | undefined = useMemo(() => {
-    if (parsed?.kind === 'site') return parsed.ref;
+    if (parsed?.kind === 'ref') return parsed.ref;
     return pubkey ? { kind: ROOT_SITE_KIND, pubkey } : undefined;
   }, [parsed, pubkey]);
 
