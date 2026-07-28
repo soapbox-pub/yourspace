@@ -47,12 +47,12 @@ export function UserPage() {
 
   const displayName =
     author.data?.metadata?.name ??
-    (pubkey ? `${nip19.npubEncode(pubkey).slice(0, 12)}\u2026` : user);
+    (pubkey ? `${nip19.npubEncode(pubkey).slice(0, 12)}…` : user);
 
   const title = nsite.data?.tags.find(([name]) => name === 'title')?.[1];
 
   useSeoMeta({
-    title: title ? `${title} \u2014 YourSpace` : `${displayName} \u2014 YourSpace`,
+    title: title ? `${title} — YourSpace` : `${displayName} — YourSpace`,
     description: nsite.data?.tags.find(([name]) => name === 'description')?.[1],
   });
 
@@ -72,7 +72,7 @@ export function UserPage() {
           <CardContent className="px-8 py-12 text-center">
             <h1 className="mb-2 text-xl font-semibold">Nobody at that address</h1>
             <p className="text-muted-foreground">
-              <span className="font-mono">{user}</span> doesn\u2019t resolve to a Nostr key.
+              <span className="font-mono">{user}</span> doesn’t resolve to a Nostr key.
               The domain may not publish a NIP-05 record for that name.
             </p>
           </CardContent>
@@ -92,7 +92,7 @@ export function UserPage() {
           <CardContent className="px-8 py-12 text-center">
             <h1 className="mb-2 text-xl font-semibold">No page here yet</h1>
             <p className="mb-6 text-muted-foreground">
-              {displayName} hasn\u2019t published a homepage, or it isn\u2019t on the relays
+              {displayName} hasn’t published a homepage, or it isn’t on the relays
               this app is reading from.
             </p>
             <Button asChild>
@@ -111,7 +111,7 @@ export function UserPage() {
       <NsiteFrame
         event={nsite.data}
         siteRef={siteRef!}
-        title={title ?? `${displayName}\u2019s homepage`}
+        title={title ?? `${displayName}’s homepage`}
         className="h-full w-full border-0"
       />
     </div>

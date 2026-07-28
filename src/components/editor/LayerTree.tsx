@@ -110,26 +110,53 @@ export function LayerTree({ editor }: LayerTreeProps) {
 
   const roots = layerChildren(wrapper);
   const selectedId = editor.getSelected()?.getId();
-
-  if (!roots.length) {
-    return (
-      <p className="px-2.5 py-6 text-center text-xs text-muted-foreground">
-        The page is empty. Drag a block in to get started.
-      </p>
-    );
-  }
+  const pageSelected = selectedId === wrapper.getId();
 
   return (
     <ul className="space-y-px">
-      {roots.map((component) => (
-        <LayerRow
-          key={component.getId()}
-          component={component}
-          editor={editor}
-          selectedId={selectedId}
-          depth={0}
-        />
-      ))}
+      {/*
+        The page itself. GrapesJS leaves the wrapper out of its own layer
+        manager by default, which leaves the one surface every block sits on
+        selectable only by clicking empty canvas — and nowhere at all once the
+        blocks fill the frame.
+      */}
+      <li>
+        <div
+          className={cn(
+            'group flex items-center gap-0.5 rounded-md pr-1 transition-colors',
+            pageSelected ? 'bg-primary/10 text-primary' : 'hover:bg-accent',
+          )}
+        >
+          <span className="size-5 shrink-0" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={() => editor.select(wrapper)}
+            aria-current={pageSelected ? 'true' : undefined}
+            className={cn(
+              'min-w-0 flex-1 truncate py-1 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+              pageSelected ? 'font-medium' : 'text-muted-foreground group-hover:text-foreground',
+            )}
+          >
+            Page
+          </button>
+        </div>
+      </li>
+
+      {roots.length ? (
+        roots.map((component) => (
+          <LayerRow
+            key={component.getId()}
+            component={component}
+            editor={editor}
+            selectedId={selectedId}
+            depth={0}
+          />
+        ))
+      ) : (
+        <li className="px-2.5 py-6 text-center text-xs text-muted-foreground">
+          The page is empty. Drag a block in to get started.
+        </li>
+      )}
     </ul>
   );
 }

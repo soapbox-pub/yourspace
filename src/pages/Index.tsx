@@ -38,9 +38,9 @@ const FEATURES = [
     medallion: 'from-violet-500 to-purple-600',
     rule: 'from-violet-400 to-purple-400',
     title: 'A page that is actually yours',
-    body: 'Your homepage lives under your own keypair, not on someone else\u2019s platform. Nobody can suspend it, rank it, or wrap it in ads.',
+    body: 'Your homepage lives under your own keypair, not on someone else’s platform. Nobody can suspend it, rank it, or wrap it in ads.',
     points: [
-      { icon: Star, className: 'text-yellow-400', text: 'You own the identity \u2014 no corporation in the middle' },
+      { icon: Star, className: 'text-yellow-400', text: 'You own the identity — no corporation in the middle' },
       { icon: Shield, className: 'text-emerald-400', text: 'Nothing to take down, because there is nothing to take it down from' },
       { icon: Heart, className: 'text-rose-400', text: 'No ads, no tracking, no algorithm deciding who sees it' },
     ],
@@ -62,7 +62,7 @@ const FEATURES = [
     medallion: 'from-amber-500 to-orange-600',
     rule: 'from-amber-400 to-orange-400',
     title: 'Real HTML, published to Nostr',
-    body: 'What you build is an nsite \u2014 ordinary HTML and CSS, addressed by your pubkey and served from anywhere that speaks the protocol.',
+    body: 'What you build is an nsite — ordinary HTML and CSS, addressed by your pubkey and served from anywhere that speaks the protocol.',
     points: [
       { icon: Code2, className: 'text-orange-400', text: 'Plain HTML and CSS you can read and take with you' },
       { icon: Sparkles, className: 'text-cyan-400', text: 'Import a published nsite and keep editing it' },
@@ -75,9 +75,9 @@ const Index = () => {
   const { user } = useCurrentUser();
 
   useSeoMeta({
-    title: 'YourSpace \u2014 Build a homepage that is actually yours',
+    title: 'YourSpace — Build a homepage that is actually yours',
     description:
-      'Where nostalgia meets innovation. Design your own homepage with drag-and-drop blocks and publish it to Nostr as an nsite \u2014 no platform, no takedowns, no algorithm.',
+      'Where nostalgia meets innovation. Design your own homepage with drag-and-drop blocks and publish it to Nostr as an nsite — no platform, no takedowns, no algorithm.',
   });
 
   return (
@@ -117,7 +117,7 @@ const Index = () => {
             </p>
 
             <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
-              Remember when your homepage was something you made? Build one again \u2014 laid out
+              Remember when your homepage was something you made? Build one again — laid out
               block by block, styled however you like, and published to Nostr so it stays yours.
             </p>
 

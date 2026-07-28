@@ -168,7 +168,7 @@ export async function fetchNsite(
   });
 
   const entry = pickEntry(files);
-  if (!entry) throw new Error('None of that site\u2019s HTML pages could be retrieved.');
+  if (!entry) throw new Error('None of that site’s HTML pages could be retrieved.');
 
   return { manifest, files: sortFiles(files), entry, missing };
 }
