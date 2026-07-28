@@ -228,7 +228,7 @@ export function Edit() {
   const { user } = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
-  const [output, setOutput] = useState({ html: '', json: '' });
+  const [html, setHtml] = useState('');
 
   /*
    * The project is held in a ref as well as in state, because the editor's
@@ -330,18 +330,18 @@ export function Edit() {
     });
 
     /*
-     * Serialized as one re-parseable document rather than two labelled
-     * sections, because the HTML tab is editable: the exact string shown is the
-     * string handed back to `applyHtml`. The same string is written into the
-     * active file, so the project is always a publishable set of files rather
-     * than one live page and a set of stale siblings.
+     * Serialized as one re-parseable document, because the code panel is
+     * editable: the exact string shown is the string handed back to
+     * `applyHtml`. The same string is written into the active file, so the
+     * project is always a publishable set of files rather than one live page
+     * and a set of stale siblings.
      */
     const syncOutput = () => {
       const current = projectRef.current;
-      const html = serializePage(instance, current.files);
+      const page = serializePage(instance, current.files);
 
-      setOutput({ html, json: JSON.stringify(instance.getProjectData(), null, 2) });
-      commit({ ...current, files: writeFile(current.files, current.activePath, html) });
+      setHtml(page);
+      commit({ ...current, files: writeFile(current.files, current.activePath, page) });
     };
 
     // `update` fires on every model change, including each keystroke while
@@ -573,28 +573,7 @@ export function Edit() {
           </aside>
         </div>
 
-        <OutputPanel
-          title="GrapesJS output"
-          tabs={[
-            {
-              id: 'json',
-              label: 'JSON',
-              language: 'json',
-              description:
-                'The project data GrapesJS loads back into the editor: the component tree, style rules, assets, and pages. This covers the open page only — the rest of the site lives outside the editor, as files.',
-              content: output.json,
-            },
-            {
-              id: 'html',
-              label: 'HTML',
-              language: 'html',
-              description:
-                'Editable. This is the open page as it would ship to Blossom, with references back to their site paths — plain HTML with a stylesheet, no renderer or hydration step. Paste a whole document and the doctype, <html> attributes and <head> are kept; paste a fragment and it replaces the body. The Profile hero is recognised on the way back in. Script tags, embeds and inline event handlers are stripped on import.',
-              content: output.html,
-              onApply: applyHtml,
-            },
-          ]}
-        />
+        <OutputPanel title="Code" language="html" content={html} onApply={applyHtml} />
       </div>
     </EditorShell>
   );
