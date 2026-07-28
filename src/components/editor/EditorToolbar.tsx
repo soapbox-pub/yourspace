@@ -13,6 +13,8 @@ interface EditorToolbarProps {
    * A slot rather than props, because none of it is the editor's business.
    */
   leading?: ReactNode;
+  /** The primary action, sitting at the far end of the bar. Also not the editor's business. */
+  trailing?: ReactNode;
 }
 
 const deviceIcons = {
@@ -24,7 +26,7 @@ const deviceIcons = {
 const buttonClass =
   'flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40';
 
-export function EditorToolbar({ editor, leading }: EditorToolbarProps) {
+export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps) {
   // Undo availability changes on every edit, and the device on every switch.
   useEditorEvent(editor, 'update change:device undo redo');
 
@@ -133,6 +135,13 @@ export function EditorToolbar({ editor, leading }: EditorToolbarProps) {
           <span className="sr-only">Preview</span>
         </button>
       </div>
+
+      {trailing && (
+        <>
+          <div className="h-6 w-px bg-border" aria-hidden="true" />
+          {trailing}
+        </>
+      )}
     </div>
   );
 }

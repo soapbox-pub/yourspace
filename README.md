@@ -32,11 +32,25 @@ The editor holds a flat list of files rather than a single document, which is wh
 describes. Switching pages serializes the canvas back into the file it came from and parses the next
 one in.
 
+## Publishing
+
+**Publish** in the editor toolbar deploys what's on the canvas to the signed-in key. Every file goes
+to your Blossom servers first, then a single manifest is signed mapping each path to its hash — that
+order matters, because a manifest naming blobs that aren't up yet is a broken site, while blobs with
+nothing pointing at them are merely unreferenced.
+
+A server is asked whether it already holds a hash before anything is uploaded to it, so republishing
+after editing one page moves only that page. Each blob that is missing somewhere costs one signature,
+replayed to every server that needs it.
+
+It publishes the **root site** (kind 15128) — the single manifest an npub resolves to. Publishing
+again replaces it.
+
 ## Status
 
-Editing and importing work; **publishing does not exist yet**. The editor can pull a published
-nsite off the network, edit it, and hand back the files it would ship, but nothing writes a manifest
-event or uploads blobs. The landing page describes where this is going, not what it does today.
+Importing, editing and publishing all work. Named sites (kind 35128, a `d` tag under one key) can be
+imported but not yet published; there is no way to add non-image files to a site in the editor, so
+they only arrive by import.
 
 ## Development
 

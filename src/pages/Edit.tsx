@@ -21,6 +21,7 @@ import { ImportNsiteDialog } from '@/components/editor/ImportNsiteDialog';
 import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
+import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOwnNsite } from '@/hooks/useOwnNsite';
@@ -513,6 +514,21 @@ export function Edit() {
     [editor, uploadFile, commit, toast],
   );
 
+  /**
+   * The site as it stands, for publishing.
+   *
+   * The canvas is written back into its file first: `update` is debounced, so
+   * the last few seconds of editing may not have reached the project yet, and
+   * deploying a page without them would silently drop work the user can see.
+   */
+  const publishableFiles = useCallback((): NsiteFile[] => {
+    if (!editor) return projectRef.current.files;
+
+    const files = flush(editor);
+    commit({ ...projectRef.current, files });
+    return files;
+  }, [editor, flush, commit]);
+
   /** Replaces the active page with hand-edited markup from the HTML tab. */
   const applyHtml = useCallback(
     (value: string) => {
@@ -556,6 +572,7 @@ export function Edit() {
               )}
             </div>
           }
+          trailing={<PublishNsiteDialog getFiles={publishableFiles} disabled={!editor} />}
         />
 
         <div className="flex min-h-0 flex-1">
