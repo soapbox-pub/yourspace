@@ -31,7 +31,6 @@ export const NAPPLET_ALLOW = [
   'encrypted-media',
   'fullscreen',
   'picture-in-picture',
-  'web-share',
 ].join('; ');
 
 /**

@@ -22,6 +22,24 @@ import { bytesToBase64, utf8ToBase64 } from '@/lib/sandbox/base64';
 /** Methods iframe.diy handles itself and will not relay. */
 const RESERVED = new Set(['ready', 'init', 'fetch']);
 
+/** Served from `public/`, so it loads under the app's `script-src 'self'`. */
+const BRIDGE_PATH = '/napplet-canvas-bridge.js';
+
+/**
+ * Puts the relay script into a document that is not this one.
+ *
+ * Idempotent, and shared by every napplet in that document: the bridge routes
+ * by frame id, so one copy serves them all.
+ */
+function installBridge(doc: Document): void {
+  if (doc.querySelector('script[data-napplet-bridge]')) return;
+
+  const script = doc.createElement('script');
+  script.setAttribute('data-napplet-bridge', '');
+  script.src = new URL(BRIDGE_PATH, window.location.origin).href;
+  (doc.head ?? doc.documentElement).appendChild(script);
+}
+
 /** The method NAP traffic travels under. Anything unreserved would do. */
 export const NAPPLET_METHOD = 'napplet';
 
@@ -80,8 +98,34 @@ export function serveSandbox(options: SandboxHostOptions): {
     console.info(label, ...parts);
   };
 
+  /*
+   * Identifies this frame to the canvas bridge, which has no other way to tell
+   * one napplet's frame from another's.
+   */
+  const frameId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  frame.setAttribute('data-napplet-frame', frameId);
+
   const post = (message: Record<string, unknown>) => {
     if (destroyed) return;
+
+    const owner = frame.ownerDocument.defaultView;
+
+    /*
+     * A frame in another realm — the editor canvas — cannot be posted to from
+     * here. `postMessage` stamps `event.source` with the realm of the calling
+     * script, so a message sent from the app window arrives claiming a source
+     * that is not the frame's parent, and iframe.diy refuses it. The bridge is
+     * a script running inside that realm which makes the call on our behalf.
+     */
+    if (owner && owner !== window) {
+      installBridge(frame.ownerDocument);
+      owner.postMessage(
+        { __napplet: 'send', frameId, message, targetOrigin: origin },
+        window.location.origin,
+      );
+      return;
+    }
+
     frame.contentWindow?.postMessage(message, origin);
   };
 
@@ -244,6 +288,12 @@ export function serveSandbox(options: SandboxHostOptions): {
     const owner = frame.ownerDocument.defaultView;
     bind(owner, owner === window ? 'owner window (same as app)' : 'owner window (canvas)');
     bind(typeof window === 'undefined' ? null : window, 'app window');
+
+    // Eagerly, because the script loads asynchronously and the reply to the
+    // frame's first `ready` would otherwise be dropped on the floor. The frame
+    // retries, so a late bridge only costs half a second — but it costs nothing
+    // to start it now.
+    if (owner && owner !== window) installBridge(frame.ownerDocument);
   };
 
   bindAll();
