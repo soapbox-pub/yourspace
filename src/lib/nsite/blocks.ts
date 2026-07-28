@@ -1,4 +1,4 @@
-import type { Component, Editor } from 'grapesjs';
+import type { Component, Editor, ResizerOptions } from 'grapesjs';
 import type { NostrMetadata, NPool } from '@nostrify/nostrify';
 import { nip19 } from 'nostr-tools';
 
@@ -227,6 +227,16 @@ const footerBlock = `
  * ------------------------------------------------------------------------ */
 
 /**
+ * "Take an equal share of the row", spelled out.
+ *
+ * `flex: 1` says exactly this in one declaration, but it is a shorthand, and
+ * resizing a column writes the `flex-basis` longhand — which a `flex: 1` left
+ * sitting in the same rule would override. The inspector collapses `padding`
+ * and `background` on edit for the same reason.
+ */
+const flexFill = 'flex-grow:1;flex-shrink:1;flex-basis:0%;';
+
+/**
  * An empty drop target.
  *
  * Dashed and given a minimum height because a div with no children is zero
@@ -234,7 +244,7 @@ const footerBlock = `
  * affordance, not decoration. Both are ordinary styles on an ordinary div, so
  * they can be cleared from the inspector once the slot has content.
  */
-const dropZone = (style = 'flex:1;') =>
+const dropZone = (style = flexFill) =>
   `<div style="${style}min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div>`;
 
 const columnsBlock = (count: number) =>
@@ -243,8 +253,8 @@ const columnsBlock = (count: number) =>
 /** Deliberately uneven, which is the whole reason to reach for it over "2 columns". */
 const sidebarBlock = `
   <div style="display:flex;gap:16px;">
-    ${dropZone('flex:0 0 30%;')}
-    ${dropZone('flex:1;')}
+    ${dropZone('flex-grow:0;flex-shrink:0;flex-basis:30%;')}
+    ${dropZone()}
   </div>
 `;
 
@@ -544,6 +554,109 @@ export function resizableComponents(editor: Editor) {
     if (component.get('resizable')) return;
 
     component.set('resizable', true, { silent: true });
+  });
+
+  /*
+   * `component:resize:init` hands out a payload whose `resizable` the listener
+   * is meant to rewrite, which is the only place these options can be decided:
+   * whether a handle should write `width` or `flex-basis` depends on the
+   * parent, and a component has no parent yet when it is created.
+   */
+  editor.on('component:resize:init', (event: ResizeInitEvent) => {
+    const { component } = event;
+    if (!component || !event.resizable) return;
+
+    const axis = flexAxis(component.parent()?.getEl());
+    if (axis) event.resizable = flexItemResize(component, axis);
+  });
+}
+
+/** The mutable half of the `component:resize:init` payload. */
+interface ResizeInitEvent {
+  component?: Component;
+  resizable?: boolean | ResizerOptions;
+}
+
+/**
+ * The axis a container lays its children out along, or null if it is not a flex
+ * container.
+ *
+ * Read from the canvas rather than from the component's own style bag, so that
+ * a rule arriving in an imported site's stylesheet counts for as much as one
+ * set here — the style bag only holds what this editor wrote or parsed inline.
+ */
+function flexAxis(el: HTMLElement | undefined): 'row' | 'column' | null {
+  const view = el?.ownerDocument.defaultView;
+  if (!el || !view) return null;
+
+  const { display, flexDirection } = view.getComputedStyle(el);
+  if (display !== 'flex' && display !== 'inline-flex') return null;
+
+  return flexDirection.startsWith('column') ? 'column' : 'row';
+}
+
+/**
+ * Resize options for a child of a flex container.
+ *
+ * The resizer writes `width`, but a flex item's size along the main axis comes
+ * from `flex-basis` — and `flex: 1` is shorthand for a basis of `0%`, which
+ * beats any width. Dragging the side handle of an equal column therefore moved
+ * nothing at all.
+ *
+ * Pointing the resizer at `flex-basis` fixes that, in percent so that a column
+ * sized against the desktop frame still means the same thing in a narrower one.
+ * `currentUnit` has to be switched off alongside it, or the unit is replaced on
+ * mousedown by whichever one the element's current basis happens to carry.
+ *
+ * Growing is dropped at the same time. A column still on `flex-grow: 1` takes
+ * its share of the leftover space *on top of* the basis just written, so it
+ * settles wider than where it was dropped; without it the column is exactly its
+ * basis, and its siblings — which are still growing — absorb the difference.
+ * That is what makes the rest of the row give way as one column is dragged.
+ */
+function flexItemResize(component: Component, axis: 'row' | 'column'): ResizerOptions {
+  const alongMainAxis =
+    axis === 'row'
+      ? { keyWidth: 'flex-basis', unitWidth: '%' }
+      : { keyHeight: 'flex-basis', unitHeight: '%' };
+
+  return {
+    ...alongMainAxis,
+    currentUnit: false,
+    onStart: () => freezeFlexSize(component, axis),
+  };
+}
+
+/**
+ * Pins a flex item to the size it is currently rendered at, as the drag begins.
+ *
+ * Dropping `flex-grow` is what makes the column settle where it was dropped
+ * rather than growing past it — but an equal column's basis is `0%`, and
+ * clearing the grow on its own would collapse it to nothing the instant the
+ * handle was grabbed, before the pointer had moved. Measuring first and writing
+ * that back as the basis means the column is the same size either side of the
+ * change, and the drag continues from where it looks like it should.
+ *
+ * Measured from `offsetWidth` against the parent's, which is how GrapesJS's own
+ * resizer converts a pixel drag into a percentage — the point is to agree with
+ * the values the drag is about to write, not to be independently exact.
+ */
+function freezeFlexSize(component: Component, axis: 'row' | 'column') {
+  const el = component.getEl();
+  const parentEl = el?.parentElement;
+  if (!el || !parentEl) return;
+
+  const [size, parentSize] =
+    axis === 'row'
+      ? [el.offsetWidth, parentEl.offsetWidth]
+      : [el.offsetHeight, parentEl.offsetHeight];
+
+  component.addStyle({
+    // The shorthand goes too: it carries a grow factor and a basis of its own,
+    // and a `flex: 1` left in the rule would put back what the longhands clear.
+    flex: '',
+    'flex-grow': '0',
+    'flex-basis': `${Math.round((size / (parentSize || 1)) * 1000) / 10}%`,
   });
 }
 
