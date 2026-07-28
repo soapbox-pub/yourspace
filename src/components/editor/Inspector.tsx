@@ -1,11 +1,14 @@
 import type { Component, Editor, Trait } from 'grapesjs';
 import { Copy, MousePointerSquareDashed, Trash2 } from 'lucide-react';
 
+import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
+import { parseCssUrl, toCssUrl } from '@/lib/nsite/siteHtml';
 import { cn } from '@/lib/utils';
 import {
   BoxControl,
   ColorControl,
   Field,
+  ImageControl,
   PanelSection,
   SelectControl,
   SegmentedControl,
@@ -16,6 +19,8 @@ import { componentName, useEditorEvent, useSelectedComponent } from './editorHoo
 
 interface InspectorProps {
   editor: Editor | null;
+  /** Every file in the site, for the background image picker. */
+  files?: NsiteFile[];
 }
 
 /* --------------------------------------------------------------------------
@@ -28,8 +33,17 @@ interface InspectorProps {
  * stock Style Manager has.
  * ------------------------------------------------------------------------ */
 
-function styleValue(component: Component, prop: string): string {
-  const value = (component.getStyle() as Record<string, unknown>)[prop];
+/**
+ * Anything with a style bag: a component, or a bare CSS rule. The page's own
+ * background is the second kind — see `pageTarget`.
+ */
+interface StyleTarget {
+  getStyle(): Record<string, unknown>;
+  addStyle(patch: Record<string, string>): unknown;
+}
+
+function styleValue(target: StyleTarget, prop: string): string {
+  const value = target.getStyle()[prop];
   return typeof value === 'string' ? value : '';
 }
 
@@ -37,8 +51,30 @@ function styleValue(component: Component, prop: string): string {
  * Writing `''` is how a property is cleared: GrapesJS keeps the key but skips
  * falsy values when serializing, so nothing reaches the exported CSS.
  */
-function setStyle(component: Component, patch: Record<string, string>) {
-  component.addStyle(patch);
+function setStyle(target: StyleTarget, patch: Record<string, string>) {
+  target.addStyle(patch);
+}
+
+const PAGE_SELECTOR = 'body';
+
+/**
+ * The page's own styles, held as a `body` rule rather than on the wrapper
+ * component.
+ *
+ * GrapesJS is willing to style the wrapper — its `stylable` list is exactly the
+ * background properties — but component styles are keyed to a generated id, and
+ * the wrapper's is minted fresh for each editor session. A `#i3f{…}` rule
+ * written today would match nothing when the site is opened again tomorrow,
+ * because the `<body id>` it refers to is dropped when a stored page is unwrapped
+ * for the canvas. `body{…}` has neither problem: it is the element the canvas
+ * frame already is, and it means the same thing in the published file.
+ */
+function pageTarget(editor: Editor): StyleTarget {
+  return {
+    getStyle: () => editor.Css.getRule(PAGE_SELECTOR)?.getStyle() ?? {},
+    addStyle: (patch) =>
+      (editor.Css.getRule(PAGE_SELECTOR) ?? editor.Css.setRule(PAGE_SELECTOR, {})).addStyle(patch),
+  };
 }
 
 const boxSideProps = (prop: string) => [
@@ -77,10 +113,10 @@ function parseBoxShorthand(value: string): Box | null {
 }
 
 /** Longhand wins where present, otherwise fall back to the shorthand. */
-function boxValues(component: Component, prop: string): Box {
-  const shorthand = parseBoxShorthand(styleValue(component, prop)) ?? ['', '', '', ''];
+function boxValues(target: StyleTarget, prop: string): Box {
+  const shorthand = parseBoxShorthand(styleValue(target, prop)) ?? ['', '', '', ''];
   return boxSideProps(prop).map(
-    (side, index) => styleValue(component, side) || shorthand[index],
+    (side, index) => styleValue(target, side) || shorthand[index],
   ) as Box;
 }
 
@@ -88,8 +124,8 @@ function boxValues(component: Component, prop: string): Box {
  * Edits collapse the shorthand into longhands, so that changing one side can
  * never be silently undone by a `padding` declaration later in the rule.
  */
-function setBoxSide(component: Component, prop: string, side: number, value: string) {
-  const next = boxValues(component, prop);
+function setBoxSide(target: StyleTarget, prop: string, side: number, value: string) {
+  const next = boxValues(target, prop);
   next[side] = value;
 
   const patch: Record<string, string> = { [prop]: '' };
@@ -97,7 +133,161 @@ function setBoxSide(component: Component, prop: string, side: number, value: str
     patch[name] = next[index];
   });
 
-  setStyle(component, patch);
+  setStyle(target, patch);
+}
+
+/* --------------------------------------------------------------------------
+ * Background
+ * ------------------------------------------------------------------------ */
+
+/** Values that stand in for an image: a file, a gradient, or nothing. */
+const IMAGE_VALUE = /^(url|[a-z-]*gradient|image-set|cross-fade|element)\(|^none$/i;
+
+/**
+ * Splits a `background` shorthand into the two parts this panel edits.
+ *
+ * Returns null for anything richer, in the same spirit as `parseBoxShorthand`:
+ * a shorthand carrying a position, a size or a repeat alongside its colour
+ * cannot become two longhands without dropping the rest.
+ */
+function parseBackgroundShorthand(value: string): { color: string; image: string } | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  // One bare token (`#fff`, `red`, `transparent`), or one function call
+  // (`rgb(…)`, `linear-gradient(…)`) with nothing after it.
+  const single = /^[^\s(]+$/.test(trimmed) || /^[a-z-]+\(.*\)$/is.test(trimmed);
+  if (!single) return null;
+
+  return IMAGE_VALUE.test(trimmed) ? { color: '', image: trimmed } : { color: trimmed, image: '' };
+}
+
+/** Longhand wins where present, otherwise fall back to the shorthand. */
+function backgroundValues(target: StyleTarget): { color: string; image: string } {
+  const shorthand = parseBackgroundShorthand(styleValue(target, 'background'));
+  return {
+    color: styleValue(target, 'background-color') || shorthand?.color || '',
+    image: styleValue(target, 'background-image') || shorthand?.image || '',
+  };
+}
+
+/**
+ * Edits collapse the shorthand into longhands, for the reason `setBoxSide`
+ * does: a `background` declaration left in the rule would reset whichever of
+ * the colour and the image was not just written. A shorthand too rich to split
+ * is lost at that point, which is why nothing here writes one back.
+ */
+function setBackground(target: StyleTarget, patch: Record<string, string>) {
+  const { color, image } = backgroundValues(target);
+  setStyle(target, {
+    background: '',
+    'background-color': color,
+    'background-image': image,
+    ...patch,
+  });
+}
+
+/** How an image covers its element. */
+type BackgroundFit = 'cover' | 'contain' | 'tile';
+
+/** CSS repeats a background at its natural size by default, which is a tile. */
+function backgroundFit(target: StyleTarget): BackgroundFit {
+  const size = styleValue(target, 'background-size').trim().toLowerCase();
+  return size === 'cover' || size === 'contain' ? size : 'tile';
+}
+
+const fitPatches: Record<BackgroundFit, Record<string, string>> = {
+  cover: {
+    'background-size': 'cover',
+    'background-repeat': 'no-repeat',
+    'background-position': 'center',
+  },
+  contain: {
+    'background-size': 'contain',
+    'background-repeat': 'no-repeat',
+    'background-position': 'center',
+  },
+  // Cleared rather than set to `auto` / `0 0`: those are the CSS defaults, and
+  // a declaration that changes nothing is noise in the exported stylesheet.
+  tile: { 'background-size': '', 'background-repeat': 'repeat', 'background-position': '' },
+};
+
+/**
+ * What the user typed, as a `background-image` value.
+ *
+ * A gradient is as much a background image as a file is, and the free-text
+ * fields elsewhere in this panel already take CSS, so anything that reads as an
+ * image value is kept as written. The rest is treated as a URL, and has to
+ * survive the scheme allowlist to be used.
+ */
+function toBackgroundImage(input: string): string {
+  const value = input.trim();
+  if (!value) return '';
+  return IMAGE_VALUE.test(value) ? value : toCssUrl(value);
+}
+
+interface BackgroundFieldsProps {
+  target: StyleTarget;
+  fieldKey: string;
+  images: { url: string; label: string }[];
+}
+
+/** Colour, image, and how the image is laid out. Shared by pages and elements. */
+function BackgroundFields({ target, fieldKey, images }: BackgroundFieldsProps) {
+  const { color, image } = backgroundValues(target);
+  const url = parseCssUrl(image);
+  const fit = backgroundFit(target);
+
+  return (
+    <>
+      <ColorControl
+        label="Colour"
+        value={color}
+        fieldKey={`${fieldKey}:background-color`}
+        onChange={(value) => setBackground(target, { 'background-color': value })}
+      />
+
+      <ImageControl
+        label="Image"
+        value={url || image}
+        preview={url}
+        fieldKey={`${fieldKey}:background-image`}
+        options={images}
+        hint={
+          images.length
+            ? 'An https:// address, a gradient, or one of the images below.'
+            : 'An https:// address, or a gradient.'
+        }
+        onChange={(value) => setBackground(target, { 'background-image': toBackgroundImage(value) })}
+      />
+
+      {image && (
+        <>
+          <SegmentedControl
+            label="Fit"
+            value={fit}
+            clearable={false}
+            options={[
+              { value: 'cover', label: 'Cover', title: 'Fill the area, cropping the overflow' },
+              { value: 'contain', label: 'Fit', title: 'Scale until the whole image shows' },
+              { value: 'tile', label: 'Tile', title: 'Repeat it at its natural size' },
+            ]}
+            onChange={(value) => setBackground(target, fitPatches[value as BackgroundFit])}
+          />
+
+          {fit !== 'tile' && (
+            <SelectControl
+              label="Position"
+              value={styleValue(target, 'background-position')}
+              options={positionOptions}
+              emptyLabel="Top left"
+              onChange={(value) => setBackground(target, { 'background-position': value })}
+            />
+          )}
+        </>
+      )}
+    </>
+  );
 }
 
 /* --------------------------------------------------------------------------
@@ -212,6 +402,18 @@ const weightOptions: Option[] = [
   { value: '700', label: 'Bold' },
 ];
 
+const positionOptions: Option[] = [
+  { value: 'center', label: 'Center' },
+  { value: 'top', label: 'Top' },
+  { value: 'bottom', label: 'Bottom' },
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'top left', label: 'Top left' },
+  { value: 'top right', label: 'Top right' },
+  { value: 'bottom left', label: 'Bottom left' },
+  { value: 'bottom right', label: 'Bottom right' },
+];
+
 /* --------------------------------------------------------------------------
  * Panel
  * ------------------------------------------------------------------------ */
@@ -231,6 +433,39 @@ function EmptyState() {
 }
 
 /**
+ * The panel for the page itself.
+ *
+ * Separate from the element panel rather than a set of hidden sections, because
+ * almost nothing they show applies: the page has no traits, cannot be
+ * duplicated or deleted, and GrapesJS restricts the wrapper to background
+ * properties. What is left is one section and an explanation of what it covers.
+ */
+function PagePanel({
+  editor,
+  images,
+}: {
+  editor: Editor;
+  images: { url: string; label: string }[];
+}) {
+  return (
+    <div>
+      <header className="border-b bg-muted/30 px-4 py-3">
+        <h2 className="truncate text-sm font-semibold text-foreground">Page</h2>
+        <code className="mt-0.5 block truncate text-[11px] text-muted-foreground">body</code>
+      </header>
+
+      <PanelSection title="Background">
+        <BackgroundFields target={pageTarget(editor)} fieldKey="page" images={images} />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Sits behind every block on this page. Each page in the site keeps its own, since each
+          ships as its own file.
+        </p>
+      </PanelSection>
+    </div>
+  );
+}
+
+/**
  * The right-hand panel.
  *
  * The ordering is the point of this demo: a component's own settings sit at the
@@ -239,11 +474,19 @@ function EmptyState() {
  * button, so editing the one field a component actually exposes — the hero's
  * npub — costs two clicks and a scroll.
  */
-export function Inspector({ editor }: InspectorProps) {
+export function Inspector({ editor, files = [] }: InspectorProps) {
   const selected = useSelectedComponent(editor);
-  useEditorEvent(editor, 'component:update component:styleUpdate change:device');
+  // `styleable:change` is the one a bare CSS rule fires — the page background
+  // is written through the CssComposer rather than onto a component.
+  useEditorEvent(editor, 'component:update component:styleUpdate styleable:change change:device');
 
   if (!editor || !selected) return <EmptyState />;
+
+  const images = files.flatMap((file) =>
+    file.url && isImageFile(file) ? [{ url: file.url, label: file.path }] : [],
+  );
+
+  if (selected === editor.getWrapper()) return <PagePanel editor={editor} images={images} />;
 
   const id = selected.getId();
   const traits = selected.getTraits();
@@ -463,18 +706,11 @@ export function Inspector({ editor }: InspectorProps) {
         />
       </PanelSection>
 
+      <PanelSection title="Background">
+        <BackgroundFields target={selected} fieldKey={id} images={images} />
+      </PanelSection>
+
       <PanelSection title="Appearance">
-        {/*
-          Bound to the `background` shorthand rather than `background-color`, so
-          that the gradients the demo blocks ship with survive a round trip
-          through this field instead of being shadowed by a colour.
-        */}
-        <ColorControl
-          label="Background"
-          value={styleValue(selected, 'background')}
-          fieldKey={`${id}:background`}
-          onChange={(value) => setStyle(selected, { background: value })}
-        />
         <div className="grid grid-cols-2 gap-2">
           <TextControl
             label="Radius"

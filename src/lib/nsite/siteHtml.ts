@@ -128,6 +128,29 @@ export function resolveCssUrls(css: string, byPath: Map<string, NsiteFile>, base
   });
 }
 
+/** The URL inside a value that is one `url()` and nothing else, or `''`. */
+export function parseCssUrl(value: string): string {
+  return /^url\(\s*(['"]?)([^)'"]*)\1\s*\)$/i.exec(value.trim())?.[2]?.trim() ?? '';
+}
+
+/**
+ * A URL as a `url()` value, or `''` when it isn't one this app will write.
+ *
+ * The scheme allowlist is the one `sanitize` applies to an `<img src>`, for the
+ * same reason: the inspector chooses this value, but it ends up in a stylesheet
+ * the canvas parses on the app's own origin. Quotes, backslashes and newlines
+ * are percent-encoded rather than passed through, so that a value can't close
+ * the string and open a declaration of its own — a URL can't contain any of
+ * them unencoded anyway.
+ */
+export function toCssUrl(url: string): string {
+  const value = url.trim();
+  if (!value) return '';
+  if (HAS_SCHEME.test(value) && !RESOURCE_SCHEMES.test(value)) return '';
+
+  return `url("${value.replace(/["\\\n\r\f]/g, (char) => encodeURIComponent(char))}")`;
+}
+
 export interface CanvasHtml {
   /** Sanitized markup with site paths pointed at object URLs. */
   html: string;

@@ -566,10 +566,10 @@ export function Edit() {
           </main>
 
           <aside
-            aria-label="Element settings"
+            aria-label="Page and element settings"
             className="w-[19rem] shrink-0 overflow-y-auto border-l bg-sidebar"
           >
-            <Inspector editor={editor} />
+            <Inspector editor={editor} files={project.files} />
           </aside>
         </div>
 

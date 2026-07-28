@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import { Image as ImageIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -219,6 +220,85 @@ export function ColorControl({ label, value, onChange, fieldKey }: ColorControlP
           className={cn(controlClass, 'font-mono text-xs')}
         />
       </div>
+    </Field>
+  );
+}
+
+interface ImageControlProps {
+  label: string;
+  /** Whatever belongs in the field — a URL, or a CSS value such as a gradient. */
+  value: string;
+  onChange: (value: string) => void;
+  fieldKey: string;
+  /** Shown as a thumbnail, when the value is a plain URL. */
+  preview?: string;
+  /** Images that ship with the site, offered as one-click choices. */
+  options?: { url: string; label: string }[];
+  hint?: string;
+}
+
+/**
+ * A URL field with the site's own images beside it.
+ *
+ * The same split as `ColorControl`: the text input stays authoritative, so any
+ * address — or a gradient — can be typed, and the thumbnails are a shortcut for
+ * the files already in the project. Picking one writes its object URL, which
+ * becomes a site path again when the page is serialized.
+ */
+export function ImageControl({
+  label,
+  value,
+  onChange,
+  fieldKey,
+  preview,
+  options = [],
+  hint,
+}: ImageControlProps) {
+  const id = useId();
+
+  return (
+    <Field label={label} htmlFor={id} hint={hint}>
+      <div className="flex gap-1.5">
+        <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input bg-background">
+          {preview ? (
+            <img src={preview} alt="" className="size-full object-cover" />
+          ) : (
+            <ImageIcon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+          )}
+        </span>
+        <input
+          key={fieldKey}
+          id={id}
+          type="text"
+          defaultValue={value}
+          placeholder="https://example.com/stars.png"
+          onChange={(event) => onChange(event.target.value)}
+          className={cn(controlClass, 'font-mono text-xs')}
+        />
+      </div>
+
+      {options.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((option) => {
+            const active = option.url === preview;
+            return (
+              <button
+                key={option.url}
+                type="button"
+                aria-pressed={active}
+                title={option.label}
+                onClick={() => onChange(active ? '' : option.url)}
+                className={cn(
+                  'size-8 overflow-hidden rounded-md border bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  active ? 'border-primary ring-2 ring-primary/30' : 'hover:border-ring/60',
+                )}
+              >
+                <img src={option.url} alt={option.label} className="size-full object-cover" />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </Field>
   );
 }
