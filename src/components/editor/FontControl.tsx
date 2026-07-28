@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Loader2, Search } from 'lucide-react';
 
 import {
@@ -39,6 +39,42 @@ const categoryLabels: Record<FontCategory, string> = {
 
 /** How long a row must stay on screen before its preview is worth fetching. */
 const PREVIEW_DELAY = 200;
+
+/** Rows rendered up front, and added each time the list is scrolled to its end. */
+const PAGE_SIZE = 60;
+
+/**
+ * Watches for the end of the list coming into view.
+ *
+ * Rendering all 1,968 rows at once is what this avoids — not the DOM cost so
+ * much as the previews, since every row that exists is a row that can decide it
+ * is visible and fetch a typeface.
+ *
+ * `onReach` has to keep its identity between renders, or the observer would be
+ * rebuilt on each one and fire again for a sentinel that is already in view.
+ */
+function ListEnd({ onReach }: { onReach: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) onReach();
+      },
+      // Enough of a margin to have the next rows in place before they are
+      // scrolled to, rather than after.
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [onReach]);
+
+  return <div ref={ref} aria-hidden="true" className="h-4" />;
+}
 
 function FontRow({
   font,
@@ -129,8 +165,21 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
   const [query, setQuery] = useState('');
   const [fonts, setFonts] = useState<FontFamily[]>([]);
   const [installing, setInstalling] = useState(false);
+  const [shown, setShown] = useState(PAGE_SIZE);
+  const list = useRef<HTMLDivElement>(null);
 
   const current = primaryFamily(value);
+
+  const showMore = useCallback(() => setShown((count) => count + PAGE_SIZE), []);
+
+  const search = (next: string) => {
+    setQuery(next);
+    // A new search is a new list, so it starts from the top in both senses —
+    // otherwise it would open partway down, at the scroll offset of the results
+    // it just replaced.
+    setShown(PAGE_SIZE);
+    list.current?.scrollTo({ top: 0 });
+  };
 
   // Deferred until the picker is first opened: the catalogue is ~50KB, and a
   // session that never changes a font should never fetch it.
@@ -139,7 +188,7 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
 
     let live = true;
     loadFonts()
-      .then((list) => live && setFonts(list))
+      .then((catalogue) => live && setFonts(catalogue))
       .catch(() => {});
 
     return () => {
@@ -193,14 +242,14 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
               autoFocus
               type="text"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => search(event.target.value)}
               placeholder="Search fonts"
               aria-label="Search fonts"
               className="h-9 w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none"
             />
           </div>
 
-          <div className="max-h-72 overflow-y-auto p-1">
+          <div ref={list} className="max-h-72 overflow-y-auto p-1">
             <button
               type="button"
               onClick={() => {
@@ -213,7 +262,7 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
               {!current && <Check className="size-3.5 shrink-0" aria-hidden="true" />}
             </button>
 
-            {results.map((font) => (
+            {results.slice(0, shown).map((font) => (
               <FontRow
                 key={font.id}
                 font={font}
@@ -221,6 +270,8 @@ export function FontControl({ label, value, onPick, onClear, hint }: FontControl
                 onSelect={(picked) => void choose(picked)}
               />
             ))}
+
+            {shown < results.length && <ListEnd onReach={showMore} />}
 
             {fonts.length > 0 && results.length === 0 && (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">

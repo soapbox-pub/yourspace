@@ -102,21 +102,22 @@ function normalize(value: string): string {
 }
 
 /**
- * Families matching `query`, best first, capped at `limit`.
+ * Every family matching `query`, best first.
  *
- * Ranked so that typing "robo" puts Roboto above Robotic Rebel, and matching is
- * done on the alphanumerics alone so that "playfairdisplay", "Playfair Display"
- * and "playfair-display" are the same search. The cap is what keeps the list
- * cheap to render and to preview: 1,968 rows of live webfont is not a list.
+ * Ranked so that typing "robo" puts Roboto above Robotic Rebel, and matched on
+ * the alphanumerics alone so that "playfairdisplay", "Playfair Display" and
+ * "playfair-display" are the same search.
+ *
+ * Uncapped, deliberately. Truncating here would mean an empty query could only
+ * ever reach the start of the alphabet, and no amount of scrolling would find
+ * Zilla Slab. Rendering is what gets limited instead, a window at a time, which
+ * is the caller's business — this function is cheap enough to run over the
+ * whole catalogue on every keystroke.
  */
-export function searchFonts(fonts: FontFamily[], query: string, limit = 50): FontFamily[] {
+export function searchFonts(fonts: FontFamily[], query: string): FontFamily[] {
   const needle = normalize(query);
-  if (!needle) return fonts.slice(0, limit);
+  if (!needle) return fonts;
 
-  // Scanned in full rather than stopping at the first `limit` hits: the
-  // catalogue is alphabetical, so a search for "sans" would otherwise fill up
-  // on families that merely contain the word and never reach the one that
-  // starts with it.
   const ranked: { font: FontFamily; rank: number }[] = [];
 
   for (const font of fonts) {
@@ -126,6 +127,5 @@ export function searchFonts(fonts: FontFamily[], query: string, limit = 50): Fon
 
   return ranked
     .sort((a, b) => a.rank - b.rank || a.font.family.length - b.font.family.length)
-    .slice(0, limit)
     .map((entry) => entry.font);
 }
