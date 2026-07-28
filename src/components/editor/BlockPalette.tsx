@@ -16,6 +16,7 @@ import {
 import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 import { insertContent } from './insertContent';
+import { paletteCardClass, paletteIconClass } from './paletteCard';
 
 interface BlockPaletteProps {
   editor: Editor | null;
@@ -70,14 +71,9 @@ function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null 
       onDrag={(event) => editor?.BlockManager.__drag(event.nativeEvent)}
       onDragEnd={() => editor?.BlockManager.__endDrag()}
       onClick={() => editor && insertContent(editor, def.content)}
-      className={cn(
-        'group flex w-full cursor-grab items-start gap-3 rounded-lg border border-transparent bg-card p-2.5 text-left transition-all',
-        'hover:border-border hover:bg-accent hover:shadow-sm',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-        'active:cursor-grabbing',
-      )}
+      className={cn(paletteCardClass, 'cursor-grab active:cursor-grabbing')}
     >
-      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/60 text-muted-foreground transition-colors group-hover:border-primary/20 group-hover:bg-primary/10 group-hover:text-primary">
+      <span className={paletteIconClass}>
         <Icon className="size-4" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import type { Editor } from 'grapesjs';
 import { AlertCircle, Loader2, Search, Sparkles } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,7 @@ import type { GifCitiesGif } from '@/lib/gifcities';
 import { escapeHtml } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 import { insertContent } from './insertContent';
+import { paletteCardClass, paletteIconClass } from './paletteCard';
 
 interface GifPickerProps {
   editor: Editor | null;
@@ -203,10 +203,23 @@ export function GifPicker({ editor }: GifPickerProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mb-3 w-full gap-2" disabled={!editor}>
-          <Sparkles className="size-4" aria-hidden="true" />
-          Find a GIF
-        </Button>
+        <button
+          type="button"
+          disabled={!editor}
+          className={cn(paletteCardClass, 'mb-4 disabled:pointer-events-none disabled:opacity-50')}
+        >
+          <span className={paletteIconClass}>
+            <Sparkles className="size-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium leading-tight text-foreground">
+              Find a GIF
+            </span>
+            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+              Animations rescued from GeoCities
+            </span>
+          </span>
+        </button>
       </DialogTrigger>
 
       <DialogContent className="flex max-h-[85dvh] flex-col gap-0 sm:max-w-3xl">
@@ -218,28 +231,35 @@ export function GifPicker({ editor }: GifPickerProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative shrink-0 pt-4">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            value={query}
-            autoFocus
-            spellCheck={false}
-            autoComplete="off"
-            placeholder="Search the archive…"
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label="Search GifCities"
-            aria-invalid={Boolean(error)}
-            className="pl-9"
-          />
-          {searching && (
-            <Loader2
-              className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground motion-safe:animate-spin"
+        {/*
+          The padding is on the wrapper and the positioning context is the
+          field itself. Putting both on one element centres `top-1/2` on the
+          padding box, which leaves the icons riding half the padding high.
+        */}
+        <div className="shrink-0 pt-4">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"
             />
-          )}
+            <Input
+              value={query}
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="Search the archive…"
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search GifCities"
+              aria-invalid={Boolean(error)}
+              className="px-9"
+            />
+            {searching && (
+              <Loader2
+                className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground motion-safe:animate-spin"
+                aria-hidden="true"
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-1.5 py-3">
