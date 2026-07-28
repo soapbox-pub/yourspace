@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
 
+import { nappletRuntime } from "./plugins/nappletRuntime";
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
   server: {
@@ -13,6 +15,7 @@ export default defineConfig(() => ({
   plugins: [
     react(),
     tailwindcss(),
+    nappletRuntime(),
   ],
   test: {
     globals: true,

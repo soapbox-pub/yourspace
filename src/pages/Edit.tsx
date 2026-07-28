@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
 import { useNostr } from '@nostrify/react';
@@ -17,6 +17,7 @@ import { OutputPanel } from '@/components/editor/OutputPanel';
 import { AssetList } from '@/components/editor/AssetList';
 import { BlockPalette } from '@/components/editor/BlockPalette';
 import { GifPicker } from '@/components/editor/GifPicker';
+import { NappletPicker } from '@/components/editor/NappletPicker';
 import { ImportNsiteDialog } from '@/components/editor/ImportNsiteDialog';
 import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
@@ -24,6 +25,7 @@ import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { registerTextAlign } from '@/components/editor/richText';
+import { useAppContext } from '@/hooks/useAppContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useOwnNsite } from '@/hooks/useOwnNsite';
 import { useToast } from '@/hooks/useToast';
@@ -36,6 +38,9 @@ import {
   nsiteDevices,
   resizableComponents,
 } from '@/lib/nsite/blocks';
+import { getEffectiveBlossomServers } from '@/lib/appBlossom';
+import { nappletComponents, type NappletCanvasConfig } from '@/lib/napplet/component';
+import { syncNappletRuntime, withNappletRuntime } from '@/lib/napplet/site';
 import type { FontFamily } from '@/lib/fonts/catalogue';
 import { addFontFace, pruneFontFaces } from '@/lib/fonts/faces';
 import {
@@ -205,7 +210,10 @@ function serializePage(editor: Editor, files: NsiteFile[]): string {
       ? html.replace('</head>', `  ${styleTag}\n</head>`)
       : `${html}\n\n${styleTag}`;
 
-  return toSiteHtml(merged, files);
+  // The runtime's script tag is added here rather than living in the canvas,
+  // because `toCanvasHtml` strips every `<script>` on the way back in. What is
+  // stored is therefore always publishable as-is.
+  return withNappletRuntime(toSiteHtml(merged, files));
 }
 
 /**
@@ -229,6 +237,7 @@ export function Edit() {
   });
 
   const { nostr } = useNostr();
+  const { config } = useAppContext();
   const { toast } = useToast();
   const { user } = useCurrentUser();
   const { mutateAsync: uploadFile } = useUploadFile();
@@ -278,6 +287,30 @@ export function Edit() {
   /** The active page's linked stylesheets, kept for canvas rebuilds. */
   const siteCssRef = useRef('');
 
+  /*
+   * Where a napplet on the canvas looks for its manifest and its bytes.
+   *
+   * Held in a ref and read on demand, so that changing relays or Blossom
+   * servers reaches the next napplet to load without tearing down the editor —
+   * the GrapesJS instance is built once and keeps whatever plugins it was
+   * initialized with.
+   */
+  const nappletConfig = useMemo<NappletCanvasConfig>(
+    () => ({
+      relays: config.relayMetadata.relays.filter((relay) => relay.read).map((relay) => relay.url),
+      blossomServers: getEffectiveBlossomServers(
+        config.blossomServerMetadata,
+        config.useAppBlossomServers,
+      ),
+    }),
+    [config.relayMetadata, config.blossomServerMetadata, config.useAppBlossomServers],
+  );
+
+  const nappletConfigRef = useRef(nappletConfig);
+  useEffect(() => {
+    nappletConfigRef.current = nappletConfig;
+  }, [nappletConfig]);
+
   /** Re-applies both canvas stylesheets from whatever the project holds now. */
   const paintCanvas = useCallback((instance: Editor) => {
     styleCanvas(instance, siteCssRef.current);
@@ -317,7 +350,11 @@ export function Edit() {
       // Drops the stock theme classes and lets the canvas fill its container
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
-      plugins: [nostrComponents(nostr), resizableComponents],
+      plugins: [
+        nostrComponents(nostr),
+        resizableComponents,
+        nappletComponents(() => nappletConfigRef.current),
+      ],
       // Nothing at all while a signed-in key's site is on its way; the starting
       // template is seeded later, and only if there turns out to be no site.
       components: owner ? '' : initialPage,
@@ -632,11 +669,14 @@ export function Edit() {
    * with nothing left to map it back to a site path.
    */
   const publishableFiles = useCallback((): NsiteFile[] => {
-    if (!editor) return pruneFontFiles(projectRef.current.files);
+    // The napplet runtime is added (or dropped) against the pages as they
+    // finally stand, so that it ships exactly when something on the site needs
+    // it — however the napplet got there.
+    if (!editor) return syncNappletRuntime(pruneFontFiles(projectRef.current.files));
 
     const files = flush(editor);
     commit({ ...projectRef.current, files });
-    return pruneFontFiles(files);
+    return syncNappletRuntime(pruneFontFiles(files));
   }, [editor, flush, commit]);
 
   /** Replaces the active page with hand-edited markup from the HTML tab. */
@@ -706,6 +746,7 @@ export function Edit() {
               </h2>
               <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-3">
                 <GifPicker editor={editor} />
+                <NappletPicker editor={editor} />
                 <BlockPalette editor={editor} />
               </div>
             </div>
