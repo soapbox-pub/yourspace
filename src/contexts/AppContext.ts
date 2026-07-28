@@ -43,8 +43,6 @@ export interface AppConfig {
    * link previews and "open in a new tab" — the app renders sites itself.
    */
   nsiteGatewayDomain: string;
-  /** RFC 6570 template for the OEmbed link preview endpoint. `{url}` is the target. */
-  linkPreviewUrl: string;
   /**
    * RFC 6570 template for a page screenshot service, used to thumbnail sites.
    * `{url}` is the target page.

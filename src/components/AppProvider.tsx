@@ -36,7 +36,6 @@ const AppConfigSchema = z.object({
   sandboxDomain: z.string(),
   discoverPubkeys: z.array(z.string()),
   nsiteGatewayDomain: z.string(),
-  linkPreviewUrl: z.string(),
   screenshotUrl: z.string(),
 }) satisfies z.ZodType<AppConfig>;
 

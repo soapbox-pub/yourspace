@@ -13,13 +13,12 @@ function FeedSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }, (_, i) => (
-        <Card key={i} className="overflow-hidden p-0">
-          <Skeleton className="h-28 w-full rounded-none" />
-          <div className="space-y-2 p-5">
-            <Skeleton className="-mt-11 mb-3 size-12 rounded-full" />
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-full" />
+        <Card key={i} className="relative aspect-[3/2] overflow-hidden p-0">
+          <Skeleton className="size-full rounded-none" />
+          {/* Where the author sits on a real card. */}
+          <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 px-3 pb-3">
+            <Skeleton className="size-7 shrink-0 rounded-full" />
+            <Skeleton className="h-4 w-24" />
           </div>
         </Card>
       ))}

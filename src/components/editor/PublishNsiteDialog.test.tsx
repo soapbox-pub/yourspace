@@ -53,7 +53,6 @@ const config = {
   sandboxDomain: 'iframe.diy',
   discoverPubkeys: [],
   nsiteGatewayDomain: 'shakespeare.to',
-  linkPreviewUrl: 'https://example.test/{url}',
   screenshotUrl: 'https://example.test/shot/{url}?w=600&h=400',
 } satisfies AppConfig;
 
