@@ -102,35 +102,6 @@ const SITE_STYLE_ID = 'nsite-site-css';
 
 const ENTRY_PATH = '/index.html';
 
-/** Long enough that a site which loads promptly never veils the canvas. */
-const LOADING_DELAY = 400;
-
-/**
- * `active`, but only once it has stayed that way for `delay` — and false again
- * the moment it stops.
- *
- * A wait shorter than this is better not shown at all: something that flashes
- * up and vanishes reads as a glitch, where nothing at all reads as fast.
- *
- * For a wait that happens once. The delay is not re-armed afterwards, so a
- * second `active` period would show immediately.
- */
-function useSettled(active: boolean, delay: number): boolean {
-  // Set from the timer and read only while `active`, rather than cleared when
-  // the wait ends: an effect that writes state as it runs makes React render
-  // the whole page twice over to reach the same frame.
-  const [elapsed, setElapsed] = useState(false);
-
-  useEffect(() => {
-    if (!active) return;
-
-    const timer = window.setTimeout(() => setElapsed(true), delay);
-    return () => window.clearTimeout(timer);
-  }, [active, delay]);
-
-  return active && elapsed;
-}
-
 interface StudioProject {
   files: NsiteFile[];
   /** Which file the canvas is currently editing. Always an HTML page. */
@@ -143,6 +114,22 @@ interface StudioProject {
 function initialProject(): StudioProject {
   return {
     files: [textFile(ENTRY_PATH, initialPage)],
+    activePath: ENTRY_PATH,
+    origin: null,
+  };
+}
+
+/**
+ * What the canvas holds while a signed-in key's own site is still coming.
+ *
+ * Empty, rather than the starting template. The template is about to be
+ * replaced by whatever comes back, and showing it first reads as the editor
+ * having discarded the site you opened it to edit — the page you were looking
+ * for, replaced by a stranger's demo, and then restored a second later.
+ */
+function pendingProject(): StudioProject {
+  return {
+    files: [textFile(ENTRY_PATH, '')],
     activePath: ENTRY_PATH,
     origin: null,
   };
@@ -238,20 +225,6 @@ export function Edit() {
   const [html, setHtml] = useState('');
 
   /*
-   * The project is held in a ref as well as in state, because the editor's
-   * `update` handler is installed once and would otherwise close over the
-   * project as it was on mount. Every write goes through `commit`, so the two
-   * cannot drift.
-   */
-  const [project, setProject] = useState<StudioProject>(initialProject);
-  const projectRef = useRef(project);
-
-  const commit = useCallback((next: StudioProject) => {
-    projectRef.current = next;
-    setProject(next);
-  }, []);
-
-  /*
    * Opening the editor while signed in opens your own site, if you have one.
    *
    * The key is read once, when the page mounts, and the import is a one-shot:
@@ -262,6 +235,33 @@ export function Edit() {
   const [owner] = useState(() => user?.pubkey);
   const ownSite = useOwnNsite(owner);
   const imported = useRef(false);
+
+  /**
+   * Whether the canvas is being held for the signed-in key's own site.
+   *
+   * Signed out there is nothing to wait for, so the starting template goes up
+   * immediately. Signed in it is held back until the answer arrives, because
+   * until then there is no telling whether this key has a site of its own —
+   * and offering the template to someone who does means showing them the wrong
+   * page and taking it away again.
+   */
+  const [awaitingOwnSite, setAwaitingOwnSite] = useState(() => !!owner);
+
+  /*
+   * The project is held in a ref as well as in state, because the editor's
+   * `update` handler is installed once and would otherwise close over the
+   * project as it was on mount. Every write goes through `commit`, so the two
+   * cannot drift.
+   */
+  const [project, setProject] = useState<StudioProject>(() =>
+    owner ? pendingProject() : initialProject(),
+  );
+  const projectRef = useRef(project);
+
+  const commit = useCallback((next: StudioProject) => {
+    projectRef.current = next;
+    setProject(next);
+  }, []);
 
   /** The active page's linked stylesheets, kept for canvas rebuilds. */
   const siteCssRef = useRef('');
@@ -306,7 +306,9 @@ export function Edit() {
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
       plugins: [nostrComponents(nostr)],
-      components: initialPage,
+      // Nothing at all while a signed-in key's site is on its way; the starting
+      // template is seeded later, and only if there turns out to be no site.
+      components: owner ? '' : initialPage,
       // No backend in this demo, so keep everything in memory.
       storageManager: false,
       // Suppresses the Font Awesome CDN request, which the app's CSP blocks.
@@ -376,8 +378,9 @@ export function Edit() {
       setEditor(null);
       instance.destroy();
     };
-    // `nostr` is the app's memoized pool, so this effect runs once.
-  }, [nostr, commit, paintCanvas]);
+    // `nostr` is the app's memoized pool and `owner` is read once, so this
+    // effect runs once.
+  }, [nostr, owner, commit, paintCanvas]);
 
   // Imported blobs outlive React state unless they are handed back explicitly.
   useEffect(() => () => releaseFiles(projectRef.current.files), []);
@@ -440,32 +443,57 @@ export function Edit() {
     [editor, commit, renderPage, toast],
   );
 
+  /**
+   * Puts the starting template on the canvas.
+   *
+   * For a key with no site of its own, which is the point at which the
+   * template stops being a placeholder for something incoming and becomes the
+   * thing you're meant to edit.
+   */
+  const startFresh = useCallback(() => {
+    if (!editor) return;
+
+    const fresh = initialProject();
+    commit(fresh);
+    renderPage(editor, fresh.files[0].text ?? '', fresh.files, fresh.activePath);
+    editor.UndoManager.clear();
+  }, [editor, commit, renderPage]);
+
   useEffect(() => {
-    // `isPending` stays true while the query is disabled, so the settled cases
-    // are the ones with something in hand.
+    // `isPending` stays true while the query is disabled, which is the signed
+    // out case — there is nothing coming, and the template is already up.
     if (!editor || imported.current || ownSite.isPending) return;
 
     // Whatever the answer was, it was for the page as it opened. Acting on it
     // twice would be overwriting work done since.
     imported.current = true;
 
+    // Writing state from an effect, deliberately: the site arrives from the
+    // network, which is exactly the external event an effect is for, and this
+    // runs once in the life of the page rather than on every render.
+    setAwaitingOwnSite(false);
+
     if (ownSite.data) {
-      // Writing state from an effect, deliberately: the site arrives from the
-      // network, which is exactly the external event an effect is for, and
-      // this runs once in the life of the page rather than on every render.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       importSite(ownSite.data);
-    } else if (ownSite.error) {
+      return;
+    }
+
+    if (ownSite.error) {
       // Not for the absence of a site — that resolves rather than rejects, and
-      // the starting page is already the right thing to offer someone who
-      // hasn't published one. This is a site that exists and wouldn't come.
+      // the starting page is the right thing to offer someone who hasn't
+      // published one. This is a site that exists and wouldn't come.
       toast({
         title: 'Could not open your site',
-        description: `${ownSite.error.message} The editor has opened on a blank page instead.`,
+        description: `${ownSite.error.message} The editor has opened on the starting page instead.`,
         variant: 'destructive',
       });
     }
-  }, [editor, ownSite.isPending, ownSite.data, ownSite.error, importSite, toast]);
+
+    // Held back until now precisely so it couldn't be mistaken for the site
+    // being fetched. This key has none, so the template is what it should get.
+    startFresh();
+  }, [editor, ownSite.isPending, ownSite.data, ownSite.error, importSite, startFresh, toast]);
 
   /**
    * Puts an image on Blossom and into the site.
@@ -543,9 +571,10 @@ export function Edit() {
   const assets = assetsOf(project.files);
 
   // Covering the canvas for the wait is what keeps the import safe to make:
-  // the starting page underneath is about to be replaced, so it must not be
-  // possible to start editing it.
-  const loadingOwnSite = useSettled(ownSite.isFetching, LOADING_DELAY);
+  // whatever is underneath is about to be replaced, so it must not be possible
+  // to start editing it. Shown from the first frame rather than after a delay,
+  // because the canvas beneath it is deliberately empty until the site lands.
+  const loadingOwnSite = awaitingOwnSite;
 
   return (
     <EditorShell>
@@ -553,7 +582,7 @@ export function Edit() {
         <EditorToolbar
           editor={editor}
           leading={
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <PageSwitcher
                 pages={pages}
                 activePath={project.activePath}
@@ -572,7 +601,15 @@ export function Edit() {
               )}
             </div>
           }
-          trailing={<PublishNsiteDialog getFiles={publishableFiles} disabled={!editor} />}
+          trailing={
+            // Disabled for the wait as well: the canvas is empty until the
+            // site lands, and publishing it then would replace a real site
+            // with a blank page.
+            <PublishNsiteDialog
+              getFiles={publishableFiles}
+              disabled={!editor || awaitingOwnSite}
+            />
+          }
         />
 
         <div className="flex min-h-0 flex-1">
