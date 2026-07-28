@@ -133,16 +133,13 @@ export function OutputPanel({ title, language, content, onApply }: OutputPanelPr
 
   return (
     <section className="shrink-0 border-t bg-muted/30">
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="gap-2"
-        >
+      {/* `py-2` around a default-height control, matching the editor toolbar at
+          the top of the canvas — the two strips frame the editor, so a
+          different height on each reads as a mistake. */}
+      <div className="flex items-center gap-2 px-4 py-2 sm:px-6">
+        <Button variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           <ChevronDown
-            className={cn('size-4 transition-transform', open && 'rotate-180')}
+            className={cn('transition-transform', open && 'rotate-180')}
             aria-hidden="true"
           />
           {title}
