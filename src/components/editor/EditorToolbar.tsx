@@ -55,14 +55,22 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
 
   return (
     <div className="flex shrink-0 items-center gap-2 border-b bg-background px-3 py-2">
+      {/*
+        The leading slot is the only part of this bar allowed to shrink. It
+        holds the widest and least fixed content — a page path, and a site name
+        that only appears once you've imported or published something — while
+        everything after it is a control of a known size. Without that, the row
+        overflows and takes the last thing in it off the edge of the screen,
+        which happens to be the primary action.
+      */}
       {leading && (
         <>
-          {leading}
-          <div className="h-6 w-px bg-border" aria-hidden="true" />
+          <div className="flex min-w-0 shrink items-center">{leading}</div>
+          <div className="h-6 w-px shrink-0 bg-border" aria-hidden="true" />
         </>
       )}
 
-      <div className="flex items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-0.5">
         <button
           type="button"
           onClick={() => undoManager?.undo()}
@@ -85,7 +93,7 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
         </button>
       </div>
 
-      <div className="mx-auto flex items-center gap-1 rounded-lg bg-muted p-1">
+      <div className="mx-auto flex shrink-0 items-center gap-1 rounded-lg bg-muted p-1">
         {nsiteDevices.map((device) => {
           const Icon = deviceIcons[device.id as keyof typeof deviceIcons];
           // `getDevice()` returns the id, but accept the name too — the same
@@ -113,7 +121,7 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
         })}
       </div>
 
-      <div className="flex items-center gap-0.5">
+      <div className="flex shrink-0 items-center gap-0.5">
         <button
           type="button"
           onClick={toggleOutlines}
@@ -138,8 +146,8 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
 
       {trailing && (
         <>
-          <div className="h-6 w-px bg-border" aria-hidden="true" />
-          {trailing}
+          <div className="h-6 w-px shrink-0 bg-border" aria-hidden="true" />
+          <div className="shrink-0">{trailing}</div>
         </>
       )}
     </div>
