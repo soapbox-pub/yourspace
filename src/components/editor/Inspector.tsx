@@ -466,6 +466,41 @@ function textNodeChild(component: Component): Component | null {
   return child?.get('type') === 'textnode' ? child : null;
 }
 
+/** Tags that exist to carry text, whatever they happen to contain right now. */
+const TEXT_TAGS = new Set([
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'p',
+  'blockquote',
+  'figcaption',
+  'li',
+  'a',
+  'span',
+  'strong',
+  'em',
+  'small',
+  'label',
+  'td',
+  'th',
+]);
+
+/**
+ * Whether typography is the first thing someone selecting this would want.
+ *
+ * Decided by tag rather than by content, so that a heading is still a heading
+ * while it happens to be empty or holds a nested `<span>`. A container that has
+ * ended up with nothing but text counts too — a `<div>` used as a caption is
+ * one in every respect except the tag.
+ */
+function isTextElement(component: Component): boolean {
+  const tag = String(component.get('tagName') ?? '').toLowerCase();
+  return TEXT_TAGS.has(tag) || Boolean(textNodeChild(component));
+}
+
 /* --------------------------------------------------------------------------
  * Style vocabulary
  * ------------------------------------------------------------------------ */
@@ -602,17 +637,6 @@ function PagePanel({
         <code className="mt-0.5 block truncate text-[11px] text-muted-foreground">body</code>
       </header>
 
-      <PanelSection title="Typography">
-        <FontFields
-          target={pageTarget(editor)}
-          onInstallFont={onInstallFont}
-          onFontChanged={onFontChanged}
-        />
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          The starting typeface for this page. Anything that doesn’t set its own inherits it.
-        </p>
-      </PanelSection>
-
       <PanelSection title="Background">
         <BackgroundFields
           target={pageTarget(editor)}
@@ -623,6 +647,17 @@ function PagePanel({
         <p className="text-xs leading-relaxed text-muted-foreground">
           Sits behind every block on this page. Each page in the site keeps its own, since each
           ships as its own file.
+        </p>
+      </PanelSection>
+
+      <PanelSection title="Typography">
+        <FontFields
+          target={pageTarget(editor)}
+          onInstallFont={onInstallFont}
+          onFontChanged={onFontChanged}
+        />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          The starting typeface for this page. Anything that doesn’t set its own inherits it.
         </p>
       </PanelSection>
     </div>
@@ -693,6 +728,66 @@ export function Inspector({
   const inGrid = parentDisplay === 'grid';
   const canRemove = selected.get('removable') !== false && Boolean(parent);
   const canCopy = selected.get('copyable') !== false && Boolean(parent);
+
+  /*
+   * Typography leads for anything that is mostly text, and keeps its usual
+   * place below the box properties for everything else.
+   *
+   * Selecting a heading to restyle it is the common case, and reaching the font
+   * meant scrolling past four sections of layout that a heading rarely needs.
+   * It sits after Settings rather than above it, because for a text element
+   * Settings is where the text itself is edited — the one thing that should
+   * stay directly under the element's own name.
+   */
+  const isText = isTextElement(selected);
+
+  const typography = (
+    <PanelSection title="Typography">
+      <FontFields
+        target={selected}
+        onInstallFont={onInstallFont}
+        onFontChanged={onFontChanged}
+      />
+
+      <div className="grid grid-cols-2 gap-2">
+        <TextControl
+          label="Size"
+          value={styleValue(selected, 'font-size')}
+          fieldKey={`${id}:font-size`}
+          placeholder="18px"
+          onChange={(value) => setStyle(selected, { 'font-size': value })}
+        />
+        <TextControl
+          label="Line height"
+          value={styleValue(selected, 'line-height')}
+          fieldKey={`${id}:line-height`}
+          placeholder="1.6"
+          onChange={(value) => setStyle(selected, { 'line-height': value })}
+        />
+      </div>
+
+      <SelectControl
+        label="Weight"
+        value={styleValue(selected, 'font-weight')}
+        options={weightOptions}
+        onChange={(value) => setStyle(selected, { 'font-weight': value })}
+      />
+
+      <SegmentedControl
+        label="Align"
+        value={styleValue(selected, 'text-align')}
+        options={textAlignOptions}
+        onChange={(value) => setStyle(selected, { 'text-align': value })}
+      />
+
+      <ColorControl
+        label="Text colour"
+        value={styleValue(selected, 'color')}
+        fieldKey={`${id}:color`}
+        onChange={(value) => setStyle(selected, { color: value })}
+      />
+    </PanelSection>
+  );
 
   const duplicate = () => {
     if (!parent) return;
@@ -767,6 +862,8 @@ export function Inspector({
           </p>
         )}
       </PanelSection>
+
+      {isText && typography}
 
       <PanelSection title="Layout">
         <SelectControl
@@ -1009,51 +1106,7 @@ export function Inspector({
         />
       </PanelSection>
 
-      <PanelSection title="Typography">
-        <FontFields
-          target={selected}
-          onInstallFont={onInstallFont}
-          onFontChanged={onFontChanged}
-        />
-
-        <div className="grid grid-cols-2 gap-2">
-          <TextControl
-            label="Size"
-            value={styleValue(selected, 'font-size')}
-            fieldKey={`${id}:font-size`}
-            placeholder="18px"
-            onChange={(value) => setStyle(selected, { 'font-size': value })}
-          />
-          <TextControl
-            label="Line height"
-            value={styleValue(selected, 'line-height')}
-            fieldKey={`${id}:line-height`}
-            placeholder="1.6"
-            onChange={(value) => setStyle(selected, { 'line-height': value })}
-          />
-        </div>
-
-        <SelectControl
-          label="Weight"
-          value={styleValue(selected, 'font-weight')}
-          options={weightOptions}
-          onChange={(value) => setStyle(selected, { 'font-weight': value })}
-        />
-
-        <SegmentedControl
-          label="Align"
-          value={styleValue(selected, 'text-align')}
-          options={textAlignOptions}
-          onChange={(value) => setStyle(selected, { 'text-align': value })}
-        />
-
-        <ColorControl
-          label="Text colour"
-          value={styleValue(selected, 'color')}
-          fieldKey={`${id}:color`}
-          onChange={(value) => setStyle(selected, { color: value })}
-        />
-      </PanelSection>
+      {!isText && typography}
 
       <PanelSection title="Background">
         <BackgroundFields
