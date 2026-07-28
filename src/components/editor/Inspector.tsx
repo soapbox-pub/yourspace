@@ -532,11 +532,11 @@ function PagePanel({
 /**
  * The right-hand panel.
  *
- * The ordering is the point of this demo: a component's own settings sit at the
- * top, visible the moment it is selected, with styling below. GrapesJS's stock
+ * The ordering is deliberate: a component's own settings sit at the top,
+ * visible the moment it is selected, with styling below. GrapesJS's stock
  * chrome puts the Style Manager in front and hides traits behind a toolbar
- * button, so editing the one field a component actually exposes — the hero's
- * npub — costs two clicks and a scroll.
+ * button, so editing the fields a component actually exposes costs two clicks
+ * and a scroll.
  */
 export function Inspector({
   editor,
@@ -724,8 +724,8 @@ export function Inspector({
           ))
         ) : textChild ? null : (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            This element has no settings of its own. Registered component types declare traits —
-            select the Profile hero to see one.
+            This element has no settings of its own. Registered component types declare traits,
+            which appear here when one is selected.
           </p>
         )}
       </PanelSection>

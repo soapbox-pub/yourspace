@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import grapesjs, { type Editor } from 'grapesjs';
-import { useNostr } from '@nostrify/react';
 import { Blocks, Images, Layers } from 'lucide-react';
 
 // Only the canvas tooling is used from GrapesJS's stylesheet — the selection
@@ -31,7 +30,6 @@ import { useUploadFile } from '@/hooks/useUploadFile';
 import {
   canvasResetCss,
   initialPage,
-  nostrComponents,
   nsiteBlockDefs,
   nsiteDevices,
   resizableComponents,
@@ -230,7 +228,6 @@ export function Edit() {
       'Build your homepage block by block: import a published nsite, switch between its pages, edit it, and read back the files it would ship.',
   });
 
-  const { nostr } = useNostr();
   const { toast } = useToast();
   const { user } = useCurrentUser();
   const { mutateAsync: uploadFile } = useUploadFile();
@@ -319,7 +316,7 @@ export function Edit() {
       // Drops the stock theme classes and lets the canvas fill its container
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
-      plugins: [nostrComponents(nostr), foreignComponents, resizableComponents],
+      plugins: [foreignComponents, resizableComponents],
       // Empty, whatever the page is going to hold. `components` has no way to
       // say that markup is a whole document, and the starting page is one, so
       // it goes in below through the same parse every other file takes.
@@ -403,9 +400,8 @@ export function Edit() {
       setEditor(null);
       instance.destroy();
     };
-    // `nostr` is the app's memoized pool and the rest are stable callbacks, so
-    // this effect runs once.
-  }, [nostr, commit, paintCanvas, renderPage]);
+    // These are all stable callbacks, so this effect runs once.
+  }, [commit, paintCanvas, renderPage]);
 
   // Imported blobs outlive React state unless they are handed back explicitly.
   useEffect(() => () => releaseFiles(projectRef.current.files), []);
