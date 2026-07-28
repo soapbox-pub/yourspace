@@ -5,11 +5,11 @@ import { ExternalLink } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useLinkPreview } from '@/hooks/useLinkPreview';
 import { useNip05 } from '@/hooks/useNip05';
+import { useScreenshot } from '@/hooks/useScreenshot';
 import { nsiteGatewayUrl } from '@/lib/nsite/subdomain';
 import { sanitizeUrl } from '@/lib/urlTemplate';
 import { getProfileUrl } from '@/lib/userParam';
@@ -26,11 +26,12 @@ function since(timestamp: number): string {
 }
 
 /**
- * A colour for the placeholder, taken from the pubkey.
+ * A colour for the backdrop, taken from the pubkey.
  *
- * Most nsites declare no `og:image`, so the majority of cards fall back to
- * this. Deriving the hue from the key rather than picking one gives the grid
- * some variety, and gives each site a constant identity across reloads.
+ * It sits behind every thumbnail, so it is what a card shows while the
+ * screenshot loads and what it keeps if the screenshot never arrives.
+ * Deriving the hue from the key rather than picking one gives the grid some
+ * variety, and gives each site a constant identity across reloads.
  */
 function placeholderStyle(pubkey: string): React.CSSProperties {
   const hue = parseInt(pubkey.slice(0, 8), 16) % 360;
@@ -45,10 +46,14 @@ export function NsiteCard({ event }: { event: NostrEvent }) {
   const author = useAuthor(event.pubkey);
   const metadata = author.data?.metadata;
 
-  // The site gets a real URL only so the preview endpoint has something to
-  // scrape; visitors are sent to the in-app viewer.
+  // The site gets a real URL only so the preview and screenshot services have
+  // something to fetch; visitors are sent to the in-app viewer.
   const gatewayUrl = nsiteGatewayUrl(event, config.nsiteGatewayDomain);
   const preview = useLinkPreview(gatewayUrl);
+
+  // Hardly any nsite declares an `og:image`, so scraping one leaves most of
+  // the grid blank. A screenshot is something every site has.
+  const screenshot = useScreenshot(gatewayUrl);
 
   // A claimed NIP-05 only becomes a URL once it points back at this pubkey.
   const nip05 = useNip05(metadata?.nip05);
@@ -67,7 +72,6 @@ export function NsiteCard({ event }: { event: NostrEvent }) {
   const description =
     event.tags.find(([n]) => n === 'description')?.[1] || metadata?.about;
 
-  const image = preview.data?.image;
   const files = event.tags.filter(([n]) => n === 'path').length;
   const href = getProfileUrl(event.pubkey, metadata, verified);
 
@@ -79,22 +83,26 @@ export function NsiteCard({ event }: { event: NostrEvent }) {
       >
         <div
           className="relative flex h-40 items-center justify-center overflow-hidden"
-          style={image ? undefined : placeholderStyle(event.pubkey)}
+          style={placeholderStyle(event.pubkey)}
         >
-          {preview.isPending ? (
-            <Skeleton className="size-full rounded-none" />
-          ) : image ? (
+          {/* Named rather than blank, for as long as there is no screenshot. */}
+          <span
+            aria-hidden="true"
+            className="line-clamp-3 px-6 text-center text-xl font-bold text-white drop-shadow-sm"
+          >
+            {title}
+          </span>
+
+          {screenshot && (
+            // Already decoded by the time it gets here, so it fades in from
+            // cache rather than popping in whenever the network gets to it.
             <img
-              src={image}
+              src={screenshot}
               alt=""
-              loading="lazy"
-              className="size-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
+              // Anchored to the top: a screenshot is 3:2 and this frame is
+              // wider, so cropping from the centre would cut off the header.
+              className="absolute inset-0 size-full object-cover object-top motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 transition-transform motion-safe:group-hover:scale-105"
             />
-          ) : (
-            // Nothing to show but the name of the thing, so show it properly.
-            <span className="line-clamp-3 px-6 text-center text-xl font-bold text-white drop-shadow-sm">
-              {title}
-            </span>
           )}
         </div>
 

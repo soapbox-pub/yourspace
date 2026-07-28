@@ -37,6 +37,7 @@ const AppConfigSchema = z.object({
   discoverPubkeys: z.array(z.string()),
   nsiteGatewayDomain: z.string(),
   linkPreviewUrl: z.string(),
+  screenshotUrl: z.string(),
 }) satisfies z.ZodType<AppConfig>;
 
 export function AppProvider(props: AppProviderProps) {

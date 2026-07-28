@@ -45,6 +45,14 @@ export interface AppConfig {
   nsiteGatewayDomain: string;
   /** RFC 6570 template for the OEmbed link preview endpoint. `{url}` is the target. */
   linkPreviewUrl: string;
+  /**
+   * RFC 6570 template for a page screenshot service, used to thumbnail sites.
+   * `{url}` is the target page.
+   *
+   * It must ask for the size `useScreenshot` expects, which is how that hook
+   * tells a finished screenshot from the placeholder served while one renders.
+   */
+  screenshotUrl: string;
 }
 
 export interface AppContextType {
