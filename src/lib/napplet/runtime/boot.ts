@@ -122,7 +122,6 @@ function bootNapplets(root: ParentNode = document): () => void {
   if (!hosts.length) return () => {};
 
   const { relays, blossomServers, sandboxDomain } = config();
-  const theme = pageTheme();
 
   // Every relay any napplet on the page might need, so the shared pool has a
   // socket open for each before the first subscription asks for one.
@@ -150,7 +149,10 @@ function bootNapplets(root: ParentNode = document): () => void {
         relays,
         blossomServers,
         sandboxDomain,
-        theme,
+        // Read from the slot rather than the page, because the slot is what
+        // the napplet is about to cover: a napplet in a white card on a dark
+        // page is sitting on white, whatever the page around it is doing.
+        theme: pageTheme(host),
         pool,
         // Stable across reloads, and distinct between two copies of the same
         // napplet, which is exactly what NAP-STORAGE's instance scope requires.

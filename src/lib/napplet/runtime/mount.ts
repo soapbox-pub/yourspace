@@ -19,13 +19,43 @@ import type { NappletRuntimeConfig, NappletStatus, NappletTheme } from './types'
  * is, and two versions of the same napplet never share one.
  */
 
-/** A hex colour from a computed CSS colour, or the fallback. */
-function toHex(value: string, fallback: string): string {
-  const match = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i.exec(value);
-  if (!match) return /^#[0-9a-f]{3,8}$/i.test(value.trim()) ? value.trim() : fallback;
+/** A hex colour from a computed CSS colour, or null if it names no colour. */
+function toHex(value: string): string | null {
+  const match = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?/i.exec(value);
+  if (!match) return /^#[0-9a-f]{3,8}$/i.test(value.trim()) ? value.trim() : null;
 
-  const [, r, g, b] = match;
-  return `#${[r, g, b].map((n) => Number(n).toString(16).padStart(2, '0')).join('')}`;
+  const [, r, g, b, alpha] = match;
+
+  /*
+   * `rgba(0, 0, 0, 0)` is what an element with no background of its own
+   * computes to. Reading its channels as a colour is how a napplet on a plain
+   * white page came out black: the page never said "black", it said "nothing
+   * here" — and every unpainted element says it in the same words.
+   */
+  if (alpha !== undefined && Number(alpha) === 0) return null;
+
+  return `#${[r, g, b].map((n) => Math.round(Number(n)).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/**
+ * The colour an element is actually sitting on.
+ *
+ * Backgrounds don't inherit, they show through, so the element's own computed
+ * value answers "what did you paint" rather than "what will be seen". Walking
+ * up until something is painted asks the second question, which is the one a
+ * napplet deciding its own colours needs answered.
+ */
+function backdrop(start: Element): string {
+  const view = start.ownerDocument.defaultView ?? window;
+
+  for (let el: Element | null = start; el; el = el.parentElement) {
+    const hex = toHex(view.getComputedStyle(el).backgroundColor);
+    if (hex) return hex;
+  }
+
+  // Nothing on the page was painted, which means the canvas colour, which for
+  // a page that never mentions one is white.
+  return '#ffffff';
 }
 
 /**
@@ -41,14 +71,15 @@ export function pageTheme(root: Element = document.body): NappletTheme {
   // themed is inside the canvas frame.
   const view = root.ownerDocument.defaultView ?? window;
   const style = view.getComputedStyle(root);
+  const text = toHex(style.color) ?? '#0f172a';
 
   return {
     colors: {
-      background: toHex(style.backgroundColor, '#ffffff'),
-      text: toHex(style.color, '#0f172a'),
+      background: backdrop(root),
+      text,
       // No page-level notion of an accent, so the text colour stands in rather
       // than inventing one that clashes.
-      primary: toHex(style.color, '#0f172a'),
+      primary: text,
     },
   };
 }
@@ -58,6 +89,8 @@ export interface MountedNapplet {
   destroy(): void;
   /** Pushes a new theme, per NAP-THEME's shell-initiated `theme.changed`. */
   setTheme(theme: NappletTheme): void;
+  /** Whether pointer events reach the napplet, or pass through to the host. */
+  setInteractive(interactive: boolean): void;
 }
 
 interface MountOptions extends NappletRuntimeConfig {
@@ -66,6 +99,11 @@ interface MountOptions extends NappletRuntimeConfig {
    * instance-scoped storage. Must be stable across reloads.
    */
   instanceId: string;
+  /**
+   * Whether the napplet takes pointer events. Defaults to true, which is what
+   * a published page wants; an editor has a second claim on those clicks.
+   */
+  interactive?: boolean;
   onStatus?: (status: NappletStatus) => void;
   /** Shared between every napplet on the page, so one socket serves all. */
   pool?: RelayPool;
@@ -90,6 +128,7 @@ export function mountNapplet(
   let sandbox: ReturnType<typeof serveSandbox> | null = null;
   let ownedPool: RelayPool | null = null;
   let destroyed = false;
+  let interactive = options.interactive ?? true;
 
   const report = (status: NappletStatus) => {
     if (!destroyed) options.onStatus?.(status);
@@ -100,7 +139,7 @@ export function mountNapplet(
   const ref = decodeNappletRef(reference);
   if (!ref) {
     report({ state: 'error', message: 'That is not a napplet identifier.' });
-    return { destroy() {}, setTheme() {} };
+    return { destroy() {}, setTheme() {}, setInteractive() {} };
   }
 
   const relays = resolveRelays(ref, options.relays);
@@ -194,6 +233,7 @@ export function mountNapplet(
      * question entirely.
      */
     frame.style.cssText = 'position:absolute;inset:0;display:block;width:100%;height:100%;border:0;';
+    if (!interactive) frame.style.pointerEvents = 'none';
 
     session = new NappletSession(
       identity,
@@ -238,6 +278,12 @@ export function mountNapplet(
     },
     setTheme(theme) {
       session?.setTheme(theme);
+    },
+    // Recorded as well as applied: the frame is built asynchronously, so this
+    // is routinely called before there is anything to set it on.
+    setInteractive(next) {
+      interactive = next;
+      if (frame) frame.style.pointerEvents = next ? '' : 'none';
     },
   };
 }

@@ -107,6 +107,7 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
           // Traits write to attributes, and GrapesJS emits a per-key change
           // event for each one, so editing the trait reloads the napplet.
           this.listenTo(this.model, `change:attributes:${NAPPLET_ATTR}`, this.reload);
+          this.listenTo(this.model, 'change:status', this.syncInteractive);
         },
 
         onRender() {
@@ -146,6 +147,7 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
             ...getConfig(),
             theme: pageTheme(el),
             instanceId: model.getId(),
+            interactive: isSelected(model),
             onStatus: (status: NappletStatus) => {
               if (status.state === 'ready' && !status.missing?.length) {
                 view.chrome?.remove();
@@ -172,6 +174,22 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
           });
         },
 
+        /*
+         * Who gets the click: the editor, or the napplet.
+         *
+         * A napplet fills its slot with a cross-origin frame, and a frame eats
+         * every pointer event that lands on it — so a running napplet could be
+         * hovered but never selected, dragged or deleted, which left the only
+         * way to remove one being the layer tree. Letting clicks through until
+         * the component is selected gives it back the click-to-select every
+         * other component has, and selecting it hands the napplet over so it
+         * can still be tried out in place.
+         */
+        syncInteractive() {
+          const view = this as unknown as NappletView;
+          view.napplet?.setInteractive(isSelected(view.model));
+        },
+
         removed() {
           const view = this as unknown as NappletView;
           view.napplet?.destroy();
@@ -181,6 +199,16 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
       },
     });
   };
+}
+
+/**
+ * Whether this component is the selected one.
+ *
+ * `status` is also `'selected-parent'` for an ancestor of the selection, which
+ * does not count: a napplet is never a parent of anything.
+ */
+function isSelected(model: Component): boolean {
+  return model.get('status') === 'selected';
 }
 
 /** The view's own state, which GrapesJS's typings have no slot for. */
