@@ -20,7 +20,7 @@ import type { NappletStatus } from './runtime/types';
  * editing is the napplet.
  */
 
-export const NAPPLET_TYPE = 'napplet';
+const NAPPLET_TYPE = 'napplet';
 
 export interface NappletCanvasConfig {
   relays: string[];

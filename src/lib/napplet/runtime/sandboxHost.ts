@@ -19,9 +19,6 @@ import { bytesToBase64, utf8ToBase64 } from '@/lib/sandbox/base64';
  *   NIP-5D envelope would never arrive. The shim wraps and unwraps it.
  */
 
-/** Methods iframe.diy handles itself and will not relay. */
-const RESERVED = new Set(['ready', 'init', 'fetch']);
-
 /** Served from `public/`, so it loads under the app's `script-src 'self'`. */
 const BRIDGE_PATH = '/napplet-canvas-bridge.js';
 
@@ -41,7 +38,7 @@ function installBridge(doc: Document): void {
 }
 
 /** The method NAP traffic travels under. Anything unreserved would do. */
-export const NAPPLET_METHOD = 'napplet';
+const NAPPLET_METHOD = 'napplet';
 
 export interface ServedFile {
   status: number;
@@ -201,10 +198,7 @@ export function serveSandbox(options: SandboxHostOptions): {
        */
       post({ jsonrpc: '2.0', id, result: null });
       if (params) onNapplet(params);
-      return;
     }
-
-    if (!method || RESERVED.has(method)) return;
   }
 
   /*

@@ -24,7 +24,7 @@ import { NAPPLET_RUNTIME_PATH } from './constants';
 /** Matches the placeholder attribute, whatever quoting was used around it. */
 const HAS_NAPPLET = /\sdata-napplet\s*=/i;
 
-export function pageUsesNapplets(html: string): boolean {
+function pageUsesNapplets(html: string): boolean {
   return HAS_NAPPLET.test(html);
 }
 
@@ -34,7 +34,7 @@ export function pageUsesNapplets(html: string): boolean {
  * Text rather than a blob, so it shows up in the code panel and diffs like
  * anything else the editor writes.
  */
-export function nappletRuntimeFile(): NsiteFile {
+function nappletRuntimeFile(): NsiteFile {
   return textFile(NAPPLET_RUNTIME_PATH, runtimeSource);
 }
 
