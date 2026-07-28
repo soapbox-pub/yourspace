@@ -34,7 +34,9 @@ const AppConfigSchema = z.object({
   blossomServerMetadata: BlossomServerMetadataSchema,
   useAppBlossomServers: z.boolean(),
   sandboxDomain: z.string(),
-  discoverPackNaddr: z.string(),
+  discoverPubkeys: z.array(z.string()),
+  nsiteGatewayDomain: z.string(),
+  linkPreviewUrl: z.string(),
 }) satisfies z.ZodType<AppConfig>;
 
 export function AppProvider(props: AppProviderProps) {

@@ -13,6 +13,7 @@ import { NostrLoginProvider } from '@nostrify/react/login';
 import { AppProvider } from '@/components/AppProvider';
 import { AppConfig } from '@/contexts/AppContext';
 import { APP_RELAYS } from '@/lib/appRelays';
+import { DISCOVER_PUBKEYS } from '@/lib/appNsites';
 import AppRouter from './AppRouter';
 
 const head = createHead({
@@ -44,9 +45,9 @@ const defaultConfig: AppConfig = {
   },
   useAppBlossomServers: true,
   sandboxDomain: 'iframe.diy',
-  // Team Soapbox — kind 39089, `k4p5w0n22suf`.
-  discoverPackNaddr:
-    'naddr1qvzqqqyckypzpyexz3t34l966ngh5xg7u2q788hthdqmj0av3lv8s2tz9t43zt6dqqxxkdrsx4mnqm3jxfeh2ess5pyrw',
+  discoverPubkeys: DISCOVER_PUBKEYS,
+  nsiteGatewayDomain: 'shakespeare.to',
+  linkPreviewUrl: 'https://ditto.pub/api/link-preview/{url}',
 };
 
 export function App() {

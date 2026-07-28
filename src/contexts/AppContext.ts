@@ -36,8 +36,15 @@ export interface AppConfig {
    * each other, so it must never be a domain this app is served from.
    */
   sandboxDomain: string;
-  /** The follow pack (kind 39089) whose members fill the Discover feed. */
-  discoverPackNaddr: string;
+  /** Whose homepages fill the Discover feed. */
+  discoverPubkeys: string[];
+  /**
+   * Public nsite gateway, used to give a site an ordinary https URL. Only for
+   * link previews and "open in a new tab" — the app renders sites itself.
+   */
+  nsiteGatewayDomain: string;
+  /** RFC 6570 template for the OEmbed link preview endpoint. `{url}` is the target. */
+  linkPreviewUrl: string;
 }
 
 export interface AppContextType {

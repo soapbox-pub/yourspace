@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useFollowPack } from '@/hooks/useFollowPack';
 import { useFollows } from '@/hooks/useFollows';
 import { useNsiteFeed } from '@/hooks/useNsiteFeed';
 
@@ -64,16 +63,15 @@ function Feed({
 /**
  * Homepages people have published, as two answers to "whose?".
  *
- * Discover is a curated follow pack, which keeps the front page populated for
- * someone who has just arrived and follows nobody. Follows is the better feed
- * once it has anything in it, so it wins by default — but only then, since an
- * empty tab is a worse first impression than a curated one.
+ * Discover is a curated list, which keeps the front page populated for someone
+ * who has just arrived and follows nobody. Follows is the better feed once it
+ * has anything in it, so it wins by default — but only then, since an empty
+ * tab is a worse first impression than a curated one.
  */
 export function NsiteShowcase() {
   const { config } = useAppContext();
   const { user } = useCurrentUser();
 
-  const pack = useFollowPack(config.discoverPackNaddr);
   const follows = useFollows();
 
   const hasFollows = !!follows.data?.length;
@@ -94,9 +92,9 @@ export function NsiteShowcase() {
 
       <TabsContent value="discover">
         <Feed
-          authors={pack.data?.pubkeys}
-          isPending={pack.isPending}
-          empty="Nobody in this pack has published a homepage to these relays yet."
+          authors={config.discoverPubkeys}
+          isPending={false}
+          empty="None of these homepages are on the relays this app is reading from."
         />
       </TabsContent>
 

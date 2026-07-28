@@ -34,8 +34,9 @@ export function TestApp({ children }: TestAppProps) {
     },
     useAppBlossomServers: true,
     sandboxDomain: 'iframe.diy',
-    discoverPackNaddr:
-      'naddr1qvzqqqyckypzpyexz3t34l966ngh5xg7u2q788hthdqmj0av3lv8s2tz9t43zt6dqqxxkdrsx4mnqm3jxfeh2ess5pyrw',
+    discoverPubkeys: [],
+    nsiteGatewayDomain: 'shakespeare.to',
+    linkPreviewUrl: 'https://ditto.pub/api/link-preview/{url}',
   };
 
   return (

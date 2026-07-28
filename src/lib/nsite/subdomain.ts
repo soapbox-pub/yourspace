@@ -38,3 +38,14 @@ export function getNsiteSubdomain(event: NostrEvent): string {
 
   return nip19.npubEncode(event.pubkey);
 }
+
+/**
+ * The site's address on a public nsite gateway.
+ *
+ * The app renders sites itself and doesn't need this to show one. It exists
+ * because some things can only be done with an ordinary URL: handing a page to
+ * a link-preview scraper, or opening it in a tab outside this app.
+ */
+export function nsiteGatewayUrl(event: NostrEvent, gatewayDomain: string): string {
+  return `https://${getNsiteSubdomain(event)}.${gatewayDomain}/`;
+}

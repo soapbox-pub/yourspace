@@ -18,6 +18,10 @@ addressed by your own key, that no platform can suspend, rank, or wrap in ads.
 - **Browsing.** A showcase of homepages people have published, and a viewer that renders any of them
   at `/<name>` — sandboxed, so a site's scripts can't reach this app.
 
+The Discover feed draws on a curated list of pubkeys in `src/lib/appNsites.ts`. It's a flat array
+rather than a follow pack fetched at runtime, because having a homepage and being worth following
+are different things — a pack of fifteen people yielded one root nsite between them.
+
 ## nsites (NIP-5A)
 
 An nsite is a static website published over Nostr: a manifest event maps paths to file hashes, and
