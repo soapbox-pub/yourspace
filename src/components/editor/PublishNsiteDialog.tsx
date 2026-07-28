@@ -2,10 +2,12 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { nip19 } from 'nostr-tools';
 import { AlertCircle, ArrowUpRight, CheckCircle2, Loader2, Upload } from 'lucide-react';
 
 import { LoginArea } from '@/components/auth/LoginArea';
+import { useAuthor } from '@/hooks/useAuthor';
+import { useNip05Verified } from '@/hooks/useNip05';
+import { getProfileUrl } from '@/lib/userParam';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,7 +35,6 @@ import {
   type FailedUpload,
   type PublishProgress,
 } from '@/lib/nsite/publish';
-import { nsiteGatewayUrl } from '@/lib/nsite/subdomain';
 
 interface PublishNsiteDialogProps {
   /** The site as it would ship — serializes the canvas before handing it over. */
@@ -173,11 +174,7 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
               <LoginArea className="max-w-60" />
             </div>
           ) : result ? (
-            <PublishedSite
-              event={result.event}
-              failed={result.failed}
-              gatewayDomain={config.nsiteGatewayDomain}
-            />
+            <PublishedSite event={result.event} failed={result.failed} />
           ) : (
             <div className="space-y-4 py-6">
               <div className="space-y-2">
@@ -275,39 +272,40 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
 interface PublishedSiteProps {
   event: NostrEvent;
   failed: FailedUpload[];
-  gatewayDomain: string;
 }
 
 /** Where the site can now be reached, and anything that didn't make it. */
-function PublishedSite({ event, failed, gatewayDomain }: PublishedSiteProps) {
-  const npub = nip19.npubEncode(event.pubkey);
-  const gateway = nsiteGatewayUrl(event, gatewayDomain);
+function PublishedSite({ event, failed }: PublishedSiteProps) {
+  const author = useAuthor(event.pubkey);
+  const metadata = author.data?.metadata;
+
+  /*
+   * A verified NIP-05 makes a far better address than an npub, but only once
+   * verified — the name lives in a kind 0, and an unverified one would point
+   * this link at whoever actually holds the name.
+   */
+  const verified = useNip05Verified(event.pubkey, metadata?.nip05);
+  const path = getProfileUrl(event.pubkey, metadata, verified);
 
   return (
     <div className="space-y-4 py-6">
       <div className="flex items-start gap-3 rounded-lg border bg-muted/40 px-4 py-3">
         <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden="true" />
-        <div className="min-w-0 space-y-1">
-          <Link to={`/${npub}`} className="block font-medium underline-offset-4 hover:underline">
-            View it here
-          </Link>
-          {/*
-            The address is one unbreakable 80-character token — an npub is 63 of
-            them before the gateway domain. `break-all` lets it wrap, which also
-            drops its min-content width to a single character: the dialog is a
-            grid, and a child that refuses to be narrower than its text widens
-            the whole column past the dialog's own max width.
-          */}
-          <a
-            href={gateway}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="block break-all font-mono text-xs text-muted-foreground hover:text-foreground"
-          >
-            {gateway}
-            <ArrowUpRight className="ml-1 inline size-3 align-text-bottom" aria-hidden="true" />
-          </a>
-        </div>
+        {/*
+          `break-all` on the address because an npub is one unbreakable
+          63-character token. It also drops the min-content width to a single
+          character: the dialog is a grid, and a child that refuses to be
+          narrower than its text widens the whole column past the dialog.
+        */}
+        <Link to={path} className="group min-w-0">
+          <span className="block font-medium underline-offset-4 group-hover:underline">
+            View your site
+            <ArrowUpRight className="ml-1 inline size-3.5 align-text-bottom" aria-hidden="true" />
+          </span>
+          <span className="mt-0.5 block break-all font-mono text-xs text-muted-foreground">
+            {path}
+          </span>
+        </Link>
       </div>
 
       {failed.length > 0 && (

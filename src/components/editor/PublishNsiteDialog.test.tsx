@@ -25,6 +25,14 @@ vi.mock('@/hooks/useCurrentUser', () => ({
   useCurrentUser: () => ({ user: { pubkey: PUBKEY, signer: {} } }),
 }));
 
+vi.mock('@/hooks/useAuthor', () => ({
+  useAuthor: () => ({ data: { metadata: { nip05: 'alex@gleasonator.com' } } }),
+}));
+
+vi.mock('@/hooks/useNip05', () => ({
+  useNip05Verified: () => true,
+}));
+
 vi.mock('@/hooks/useNostrPublish', () => ({
   useNostrPublish: () => ({
     mutateAsync: async (template: { kind: number; content: string; tags: string[][] }) => ({
@@ -84,6 +92,12 @@ describe('PublishNsiteDialog', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Publish' }));
 
     await screen.findByText('Your site is live');
+
+    // The site's address on this app, not on a public gateway.
+    expect(screen.getByRole('link', { name: /View your site/ })).toHaveAttribute(
+      'href',
+      '/alex@gleasonator.com',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
