@@ -20,7 +20,7 @@
   --gjs-canvas-top: 0px;
   --gjs-left-width: 0%;
 
-  /* Selection chrome, matched to the hero's violet. */
+  /* Selection chrome, matched to the app's violet. */
   --gjs-color-blue: #8b5cf6;
   --gjs-color-highlight: #c4b5fd;
 }

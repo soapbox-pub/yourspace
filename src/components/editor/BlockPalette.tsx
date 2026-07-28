@@ -3,19 +3,13 @@ import type { Editor } from 'grapesjs';
 import {
   Columns2,
   Columns3,
-  Contact,
-  FileText,
   Frame,
   Heading2,
   Image,
-  KeyRound,
   LayoutGrid,
-  Link2,
-  MessagesSquare,
   PanelLeft,
   StretchVertical,
   Type,
-  Zap,
 } from 'lucide-react';
 
 import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
@@ -28,12 +22,6 @@ interface BlockPaletteProps {
 }
 
 const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
-  hero: Contact,
-  about: FileText,
-  links: Link2,
-  notes: MessagesSquare,
-  zap: Zap,
-  footer: KeyRound,
   heading: Heading2,
   text: Type,
   image: Image,
@@ -45,7 +33,7 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
   spacer: StretchVertical,
 };
 
-const categories = ['Basic', 'Layout', 'Nostr'] as const;
+const categories = ['Basic', 'Layout'] as const;
 
 function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null }) {
   const Icon = blockIcons[def.id] ?? Type;

@@ -47,8 +47,8 @@ export function useSelectedComponent(editor: Editor | null): Component | undefin
 /**
  * A component's display name for panels and the layer tree.
  *
- * `getName()` already resolves the custom `name` on registered types (the
- * Profile hero), falling back to a humanized tag name.
+ * `getName()` already resolves the custom `name` on registered types, falling
+ * back to a humanized tag name.
  */
 export function componentName(component: Component): string {
   return component.getName() || component.get('tagName') || 'Element';

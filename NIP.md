@@ -37,11 +37,12 @@ wanted to render YourSpace pages faithfully would need to honour them.
   again when the last placeholder goes. Its `data-relays` and
   `data-blossom-servers` attributes override the defaults it was built with.
 
-The script tag cannot live in the editor canvas: `toCanvasHtml` strips every
-`<script>` before GrapesJS parses a page, because an imported nsite is a
-stranger's markup and the canvas is same-origin with this app. So the tag is
-stripped on the way in and re-added on the way out — the same bargain that
-module already makes with linked stylesheets.
+The script tag is derived rather than authored: `withNappletRuntime` strips any
+copy of it and re-adds one only if the page still holds a placeholder. `<script>`
+survives the canvas round trip now that `nsite/foreign.ts` carries it, so a tag
+left to persist on its own would outlive the last napplet and point at a file no
+longer published. Recomputing it on every serialization is what keeps the page
+self-correcting.
 
 ### Divergences from NIP-5D
 

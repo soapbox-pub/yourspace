@@ -12,12 +12,13 @@ import { NAPPLET_RUNTIME_PATH } from './constants';
  * carries an inert placeholder, and the runtime that turns placeholders into
  * sandboxed frames ships beside it as an ordinary file of the site.
  *
- * The script tag is added here, on the way *out* of the editor, rather than
- * living in the canvas markup. It could not live there: `toCanvasHtml` strips
- * every `<script>` before GrapesJS sees a page, because an imported site is a
- * stranger's markup and the canvas is same-origin with this app. Stripping on
- * the way in and adding on the way out is the same bargain that module already
- * makes with stylesheets, and it round-trips for the same reason.
+ * The script tag is derived here, on the way *out* of the editor, rather than
+ * being markup the user owns. `./foreign` now carries `<script>` through the
+ * canvas intact, so the tag would survive on its own — but surviving is the
+ * problem: a tag that persisted after the last napplet was deleted would point
+ * at a file no longer published. So it is rewritten from scratch on every
+ * serialization, which makes the page self-correcting however the napplets got
+ * there or went away.
  */
 
 /** Matches the placeholder attribute, whatever quoting was used around it. */
@@ -37,23 +38,34 @@ export function nappletRuntimeFile(): NsiteFile {
   return textFile(NAPPLET_RUNTIME_PATH, runtimeSource);
 }
 
+/** The tag as this module writes it, and as it recognizes its own past work. */
+const RUNTIME_SCRIPT = new RegExp(
+  `\\s*<script\\b[^>]*\\bsrc=(["']?)${NAPPLET_RUNTIME_PATH.replace(/[.]/g, '\\$&')}\\1[^>]*>\\s*</script>`,
+  'gi',
+);
+
 /**
- * Adds the runtime's script tag to a serialized page that needs it.
+ * Rewrites a serialized page's reference to the runtime.
+ *
+ * Stripped first and re-added second, rather than added only when missing. The
+ * tag is derived from whether the page holds a napplet, so recomputing it is
+ * what makes deleting the last napplet take the script with it — and it keeps
+ * every page's copy in one canonical form and position no matter how many
+ * round trips it has been through.
  *
  * `defer` because the placeholders have to exist before the runtime looks for
  * them, and because a napplet is never the thing a reader came for — it should
  * not hold up the page around it.
  */
 export function withNappletRuntime(html: string): string {
-  if (!pageUsesNapplets(html)) return html;
-  // Re-serializing a page that already carries the tag must not add a second.
-  if (html.includes(NAPPLET_RUNTIME_PATH)) return html;
+  const without = html.replace(RUNTIME_SCRIPT, '');
+  if (!pageUsesNapplets(without)) return without;
 
   const tag = `<script src="${NAPPLET_RUNTIME_PATH}" defer></script>`;
 
-  return html.includes('</body>')
-    ? html.replace('</body>', `  ${tag}\n</body>`)
-    : `${html}\n${tag}`;
+  return without.includes('</body>')
+    ? without.replace('</body>', `  ${tag}\n</body>`)
+    : `${without}\n${tag}`;
 }
 
 /**

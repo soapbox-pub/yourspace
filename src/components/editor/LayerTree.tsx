@@ -10,9 +10,9 @@ interface LayerTreeProps {
 }
 
 /**
- * Components opt out of the tree with `layerable: false` — which is how the
- * Profile hero's generated markup stays collapsed into a single row instead of
- * spilling its banner, avatar and headings into the outline.
+ * Components opt out of the tree with `layerable: false` — which is how a
+ * component type that generates its own markup stays collapsed into a single
+ * row instead of spilling its internals into the outline.
  */
 function layerChildren(component: Component): Component[] {
   return component
