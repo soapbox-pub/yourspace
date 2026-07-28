@@ -45,6 +45,7 @@ import {
   installWeights,
   pruneFontFiles,
 } from '@/lib/fonts/install';
+import { foreignComponents, foreignPlaceholderCss } from '@/lib/nsite/foreign';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import { sha256Hex } from '@/lib/nsite/blobs';
 import {
@@ -156,8 +157,9 @@ function pendingProject(): StudioProject {
  * the reset, and an edit made in the inspector has to beat both.
  *
  * Both stylesheets are the same for every page. The reset is the editor
- * artifact fix plus the scrollbar treatment, neither of which is page styling
- * and neither of which a site should have to override.
+ * artifact fix, the scrollbar treatment and the placeholder chips standing in
+ * for scripts and embeds — none of it page styling, and none of it something a
+ * site should have to override.
  */
 function styleCanvas(editor: Editor, siteCss: string) {
   const doc = editor.Canvas.getDocument();
@@ -176,7 +178,7 @@ function styleCanvas(editor: Editor, siteCss: string) {
     doc.head.prepend(reset, site);
   }
 
-  reset.textContent = canvasResetCss + studioScrollbarCss;
+  reset.textContent = canvasResetCss + studioScrollbarCss + foreignPlaceholderCss;
   site.textContent = siteCss;
 }
 
@@ -317,7 +319,7 @@ export function Edit() {
       // Drops the stock theme classes and lets the canvas fill its container
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
-      plugins: [nostrComponents(nostr), resizableComponents],
+      plugins: [nostrComponents(nostr), foreignComponents, resizableComponents],
       // Nothing at all while a signed-in key's site is on its way; the starting
       // template is seeded later, and only if there turns out to be no site.
       components: owner ? '' : initialPage,

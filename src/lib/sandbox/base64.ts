@@ -34,3 +34,12 @@ export function bytesToBase64(bytes: Uint8Array): string {
 export function utf8ToBase64(str: string): string {
   return bytesToBase64(new TextEncoder().encode(str));
 }
+
+/** The inverse of `utf8ToBase64`. Throws on input that isn't base64. */
+export function base64ToUtf8(value: string): string {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  return new TextDecoder().decode(bytes);
+}

@@ -3,6 +3,7 @@ import type { NostrMetadata, NPool } from '@nostrify/nostrify';
 import { nip19 } from 'nostr-tools';
 
 import { demoLinks, demoNotes, demoProfile, formatSats } from '@/lib/nsite/demoContent';
+import { isForeign } from '@/lib/nsite/foreign';
 
 /**
  * The nsite content the builder starts from: its blocks, its "Profile hero"
@@ -558,6 +559,9 @@ export function resizableComponents(editor: Editor) {
   editor.on('component:create', (component: Component) => {
     // A bare text node has no element of its own to put handles on.
     if (component.get('type') === 'textnode') return;
+    // A placeholder serializes to the markup it stands for, so a size written
+    // onto it would be discarded on save — handles that do nothing.
+    if (isForeign(component)) return;
     if (component.get('resizable')) return;
 
     component.set('resizable', true, { silent: true });

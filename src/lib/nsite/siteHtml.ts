@@ -1,4 +1,5 @@
 import type { NsiteFile } from './files';
+import { stashForeign } from './foreign';
 
 /**
  * Translating between a page as it ships and a page as the canvas can render it.
@@ -15,6 +16,9 @@ import type { NsiteFile } from './files';
  * `<style>` instead, which leaves the `<link>` tag untouched in the document and
  * the `.css` file untouched on disk — the site round-trips losslessly and its
  * stylesheet stays a shared file rather than being flattened into each page.
+ *
+ * Scripts and embeds are the other exception, and are swapped for placeholders
+ * that serialize back to themselves — see `./foreign`.
  */
 
 /**
@@ -30,15 +34,6 @@ import type { NsiteFile } from './files';
 export function isHtmlDocument(value: string): boolean {
   return /^\s*(<!doctype\s|<html[\s>])/i.test(value);
 }
-
-/**
- * Elements that exist to run or embed foreign code. An imported nsite is
- * arbitrary markup from a stranger, and the canvas iframe is same-origin with
- * the app — script that ran in there could read the `nsec` out of localStorage.
- * GrapesJS's parser drops `<script>` and `on*` handlers already; this is the
- * belt to that pair of braces, and it runs before GrapesJS ever sees the markup.
- */
-const FORBIDDEN = 'script, iframe, frame, object, embed, applet, base, meta[http-equiv], noscript';
 
 /** Attributes naming a subresource the browser will fetch. */
 const RESOURCE_ATTRIBUTES: Record<string, readonly string[]> = {
@@ -63,9 +58,18 @@ function isAllowed(value: string, allowed: RegExp): boolean {
   return allowed.test(trimmed);
 }
 
+/**
+ * Strips what can execute from markup that is about to be parsed into the
+ * canvas, which is an iframe on the app's own origin — script that ran in there
+ * could read the `nsec` out of localStorage.
+ *
+ * Only attributes, because the elements that run or embed code are carried
+ * instead of removed (see `./foreign`). Inline `on*` handlers have no such
+ * carrier yet and are still dropped, which is the one way this round trip is
+ * still lossy. GrapesJS's parser removes them too; this is the belt to that
+ * pair of braces, and it runs before GrapesJS ever sees the markup.
+ */
 function sanitize(root: Document): void {
-  root.querySelectorAll(FORBIDDEN).forEach((el) => el.remove());
-
   for (const el of root.querySelectorAll<HTMLElement>('*')) {
     const resources = RESOURCE_ATTRIBUTES[el.tagName] ?? [];
 
@@ -170,6 +174,9 @@ export function toCanvasHtml(html: string, files: NsiteFile[], basePath: string)
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const byPath = new Map(files.map((file) => [file.path, file]));
 
+  // Before `sanitize`, so that what it scrubs is the page around the carried
+  // markup rather than the carriers, and long before GrapesJS sees any of it.
+  stashForeign(doc, asDocument);
   sanitize(doc);
 
   const stylesheets: string[] = [];
@@ -196,7 +203,15 @@ export function toCanvasHtml(html: string, files: NsiteFile[], basePath: string)
   return {
     // `parseFromString` always builds a full document, so a fragment has to be
     // unwrapped again — otherwise every page would gain an `<html>` on import.
-    html: asDocument ? `<!DOCTYPE html>\n${doc.documentElement.outerHTML}` : doc.body.innerHTML,
+    //
+    // Both halves, because the parser puts anything head-only that appears
+    // before the first body content — a leading `<style>`, `<script>` or
+    // `<base>` — into the head it synthesized, and taking only the body would
+    // drop it. Nothing can reach the head after the body has opened, so the two
+    // concatenated are the fragment back in its original order.
+    html: asDocument
+      ? `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`
+      : doc.head.innerHTML + doc.body.innerHTML,
     css: stylesheets.join('\n\n'),
   };
 }
