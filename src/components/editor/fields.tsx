@@ -1,4 +1,5 @@
-import { useId, type ReactNode } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
+import { Image as ImageIcon, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -219,6 +220,145 @@ export function ColorControl({ label, value, onChange, fieldKey }: ColorControlP
           className={cn(controlClass, 'font-mono text-xs')}
         />
       </div>
+    </Field>
+  );
+}
+
+interface ImageControlProps {
+  label: string;
+  /** Whatever belongs in the field — a URL, or a CSS value such as a gradient. */
+  value: string;
+  onChange: (value: string) => void;
+  fieldKey: string;
+  /** Shown as a thumbnail, when the value is a plain URL. */
+  preview?: string;
+  /** Images that ship with the site, offered as one-click choices. */
+  options?: { url: string; label: string }[];
+  /** Adds a chosen file to the site and resolves to the URL for it. */
+  onUpload?: (file: File) => Promise<string | null>;
+  hint?: string;
+}
+
+/**
+ * A URL field with the site's own images beside it.
+ *
+ * The same split as `ColorControl`: the text input stays authoritative, so any
+ * address — or a gradient — can be typed, and the thumbnails are a shortcut for
+ * the files already in the project. Picking one writes its object URL, which
+ * becomes a site path again when the page is serialized.
+ */
+export function ImageControl({
+  label,
+  value,
+  onChange,
+  fieldKey,
+  preview,
+  options = [],
+  onUpload,
+  hint,
+}: ImageControlProps) {
+  const id = useId();
+  const picker = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const choose = async (file: File | undefined) => {
+    if (!file || !onUpload) return;
+
+    setUploading(true);
+    try {
+      const url = await onUpload(file);
+      if (url) onChange(url);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Field label={label} htmlFor={id} hint={hint}>
+      <div className="flex gap-1.5">
+        {/*
+          The preview doubles as the upload button. There is nowhere else in
+          this panel to put one, and a thumbnail that opens a file picker is
+          the same gesture every avatar field uses.
+        */}
+        <button
+          type="button"
+          onClick={() => picker.current?.click()}
+          disabled={!onUpload || uploading}
+          title={onUpload ? 'Upload an image' : 'Log in to upload images'}
+          className={cn(
+            'group/upload relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md border border-input bg-background transition-colors',
+            'hover:border-ring/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-input',
+          )}
+        >
+          {preview && <img src={preview} alt="" className="size-full object-cover" />}
+          <span
+            className={cn(
+              'absolute inset-0 flex items-center justify-center text-muted-foreground',
+              // An empty box shows the affordance outright; over a preview it
+              // waits for a hover, so the image stays readable.
+              preview &&
+                !uploading &&
+                'bg-background/80 opacity-0 transition-opacity group-hover/upload:opacity-100 group-focus-visible/upload:opacity-100',
+            )}
+          >
+            {uploading ? (
+              <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            ) : (
+              <ImageIcon className="size-3.5" aria-hidden="true" />
+            )}
+          </span>
+          <span className="sr-only">{uploading ? 'Uploading' : 'Upload an image'}</span>
+        </button>
+
+        <input
+          ref={picker}
+          type="file"
+          accept="image/*"
+          // `hidden` rather than `sr-only`: the button above is the labelled
+          // control, and this input has nothing useful to announce.
+          hidden
+          onChange={(event) => {
+            void choose(event.target.files?.[0]);
+            // Cleared so that choosing the same file twice fires again.
+            event.target.value = '';
+          }}
+        />
+
+        <input
+          key={fieldKey}
+          id={id}
+          type="text"
+          defaultValue={value}
+          placeholder="https://example.com/stars.png"
+          onChange={(event) => onChange(event.target.value)}
+          className={cn(controlClass, 'font-mono text-xs')}
+        />
+      </div>
+
+      {options.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((option) => {
+            const active = option.url === preview;
+            return (
+              <button
+                key={option.url}
+                type="button"
+                aria-pressed={active}
+                title={option.label}
+                onClick={() => onChange(active ? '' : option.url)}
+                className={cn(
+                  'size-8 overflow-hidden rounded-md border bg-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  active ? 'border-primary ring-2 ring-primary/30' : 'hover:border-ring/60',
+                )}
+              >
+                <img src={option.url} alt={option.label} className="size-full object-cover" />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </Field>
   );
 }

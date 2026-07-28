@@ -83,6 +83,18 @@ export function mimeForPath(path: string): string {
   return MIME_TYPES[extensionOf(path)] ?? 'application/octet-stream';
 }
 
+/**
+ * The usual extension for a MIME type, for files that arrive without one.
+ *
+ * A site path is the only name a file has here, and the pages/assets split and
+ * the served Content-Type are both read back off its extension — so a file
+ * stored as `/images/photo` would be neither an image nor anything else.
+ */
+export function extensionForMime(type: string): string {
+  const wanted = type.split(';')[0].trim().toLowerCase();
+  return Object.keys(MIME_TYPES).find((ext) => MIME_TYPES[ext] === wanted) ?? '';
+}
+
 export function isTextPath(path: string): boolean {
   return TEXT_EXTENSIONS.has(extensionOf(path));
 }
@@ -134,6 +146,34 @@ export function normalizePagePath(input: string): string {
   // A trailing slash means a directory, which resolves to its index page.
   const path = withSlash.endsWith('/') ? `${withSlash}index.html` : withSlash;
   if (!isPagePath(path)) throw new Error('Pages must end in .html.');
+
+  return path;
+}
+
+const ASSET_FOLDER = '/images';
+
+/**
+ * A site path for a file added in the editor rather than imported.
+ *
+ * The name is reduced to what a path can carry without escaping, and gains a
+ * numeric suffix when it is already taken: two files chosen as `photo.jpg` are
+ * two files, and quietly writing the second over the first would drop the
+ * first out of the site.
+ */
+export function assetPath(files: NsiteFile[], name: string, type = ''): string {
+  const cleaned = name
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, '-')
+    .replace(/^[-.]+|-+$/g, '');
+
+  const own = extensionOf(cleaned);
+  const stem = (own ? cleaned.slice(0, -(own.length + 1)) : cleaned) || 'image';
+  const extension = own || extensionForMime(type);
+  const suffix = extension ? `.${extension}` : '';
+
+  const taken = new Set(files.map((file) => file.path));
+  let path = `${ASSET_FOLDER}/${stem}${suffix}`;
+  for (let n = 2; taken.has(path); n++) path = `${ASSET_FOLDER}/${stem}-${n}${suffix}`;
 
   return path;
 }

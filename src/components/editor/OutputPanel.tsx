@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AlertCircle, Check, ChevronDown, Copy, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface OutputPanelProps {
@@ -18,6 +17,27 @@ interface OutputPanelProps {
 }
 
 const codeClass = 'w-full overflow-auto rounded-lg border bg-background p-4 text-xs leading-relaxed';
+
+function CopyButton({ content, className }: { content: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(content);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={copy} className={cn('gap-2', className)}>
+      {copied ? (
+        <Check className="size-4" aria-hidden="true" />
+      ) : (
+        <Copy className="size-4" aria-hidden="true" />
+      )}
+      {copied ? 'Copied' : 'Copy'}
+    </Button>
+  );
+}
 
 /**
  * An editable serialization.
@@ -62,6 +82,7 @@ function EditableOutput({
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        <CopyButton content={value} className="mr-auto" />
         {dirty && (
           <Button variant="ghost" size="sm" onClick={revert} className="gap-2">
             <RotateCcw className="size-4" aria-hidden="true" />
@@ -69,7 +90,7 @@ function EditableOutput({
           </Button>
         )}
         <Button size="sm" onClick={apply} disabled={!dirty}>
-          Apply to canvas
+          Apply
         </Button>
       </div>
 
@@ -109,13 +130,6 @@ function EditableOutput({
  */
 export function OutputPanel({ title, language, content, onApply }: OutputPanelProps) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(content);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <section className="shrink-0 border-t bg-muted/30">
@@ -134,20 +148,7 @@ export function OutputPanel({ title, language, content, onApply }: OutputPanelPr
           {title}
         </Button>
 
-        <Badge variant="outline" className="font-mono text-xs uppercase">
-          {language}
-        </Badge>
-
-        {open && (
-          <Button variant="outline" size="sm" onClick={copy} className="ml-auto gap-2">
-            {copied ? (
-              <Check className="size-4" aria-hidden="true" />
-            ) : (
-              <Copy className="size-4" aria-hidden="true" />
-            )}
-            {copied ? 'Copied' : 'Copy'}
-          </Button>
-        )}
+        {open && !onApply && <CopyButton content={content} className="ml-auto" />}
       </div>
 
       {open && (
