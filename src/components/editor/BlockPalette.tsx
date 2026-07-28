@@ -2,13 +2,18 @@ import type { ComponentType } from 'react';
 import type { Editor } from 'grapesjs';
 import {
   Columns2,
+  Columns3,
   Contact,
   FileText,
+  Frame,
   Heading2,
   Image,
   KeyRound,
+  LayoutGrid,
   Link2,
   MessagesSquare,
+  PanelLeft,
+  StretchVertical,
   Type,
   Zap,
 } from 'lucide-react';
@@ -31,11 +36,16 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
   footer: KeyRound,
   heading: Heading2,
   text: Type,
-  'two-columns': Columns2,
   image: Image,
+  'two-columns': Columns2,
+  'three-columns': Columns3,
+  sidebar: PanelLeft,
+  grid: LayoutGrid,
+  'free-area': Frame,
+  spacer: StretchVertical,
 };
 
-const categories = ['Basic', 'Nostr'] as const;
+const categories = ['Basic', 'Layout', 'Nostr'] as const;
 
 function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null }) {
   const Icon = blockIcons[def.id] ?? Type;

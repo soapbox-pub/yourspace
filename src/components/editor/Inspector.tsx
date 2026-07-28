@@ -139,6 +139,54 @@ function setBoxSide(target: StyleTarget, prop: string, side: number, value: stri
 }
 
 /* --------------------------------------------------------------------------
+ * Offsets
+ *
+ * `top`/`right`/`bottom`/`left` are already longhands rather than sides of a
+ * shorthand, so this is thinner than the padding/margin machinery above — but
+ * `inset` is a shorthand for exactly these four, in the same order, and has to
+ * be collapsed for the same reason.
+ * ------------------------------------------------------------------------ */
+
+const insetProps = ['top', 'right', 'bottom', 'left'] as const;
+
+function insetValues(target: StyleTarget): Box {
+  const shorthand = parseBoxShorthand(styleValue(target, 'inset')) ?? ['', '', '', ''];
+  return insetProps.map((prop, index) => styleValue(target, prop) || shorthand[index]) as Box;
+}
+
+/**
+ * Returning an element to the flow takes its offsets and stacking order with
+ * it. They are inert on a static element, so leaving them behind would put
+ * declarations in the published stylesheet that do nothing — and would silently
+ * move the element again the next time it was positioned.
+ */
+function setPosition(target: StyleTarget, value: string) {
+  if (value) {
+    setStyle(target, { position: value });
+    return;
+  }
+
+  setStyle(target, {
+    position: '',
+    inset: '',
+    'z-index': '',
+    ...Object.fromEntries(insetProps.map((prop) => [prop, ''])),
+  });
+}
+
+function setInsetSide(target: StyleTarget, side: number, value: string) {
+  const next = insetValues(target);
+  next[side] = value;
+
+  const patch: Record<string, string> = { inset: '' };
+  insetProps.forEach((prop, index) => {
+    patch[prop] = next[index];
+  });
+
+  setStyle(target, patch);
+}
+
+/* --------------------------------------------------------------------------
  * Background
  * ------------------------------------------------------------------------ */
 
@@ -283,7 +331,7 @@ function BackgroundFields({ target, fieldKey, images, onUpload }: BackgroundFiel
             <SelectControl
               label="Position"
               value={styleValue(target, 'background-position')}
-              options={positionOptions}
+              options={backgroundPositionOptions}
               emptyLabel="Top left"
               onChange={(value) => setBackground(target, { 'background-position': value })}
             />
@@ -399,6 +447,31 @@ const alignOptions: Option[] = [
   { value: 'baseline', label: 'Baseline' },
 ];
 
+/**
+ * `align-self` takes everything `align-items` does, plus `auto` — which is not
+ * the same as leaving it unset, since it explicitly defers to the parent.
+ */
+const alignSelfOptions: Option[] = [{ value: 'auto', label: 'Auto' }, ...alignOptions];
+
+const justifySelfOptions: Option[] = [
+  { value: 'stretch', label: 'Stretch' },
+  { value: 'start', label: 'Start' },
+  { value: 'center', label: 'Center' },
+  { value: 'end', label: 'End' },
+];
+
+/**
+ * No `static` entry: that is what the control's empty option already means, and
+ * offering both would be two ways to say the same thing — one of which writes a
+ * declaration that changes nothing.
+ */
+const positionOptions: Option[] = [
+  { value: 'relative', label: 'Relative' },
+  { value: 'absolute', label: 'Absolute' },
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'sticky', label: 'Sticky' },
+];
+
 const weightOptions: Option[] = [
   { value: '400', label: 'Regular' },
   { value: '500', label: 'Medium' },
@@ -406,7 +479,8 @@ const weightOptions: Option[] = [
   { value: '700', label: 'Bold' },
 ];
 
-const positionOptions: Option[] = [
+/** Where a background image sits — not to be confused with `positionOptions`. */
+const backgroundPositionOptions: Option[] = [
   { value: 'center', label: 'Center' },
   { value: 'top', label: 'Top' },
   { value: 'bottom', label: 'Bottom' },
@@ -508,7 +582,22 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
   const isFlex = display === 'flex' || display === 'inline-flex';
   const isGrid = display === 'grid';
 
+  const position = styleValue(selected, 'position');
+  // Offsets and stacking order do nothing on a statically positioned element,
+  // so the fields for them stay out of the way until they would have an effect.
+  const isPositioned = Boolean(position) && position !== 'static';
+
   const parent = selected.parent();
+
+  /*
+   * How the *parent* lays out decides which properties on the child are live:
+   * `flex-grow` is inert outside a flex container and `grid-column` outside a
+   * grid one. Reading the parent is what lets the panel offer the half of the
+   * layout model that belongs to the item rather than the container.
+   */
+  const parentDisplay = parent ? styleValue(parent, 'display') : '';
+  const inFlex = parentDisplay === 'flex' || parentDisplay === 'inline-flex';
+  const inGrid = parentDisplay === 'grid';
   const canRemove = selected.get('removable') !== false && Boolean(parent);
   const canCopy = selected.get('copyable') !== false && Boolean(parent);
 
@@ -595,18 +684,65 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
         />
 
         {isFlex && (
-          <SegmentedControl
-            label="Direction"
-            value={styleValue(selected, 'flex-direction')}
-            options={[
-              { value: 'row', label: 'Row' },
-              { value: 'column', label: 'Column' },
-            ]}
-            onChange={(value) => setStyle(selected, { 'flex-direction': value })}
-          />
+          <>
+            <SegmentedControl
+              label="Direction"
+              value={styleValue(selected, 'flex-direction')}
+              options={[
+                { value: 'row', label: 'Row' },
+                { value: 'column', label: 'Column' },
+              ]}
+              onChange={(value) => setStyle(selected, { 'flex-direction': value })}
+            />
+            <SegmentedControl
+              label="Wrap"
+              value={styleValue(selected, 'flex-wrap')}
+              options={[
+                { value: 'nowrap', label: 'No wrap', title: 'Squeeze everything onto one line' },
+                { value: 'wrap', label: 'Wrap', title: 'Start a new line when it runs out of room' },
+              ]}
+              onChange={(value) => setStyle(selected, { 'flex-wrap': value })}
+            />
+          </>
         )}
 
-        {isFlex && (
+        {isGrid && (
+          <>
+            {/*
+              The presets are a shortcut and the text fields are the truth, the
+              same split `ColorControl` and `ImageControl` use: a track list can
+              say things like `240px 1fr` or `repeat(auto-fill, minmax(160px,
+              1fr))` that no fixed set of buttons could offer.
+            */}
+            <SegmentedControl
+              label="Columns"
+              value={styleValue(selected, 'grid-template-columns')}
+              options={[2, 3, 4].map((count) => ({
+                value: `repeat(${count}, 1fr)`,
+                label: String(count),
+                title: `${count} equal columns`,
+              }))}
+              onChange={(value) => setStyle(selected, { 'grid-template-columns': value })}
+            />
+            <TextControl
+              label="Column tracks"
+              value={styleValue(selected, 'grid-template-columns')}
+              fieldKey={`${id}:grid-template-columns`}
+              placeholder="repeat(3, 1fr)"
+              onChange={(value) => setStyle(selected, { 'grid-template-columns': value })}
+            />
+            <TextControl
+              label="Row tracks"
+              value={styleValue(selected, 'grid-template-rows')}
+              fieldKey={`${id}:grid-template-rows`}
+              placeholder="auto"
+              onChange={(value) => setStyle(selected, { 'grid-template-rows': value })}
+            />
+          </>
+        )}
+
+        {/* Both layout modes read these, and both spell the values the same way. */}
+        {(isFlex || isGrid) && (
           <>
             <SelectControl
               label="Justify"
@@ -620,19 +756,124 @@ export function Inspector({ editor, files = [], onUploadImage }: InspectorProps)
               options={alignOptions}
               onChange={(value) => setStyle(selected, { 'align-items': value })}
             />
+            <TextControl
+              label="Gap"
+              value={styleValue(selected, 'gap')}
+              fieldKey={`${id}:gap`}
+              placeholder="16px"
+              onChange={(value) => setStyle(selected, { gap: value })}
+            />
           </>
         )}
+      </PanelSection>
 
-        {(isFlex || isGrid) && (
-          <TextControl
-            label="Gap"
-            value={styleValue(selected, 'gap')}
-            fieldKey={`${id}:gap`}
-            placeholder="16px"
-            onChange={(value) => setStyle(selected, { gap: value })}
-          />
+      <PanelSection title="Position">
+        <SelectControl
+          label="Mode"
+          value={position}
+          options={positionOptions}
+          emptyLabel="Static (in flow)"
+          onChange={(value) => setPosition(selected, value)}
+          hint={
+            isPositioned
+              ? undefined
+              : 'Switch to Absolute to place this anywhere on the page, or Relative to nudge it and hold positioned children.'
+          }
+        />
+
+        {isPositioned && (
+          <>
+            <BoxControl
+              label="Offset"
+              value={insetValues(selected)}
+              fieldKey={`${id}:inset`}
+              onChange={(side, value) => setInsetSide(selected, side, value)}
+            />
+            <TextControl
+              label="Z-index"
+              value={styleValue(selected, 'z-index')}
+              fieldKey={`${id}:z-index`}
+              placeholder="auto"
+              hint="Higher numbers sit in front."
+              onChange={(value) => setStyle(selected, { 'z-index': value })}
+            />
+          </>
         )}
       </PanelSection>
+
+      {(inFlex || inGrid) && (
+        <PanelSection title={inGrid ? 'Grid item' : 'Flex item'}>
+          {inFlex && (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <TextControl
+                  label="Grow"
+                  value={styleValue(selected, 'flex-grow')}
+                  fieldKey={`${id}:flex-grow`}
+                  placeholder="0"
+                  onChange={(value) => setStyle(selected, { 'flex-grow': value })}
+                />
+                <TextControl
+                  label="Shrink"
+                  value={styleValue(selected, 'flex-shrink')}
+                  fieldKey={`${id}:flex-shrink`}
+                  placeholder="1"
+                  onChange={(value) => setStyle(selected, { 'flex-shrink': value })}
+                />
+              </div>
+              <TextControl
+                label="Basis"
+                value={styleValue(selected, 'flex-basis')}
+                fieldKey={`${id}:flex-basis`}
+                placeholder="auto"
+                hint="The size to start from before growing or shrinking — try 30% for a sidebar."
+                onChange={(value) => setStyle(selected, { 'flex-basis': value })}
+              />
+            </>
+          )}
+
+          {inGrid && (
+            <>
+              <TextControl
+                label="Column"
+                value={styleValue(selected, 'grid-column')}
+                fieldKey={`${id}:grid-column`}
+                placeholder="auto"
+                hint="`span 2` to widen it, or `1 / 4` to pin it to specific lines."
+                onChange={(value) => setStyle(selected, { 'grid-column': value })}
+              />
+              <TextControl
+                label="Row"
+                value={styleValue(selected, 'grid-row')}
+                fieldKey={`${id}:grid-row`}
+                placeholder="auto"
+                onChange={(value) => setStyle(selected, { 'grid-row': value })}
+              />
+              <SelectControl
+                label="Justify self"
+                value={styleValue(selected, 'justify-self')}
+                options={justifySelfOptions}
+                onChange={(value) => setStyle(selected, { 'justify-self': value })}
+              />
+            </>
+          )}
+
+          <SelectControl
+            label="Align self"
+            value={styleValue(selected, 'align-self')}
+            options={alignSelfOptions}
+            onChange={(value) => setStyle(selected, { 'align-self': value })}
+          />
+          <TextControl
+            label="Order"
+            value={styleValue(selected, 'order')}
+            fieldKey={`${id}:order`}
+            placeholder="0"
+            hint="Reorders this item without moving it in the markup."
+            onChange={(value) => setStyle(selected, { order: value })}
+          />
+        </PanelSection>
+      )}
 
       <PanelSection title="Size">
         <div className="grid grid-cols-2 gap-2">

@@ -1,6 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import type { Editor } from 'grapesjs';
-import { Eye, Monitor, Redo2, Smartphone, SquareDashed, Tablet, Undo2 } from 'lucide-react';
+import {
+  Eye,
+  Monitor,
+  Move,
+  Redo2,
+  Smartphone,
+  SquareDashed,
+  Tablet,
+  Undo2,
+} from 'lucide-react';
 
 import { nsiteDevices } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
@@ -32,6 +41,7 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
 
   const [outlines, setOutlines] = useState(true);
   const [preview, setPreview] = useState(false);
+  const [freeLayout, setFreeLayout] = useState(false);
 
   const undoManager = editor?.UndoManager;
   const activeDevice = editor?.getDevice();
@@ -43,6 +53,23 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
     // A togglable core command: run to draw the dashed boxes, stop to hide them.
     if (next) editor.runCommand('core:component-outline');
     else editor.stopCommand('core:component-outline');
+  };
+
+  /**
+   * Flow layout vs. free layout, for the whole page.
+   *
+   * In free layout GrapesJS drags components by writing `position:absolute` and
+   * offsets onto them, with alignment guides, instead of sorting them into
+   * their parent's flow — and a block dragged from the palette lands wherever
+   * it was dropped rather than in the nearest container. Flow is still the
+   * default, because a page built entirely out of absolute coordinates does not
+   * survive a narrow screen.
+   */
+  const toggleFreeLayout = () => {
+    if (!editor) return;
+    const next = !freeLayout;
+    setFreeLayout(next);
+    editor.setDragMode(next ? 'absolute' : '');
   };
 
   const togglePreview = () => {
@@ -122,6 +149,16 @@ export function EditorToolbar({ editor, leading, trailing }: EditorToolbarProps)
       </div>
 
       <div className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          onClick={toggleFreeLayout}
+          aria-pressed={freeLayout}
+          title="Free layout — drag anything anywhere"
+          className={cn(buttonClass, freeLayout && 'bg-accent text-foreground')}
+        >
+          <Move className="size-4" aria-hidden="true" />
+          <span className="sr-only">Free layout</span>
+        </button>
         <button
           type="button"
           onClick={toggleOutlines}

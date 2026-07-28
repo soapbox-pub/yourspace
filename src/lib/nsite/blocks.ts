@@ -219,13 +219,64 @@ const footerBlock = `
   </footer>
 `;
 
+/* --------------------------------------------------------------------------
+ * Layout
+ *
+ * Structural blocks: containers with nothing in them, whose only job is to give
+ * the page a shape other than one column of stacked sections.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * An empty drop target.
+ *
+ * Dashed and given a minimum height because a div with no children is zero
+ * tall and therefore impossible to drag anything onto — the outline is the
+ * affordance, not decoration. Both are ordinary styles on an ordinary div, so
+ * they can be cleared from the inspector once the slot has content.
+ */
+const dropZone = (style = 'flex:1;') =>
+  `<div style="${style}min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div>`;
+
+const columnsBlock = (count: number) =>
+  `<div style="display:flex;gap:16px;">${Array.from({ length: count }, () => dropZone()).join('')}</div>`;
+
+/** Deliberately uneven, which is the whole reason to reach for it over "2 columns". */
+const sidebarBlock = `
+  <div style="display:flex;gap:16px;">
+    ${dropZone('flex:0 0 30%;')}
+    ${dropZone('flex:1;')}
+  </div>
+`;
+
+const gridBlock = `
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+    ${dropZone('').repeat(6)}
+  </div>
+`;
+
+/**
+ * A positioning context.
+ *
+ * `position:relative` is what makes the children of this block placeable:
+ * `core:component-drag` walks up from the element being dragged looking for an
+ * ancestor styled `relative` or `absolute`, and measures its offsets from the
+ * first one it finds. Without such an ancestor the coordinates are resolved
+ * against the page instead, which is fine but means the group can't be moved
+ * as a unit afterwards.
+ */
+const freeAreaBlock = `
+  <div style="position:relative;min-height:320px;border:1px dashed #cbd5e1;border-radius:12px;"></div>
+`;
+
+const spacerBlock = `<div style="height:64px;"></div>`;
+
 /** Block content as GrapesJS accepts it: markup, or a component reference. */
 export type BlockContent = string | { type: string; style?: Record<string, string> };
 
 export interface NsiteBlockDef {
   id: string;
   label: string;
-  category: 'Nostr' | 'Basic';
+  category: 'Nostr' | 'Basic' | 'Layout';
   /** One line of "what does dropping this give me", shown in the studio palette. */
   description: string;
   content: BlockContent;
@@ -290,24 +341,69 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
     content: '<p style="font-size:18px;line-height:1.7;color:#475569;">Write something here.</p>',
   },
   {
-    id: 'two-columns',
-    label: '2 columns',
-    category: 'Basic',
-    description: 'Two flex drop zones side by side',
-    content:
-      '<div style="display:flex;gap:16px;"><div style="flex:1;min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div><div style="flex:1;min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div></div>',
-  },
-  {
     id: 'image',
     label: 'Image',
     category: 'Basic',
     description: 'Placeholder image, swap via the asset picker',
     content: { type: 'image', style: { width: '100%', 'border-radius': '12px' } },
   },
+  {
+    id: 'two-columns',
+    label: '2 columns',
+    category: 'Layout',
+    description: 'Two equal drop zones side by side',
+    content: columnsBlock(2),
+  },
+  {
+    id: 'three-columns',
+    label: '3 columns',
+    category: 'Layout',
+    description: 'Three equal drop zones side by side',
+    content: columnsBlock(3),
+  },
+  {
+    id: 'sidebar',
+    label: 'Sidebar + main',
+    category: 'Layout',
+    description: 'A narrow rail beside a wide column',
+    content: sidebarBlock,
+  },
+  {
+    id: 'grid',
+    label: 'Grid',
+    category: 'Layout',
+    description: 'Six cells in a 3-across grid, resizable',
+    content: gridBlock,
+  },
+  {
+    id: 'free-area',
+    label: 'Free area',
+    category: 'Layout',
+    description: 'A positioned region — place anything anywhere inside it',
+    content: freeAreaBlock,
+  },
+  {
+    id: 'spacer',
+    label: 'Spacer',
+    category: 'Layout',
+    description: 'Empty vertical room between blocks',
+    content: spacerBlock,
+  },
 ];
 
+/*
+ * `position:relative` on the root is what makes the starting page free-form
+ * rather than a stack. It is the containing block anything positioned inside
+ * measures against — including elements dragged in free layout mode, which
+ * `core:component-drag` offsets from the nearest ancestor styled `relative` or
+ * `absolute`. Without it the first such drag resolves against the page and the
+ * element no longer travels with the column it looked like it was part of.
+ *
+ * The column itself stays: it is how the blocks below want to be arranged, and
+ * anything taken out of flow leaves it without disturbing the rest.
+ */
 export const initialPage = `
-  <div style="max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;">
+  <div style="position:relative;max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#0f172a;">
     ${heroBlock}
     ${aboutBlock}
     ${linksBlock}
@@ -420,6 +516,35 @@ export function nostrComponents(nostr: NPool) {
       },
     });
   };
+}
+
+/**
+ * Resize handles on everything.
+ *
+ * `resizable` defaults to false for every type but `image`, so without this the
+ * only way to size an element is to type a value into the inspector. GrapesJS
+ * already adapts the handles to how the element is being laid out: its resizer
+ * writes `top`/`left` alongside the new size *only* when the component is in a
+ * drag mode, so in normal flow the handles change width and height and nothing
+ * else, and in free layout they reposition as you'd expect from a design tool.
+ *
+ * Registered as a plugin, and listening rather than setting defaults, because
+ * types like `text` and `image` bring their own model class — extending the
+ * `default` type would not reach them. `component:create` fires for every
+ * component whatever its type, and plugins run before `init` parses
+ * `components`, so the starting page is covered too.
+ *
+ * Set silently: this is a property of the editor's chrome, not an edit to the
+ * page, and it should not land in the undo stack or mark the project dirty.
+ */
+export function resizableComponents(editor: Editor) {
+  editor.on('component:create', (component: Component) => {
+    // A bare text node has no element of its own to put handles on.
+    if (component.get('type') === 'textnode') return;
+    if (component.get('resizable')) return;
+
+    component.set('resizable', true, { silent: true });
+  });
 }
 
 export const nsiteDevices = [
