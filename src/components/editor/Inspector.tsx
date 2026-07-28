@@ -12,8 +12,9 @@ import {
 import type { FontFamily } from '@/lib/fonts/catalogue';
 import { fontFamilyValue } from '@/lib/fonts/install';
 import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
-import { parseCssUrl, toCssUrl } from '@/lib/nsite/siteHtml';
+import { parseCssUrl } from '@/lib/nsite/siteHtml';
 import { cn } from '@/lib/utils';
+import { BackgroundPicker } from './BackgroundPicker';
 import {
   BoxControl,
   ColorControl,
@@ -27,6 +28,18 @@ import {
 } from './fields';
 import { FontControl } from './FontControl';
 import { componentName, useEditorEvent, useSelectedComponent } from './editorHooks';
+import {
+  backgroundFit,
+  backgroundValues,
+  fitPatches,
+  pageTarget,
+  setBackground,
+  setStyle,
+  styleValue,
+  toBackgroundImage,
+  type BackgroundFit,
+  type StyleTarget,
+} from './styleTarget';
 
 interface InspectorProps {
   editor: Editor | null;
@@ -38,60 +51,6 @@ interface InspectorProps {
   onInstallFont?: (font: FontFamily) => Promise<boolean>;
   /** Called after a font is set or cleared, so unused faces can be dropped. */
   onFontChanged?: () => void;
-}
-
-/* --------------------------------------------------------------------------
- * Style plumbing
- *
- * Values are read from and written to the component itself rather than through
- * the StyleManager, which is switched off on this page. `getStyle`/`addStyle`
- * already resolve against the active device, so a change made while the mobile
- * breakpoint is selected lands in that media query — the same behaviour the
- * stock Style Manager has.
- * ------------------------------------------------------------------------ */
-
-/**
- * Anything with a style bag: a component, or a bare CSS rule. The page's own
- * background is the second kind — see `pageTarget`.
- */
-interface StyleTarget {
-  getStyle(): Record<string, unknown>;
-  addStyle(patch: Record<string, string>): unknown;
-}
-
-function styleValue(target: StyleTarget, prop: string): string {
-  const value = target.getStyle()[prop];
-  return typeof value === 'string' ? value : '';
-}
-
-/**
- * Writing `''` is how a property is cleared: GrapesJS keeps the key but skips
- * falsy values when serializing, so nothing reaches the exported CSS.
- */
-function setStyle(target: StyleTarget, patch: Record<string, string>) {
-  target.addStyle(patch);
-}
-
-const PAGE_SELECTOR = 'body';
-
-/**
- * The page's own styles, held as a `body` rule rather than on the wrapper
- * component.
- *
- * GrapesJS is willing to style the wrapper — its `stylable` list is exactly the
- * background properties — but component styles are keyed to a generated id, and
- * the wrapper's is minted fresh for each editor session. A `#i3f{…}` rule
- * written today would match nothing when the site is opened again tomorrow,
- * because the `<body id>` it refers to is dropped when a stored page is unwrapped
- * for the canvas. `body{…}` has neither problem: it is the element the canvas
- * frame already is, and it means the same thing in the published file.
- */
-function pageTarget(editor: Editor): StyleTarget {
-  return {
-    getStyle: () => editor.Css.getRule(PAGE_SELECTOR)?.getStyle() ?? {},
-    addStyle: (patch) =>
-      (editor.Css.getRule(PAGE_SELECTOR) ?? editor.Css.setRule(PAGE_SELECTOR, {})).addStyle(patch),
-  };
 }
 
 const boxSideProps = (prop: string) => [
@@ -201,96 +160,6 @@ function setInsetSide(target: StyleTarget, side: number, value: string) {
   setStyle(target, patch);
 }
 
-/* --------------------------------------------------------------------------
- * Background
- * ------------------------------------------------------------------------ */
-
-/** Values that stand in for an image: a file, a gradient, or nothing. */
-const IMAGE_VALUE = /^(url|[a-z-]*gradient|image-set|cross-fade|element)\(|^none$/i;
-
-/**
- * Splits a `background` shorthand into the two parts this panel edits.
- *
- * Returns null for anything richer, in the same spirit as `parseBoxShorthand`:
- * a shorthand carrying a position, a size or a repeat alongside its colour
- * cannot become two longhands without dropping the rest.
- */
-function parseBackgroundShorthand(value: string): { color: string; image: string } | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  // One bare token (`#fff`, `red`, `transparent`), or one function call
-  // (`rgb(…)`, `linear-gradient(…)`) with nothing after it.
-  const single = /^[^\s(]+$/.test(trimmed) || /^[a-z-]+\(.*\)$/is.test(trimmed);
-  if (!single) return null;
-
-  return IMAGE_VALUE.test(trimmed) ? { color: '', image: trimmed } : { color: trimmed, image: '' };
-}
-
-/** Longhand wins where present, otherwise fall back to the shorthand. */
-function backgroundValues(target: StyleTarget): { color: string; image: string } {
-  const shorthand = parseBackgroundShorthand(styleValue(target, 'background'));
-  return {
-    color: styleValue(target, 'background-color') || shorthand?.color || '',
-    image: styleValue(target, 'background-image') || shorthand?.image || '',
-  };
-}
-
-/**
- * Edits collapse the shorthand into longhands, for the reason `setBoxSide`
- * does: a `background` declaration left in the rule would reset whichever of
- * the colour and the image was not just written. A shorthand too rich to split
- * is lost at that point, which is why nothing here writes one back.
- */
-function setBackground(target: StyleTarget, patch: Record<string, string>) {
-  const { color, image } = backgroundValues(target);
-  setStyle(target, {
-    background: '',
-    'background-color': color,
-    'background-image': image,
-    ...patch,
-  });
-}
-
-/** How an image covers its element. */
-type BackgroundFit = 'cover' | 'contain' | 'tile';
-
-/** CSS repeats a background at its natural size by default, which is a tile. */
-function backgroundFit(target: StyleTarget): BackgroundFit {
-  const size = styleValue(target, 'background-size').trim().toLowerCase();
-  return size === 'cover' || size === 'contain' ? size : 'tile';
-}
-
-const fitPatches: Record<BackgroundFit, Record<string, string>> = {
-  cover: {
-    'background-size': 'cover',
-    'background-repeat': 'no-repeat',
-    'background-position': 'center',
-  },
-  contain: {
-    'background-size': 'contain',
-    'background-repeat': 'no-repeat',
-    'background-position': 'center',
-  },
-  // Cleared rather than set to `auto` / `0 0`: those are the CSS defaults, and
-  // a declaration that changes nothing is noise in the exported stylesheet.
-  tile: { 'background-size': '', 'background-repeat': 'repeat', 'background-position': '' },
-};
-
-/**
- * What the user typed, as a `background-image` value.
- *
- * A gradient is as much a background image as a file is, and the free-text
- * fields elsewhere in this panel already take CSS, so anything that reads as an
- * image value is kept as written. The rest is treated as a URL, and has to
- * survive the scheme allowlist to be used.
- */
-function toBackgroundImage(input: string): string {
-  const value = input.trim();
-  if (!value) return '';
-  return IMAGE_VALUE.test(value) ? value : toCssUrl(value);
-}
-
 interface BackgroundFieldsProps {
   target: StyleTarget;
   fieldKey: string;
@@ -359,6 +228,9 @@ function BackgroundFields({ target, fieldKey, images, onUpload }: BackgroundFiel
 
 interface FontFieldsProps {
   target: StyleTarget;
+  label: string;
+  /** Left off where the surrounding panel is already saying enough. */
+  hint?: string;
   onInstallFont?: (font: FontFamily) => Promise<boolean>;
   onFontChanged?: () => void;
 }
@@ -370,7 +242,7 @@ interface FontFieldsProps {
  * that couldn't be downloaded leaves the page exactly as it was rather than
  * naming a family nothing can load.
  */
-function FontFields({ target, onInstallFont, onFontChanged }: FontFieldsProps) {
+function FontFields({ target, label, hint, onInstallFont, onFontChanged }: FontFieldsProps) {
   const change = (value: string) => {
     setStyle(target, { 'font-family': value });
     onFontChanged?.();
@@ -378,9 +250,9 @@ function FontFields({ target, onInstallFont, onFontChanged }: FontFieldsProps) {
 
   return (
     <FontControl
-      label="Font"
+      label={label}
       value={styleValue(target, 'font-family')}
-      hint="Downloaded into the site, so the published page serves its own fonts."
+      hint={hint}
       onPick={async (font) => {
         if (onInstallFont && !(await onInstallFont(font))) return;
         change(fontFamilyValue(font));
@@ -615,7 +487,13 @@ function EmptyState() {
  * Separate from the element panel rather than a set of hidden sections, because
  * almost nothing they show applies: the page has no traits, cannot be
  * duplicated or deleted, and GrapesJS restricts the wrapper to background
- * properties. What is left is one section and an explanation of what it covers.
+ * properties. That leaves two decisions — what the page sits on and what it is
+ * set in — and both are answered here by looking rather than by typing.
+ *
+ * So this one is deliberately unlike the rest of the inspector: no uppercase
+ * section rules, no field labels, no paragraph under each control explaining
+ * what a background is. Choosing how your own page looks should feel like
+ * flipping through swatches, not like filling in a form.
  */
 function PagePanel({
   editor,
@@ -631,35 +509,22 @@ function PagePanel({
   onFontChanged?: () => void;
 }) {
   return (
-    <div>
-      <header className="border-b bg-muted/30 px-4 py-3">
-        <h2 className="truncate text-sm font-semibold text-foreground">Page</h2>
-        <code className="mt-0.5 block truncate text-[11px] text-muted-foreground">body</code>
+    <div className="space-y-5 p-4">
+      <header>
+        <h2 className="text-base font-semibold text-foreground">Your page</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Pick a look. Change it as often as you like.
+        </p>
       </header>
 
-      <PanelSection title="Background">
-        <BackgroundFields
-          target={pageTarget(editor)}
-          fieldKey="page"
-          images={images}
-          onUpload={onUpload}
-        />
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Sits behind every block on this page. Each page in the site keeps its own, since each
-          ships as its own file.
-        </p>
-      </PanelSection>
+      <BackgroundPicker target={pageTarget(editor)} images={images} onUpload={onUpload} />
 
-      <PanelSection title="Typography">
-        <FontFields
-          target={pageTarget(editor)}
-          onInstallFont={onInstallFont}
-          onFontChanged={onFontChanged}
-        />
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          The starting typeface for this page. Anything that doesn’t set its own inherits it.
-        </p>
-      </PanelSection>
+      <FontFields
+        target={pageTarget(editor)}
+        label="Font"
+        onInstallFont={onInstallFont}
+        onFontChanged={onFontChanged}
+      />
     </div>
   );
 }
@@ -745,6 +610,8 @@ export function Inspector({
     <PanelSection title="Typography">
       <FontFields
         target={selected}
+        label="Font"
+        hint="Downloaded into the site, so the published page serves its own fonts."
         onInstallFont={onInstallFont}
         onFontChanged={onFontChanged}
       />

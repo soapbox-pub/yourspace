@@ -1,5 +1,7 @@
 import type { Component, Editor, ResizerOptions } from 'grapesjs';
 
+import { isForeign } from '@/lib/nsite/foreign';
+
 /**
  * The nsite content the builder starts from: its blocks and its starting page.
  *
@@ -43,13 +45,13 @@ const flexFill = 'flex-grow:1;flex-shrink:1;flex-basis:0%;';
 /**
  * An empty drop target.
  *
- * Dashed and given a minimum height because a div with no children is zero
- * tall and therefore impossible to drag anything onto — the outline is the
- * affordance, not decoration. Both are ordinary styles on an ordinary div, so
- * they can be cleared from the inspector once the slot has content.
+ * Given a minimum height because a div with no children is zero tall and
+ * therefore impossible to drag anything onto. Nothing marks it out visually:
+ * the "Show element outlines" toggle already draws a dashed box around every
+ * component while editing, and a border set here would survive into the
+ * published page, where an empty slot should look like empty space.
  */
-const dropZone = (style = flexFill) =>
-  `<div style="${style}min-height:80px;border:1px dashed #cbd5e1;border-radius:8px;"></div>`;
+const dropZone = (style = flexFill) => `<div style="${style}min-height:80px;"></div>`;
 
 const columnsBlock = (count: number) =>
   `<div style="display:flex;gap:16px;">${Array.from({ length: count }, () => dropZone()).join('')}</div>`;
@@ -79,7 +81,7 @@ const gridBlock = `
  * as a unit afterwards.
  */
 const freeAreaBlock = `
-  <div style="position:relative;min-height:320px;border:1px dashed #cbd5e1;border-radius:12px;"></div>
+  <div style="position:relative;min-height:320px;"></div>
 `;
 
 const spacerBlock = `<div style="height:64px;"></div>`;
@@ -163,30 +165,27 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
 ];
 
 /*
- * `position:relative` on the root is what makes the starting page free-form
- * rather than a stack. It is the containing block anything positioned inside
- * measures against — including elements dragged in free layout mode, which
- * `core:component-drag` offsets from the nearest ancestor styled `relative` or
- * `absolute`. Without it the first such drag resolves against the page and the
- * element no longer travels with the column it looked like it was part of.
+ * An empty page, and a whole document rather than a fragment.
  *
- * The column itself stays: it is how dropped blocks want to be arranged, and
- * anything taken out of flow leaves it without disturbing the rest.
+ * Empty because everything here is the user's to write: a page that opens
+ * holding someone else's sections is a page whose first editing session is
+ * spent deleting them, and the palette is right there.
  *
- * The page starts empty, so it needs a `min-height` to be a drop target at all
- * — a flex column with no children is zero tall, and there would be nothing to
- * drag the first block onto.
- *
- * The typeface is set on `body` rather than inline on the root, because that is
- * the rule the inspector's page-level font control writes to. Inline it would
- * win against anything chosen there, and picking a font for the page would
- * appear to do nothing. GrapesJS lifts a `<style>` into the stylesheet whether
- * the page is a document or a fragment, so this survives the round trip.
+ * A document because that is what a site ships, and because the doctype is what
+ * `serializePage` reads to decide whether to serialize one — starting without
+ * it means the `<head>` only appears once something else puts it there. What is
+ * in the head is the minimum a published page needs and nothing that would
+ * render: a charset so the bytes are read as UTF-8, and a viewport so phones
+ * lay the page out at their own width instead of zooming out from 980px.
  */
-export const initialPage = `
-  <style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}</style>
-  <div style="position:relative;max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;color:#0f172a;min-height:60vh;">
-  </div>
+export const initialPage = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body></body>
+</html>
 `;
 
 /**
@@ -202,8 +201,8 @@ export const initialPage = `
  * Registered as a plugin, and listening rather than setting defaults, because
  * types like `text` and `image` bring their own model class — extending the
  * `default` type would not reach them. `component:create` fires for every
- * component whatever its type, and plugins run before `init` parses
- * `components`, so the starting page is covered too.
+ * component whatever its type, and plugins run before anything is parsed, so
+ * the page the editor opens on is covered too.
  *
  * Set silently: this is a property of the editor's chrome, not an edit to the
  * page, and it should not land in the undo stack or mark the project dirty.
@@ -212,6 +211,9 @@ export function resizableComponents(editor: Editor) {
   editor.on('component:create', (component: Component) => {
     // A bare text node has no element of its own to put handles on.
     if (component.get('type') === 'textnode') return;
+    // A placeholder serializes to the markup it stands for, so a size written
+    // onto it would be discarded on save — handles that do nothing.
+    if (isForeign(component)) return;
     if (component.get('resizable')) return;
 
     component.set('resizable', true, { silent: true });
@@ -337,9 +339,8 @@ export const nsiteDevices = [
  *
  * That makes this compensation for an editor artifact rather than page styling,
  * which is why it applies to an imported site as much as to the starting page.
- * Everything else a page needs it either brings itself or gets from behind the
- * frame: the backdrop is on `.gjs-frame`, and the starting template carries its
- * own font on the root div.
+ * Everything else a page needs it brings itself, or gets from behind the frame:
+ * the backdrop is on `.gjs-frame`.
  *
  * The app's CSP forbids `data:` stylesheets, so this is injected as an inline
  * `<style>` into the canvas document rather than passed to `canvas.styles`.

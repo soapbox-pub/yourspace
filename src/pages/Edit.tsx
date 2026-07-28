@@ -43,6 +43,7 @@ import {
   installWeights,
   pruneFontFiles,
 } from '@/lib/fonts/install';
+import { foreignComponents, foreignPlaceholderCss } from '@/lib/nsite/foreign';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import { sha256Hex } from '@/lib/nsite/blobs';
 import {
@@ -120,7 +121,7 @@ interface StudioProject {
   origin: string | null;
 }
 
-/** A one-page site holding the starting content from `nsiteBlocks`. */
+/** A one-page site holding the blank starting page. */
 function initialProject(): StudioProject {
   return {
     files: [textFile(ENTRY_PATH, initialPage)],
@@ -132,10 +133,10 @@ function initialProject(): StudioProject {
 /**
  * What the canvas holds while a signed-in key's own site is still coming.
  *
- * Empty, rather than the starting template. The template is about to be
- * replaced by whatever comes back, and showing it first reads as the editor
- * having discarded the site you opened it to edit — the page you were looking
- * for, replaced by a stranger's demo, and then restored a second later.
+ * Nothing at all, not even the blank starting page. The file about to be
+ * committed is this key's own, and seeding one first would mean the canvas
+ * spends the wait editing a page that is about to be thrown away, undo history
+ * and all.
  */
 function pendingProject(): StudioProject {
   return {
@@ -154,8 +155,9 @@ function pendingProject(): StudioProject {
  * the reset, and an edit made in the inspector has to beat both.
  *
  * Both stylesheets are the same for every page. The reset is the editor
- * artifact fix plus the scrollbar treatment, neither of which is page styling
- * and neither of which a site should have to override.
+ * artifact fix, the scrollbar treatment and the placeholder chips standing in
+ * for scripts and embeds — none of it page styling, and none of it something a
+ * site should have to override.
  */
 function styleCanvas(editor: Editor, siteCss: string) {
   const doc = editor.Canvas.getDocument();
@@ -174,7 +176,7 @@ function styleCanvas(editor: Editor, siteCss: string) {
     doc.head.prepend(reset, site);
   }
 
-  reset.textContent = canvasResetCss + studioScrollbarCss;
+  reset.textContent = canvasResetCss + studioScrollbarCss + foreignPlaceholderCss;
   site.textContent = siteCss;
 }
 
@@ -248,10 +250,10 @@ export function Edit() {
   /**
    * Whether the canvas is being held for the signed-in key's own site.
    *
-   * Signed out there is nothing to wait for, so the starting template goes up
+   * Signed out there is nothing to wait for, so the starting page goes up
    * immediately. Signed in it is held back until the answer arrives, because
    * until then there is no telling whether this key has a site of its own —
-   * and offering the template to someone who does means showing them the wrong
+   * and opening a blank page for someone who does means showing them the wrong
    * page and taking it away again.
    */
   const [awaitingOwnSite, setAwaitingOwnSite] = useState(() => !!owner);
@@ -314,10 +316,11 @@ export function Edit() {
       // Drops the stock theme classes and lets the canvas fill its container
       // instead of leaving 15% for a right-hand panel that no longer exists.
       customUI: true,
-      plugins: [resizableComponents],
-      // Nothing at all while a signed-in key's site is on its way; the starting
-      // template is seeded later, and only if there turns out to be no site.
-      components: owner ? '' : initialPage,
+      plugins: [foreignComponents, resizableComponents],
+      // Empty, whatever the page is going to hold. `components` has no way to
+      // say that markup is a whole document, and the starting page is one, so
+      // it goes in below through the same parse every other file takes.
+      components: '',
       // No backend in this demo, so keep everything in memory.
       storageManager: false,
       // Suppresses the Font Awesome CDN request, which the app's CSP blocks.
@@ -382,6 +385,14 @@ export function Edit() {
     instance.on('canvas:frame:load', () => paintCanvas(instance));
 
     setEditor(instance);
+
+    // Whatever the project opened on: the starting page signed out, nothing at
+    // all while a signed-in key's own site is on its way. `paintCanvas` inside
+    // is a no-op until the frame exists, and the `load` handler above runs it
+    // again once it does.
+    const { files, activePath } = projectRef.current;
+    renderPage(instance, files[0].text ?? '', files, activePath);
+
     syncOutput();
 
     return () => {
@@ -389,8 +400,8 @@ export function Edit() {
       setEditor(null);
       instance.destroy();
     };
-    // `owner` is read once, so this effect runs once.
-  }, [owner, commit, paintCanvas]);
+    // These are all stable callbacks, so this effect runs once.
+  }, [commit, paintCanvas, renderPage]);
 
   // Imported blobs outlive React state unless they are handed back explicitly.
   useEffect(() => () => releaseFiles(projectRef.current.files), []);
@@ -454,10 +465,10 @@ export function Edit() {
   );
 
   /**
-   * Puts the starting template on the canvas.
+   * Puts the starting page on the canvas.
    *
-   * For a key with no site of its own, which is the point at which the
-   * template stops being a placeholder for something incoming and becomes the
+   * For a key with no site of its own, which is the point at which a blank
+   * canvas stops being a placeholder for something incoming and becomes the
    * thing you're meant to edit.
    */
   const startFresh = useCallback(() => {
