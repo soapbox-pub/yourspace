@@ -46,7 +46,7 @@ export interface ServedFile {
   body: Uint8Array | string;
 }
 
-export interface SandboxHostOptions {
+interface SandboxHostOptions {
   /** The frame element. Its `contentWindow` is the only accepted sender. */
   frame: HTMLIFrameElement;
   /** `https://<subdomain>.<sandboxDomain>` — the only accepted origin. */

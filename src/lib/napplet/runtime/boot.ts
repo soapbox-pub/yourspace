@@ -117,7 +117,7 @@ function chrome(host: HTMLElement, status: NappletStatus): void {
  * One relay pool is shared by all of them: a page with four napplets should
  * open four frames, not four sets of sockets.
  */
-export function bootNapplets(root: ParentNode = document): () => void {
+function bootNapplets(root: ParentNode = document): () => void {
   const hosts = [...root.querySelectorAll<HTMLElement>(`[${NAPPLET_ATTR}]`)];
   if (!hosts.length) return () => {};
 

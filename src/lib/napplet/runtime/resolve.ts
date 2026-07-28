@@ -22,7 +22,7 @@ import type { NappletIdentity, NappletNostrEvent } from './types';
 /** A Blossom server is one that can produce bytes, not one that is believed. */
 const BLOB_TIMEOUT = 15000;
 
-export interface ResolvedNapplet {
+interface ResolvedNapplet {
   manifest: NappletManifest;
   identity: NappletIdentity;
   /** The verified `/index.html`, decoded as UTF-8. */

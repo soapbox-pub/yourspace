@@ -336,11 +336,9 @@ const SHIM = `(function () {
  * so it is always empty — but the field is part of the environment a napplet is
  * entitled to read, so it is delivered rather than omitted.
  */
-export function guestShim(domains: string[], services: string[] = []): string {
-  return neutralize(
-    SHIM.replace('__DOMAINS__', JSON.stringify(domains)).replace(
-      '__SERVICES__',
-      JSON.stringify(services),
-    ),
-  );
+export function guestShim(domains: string[]): string {
+  // Always empty: this runtime exposes no named services. The field is still
+  // delivered rather than omitted, because it is part of the environment
+  // NAP-SHELL entitles a napplet to read.
+  return neutralize(SHIM.replace('__DOMAINS__', JSON.stringify(domains)).replace('__SERVICES__', '[]'));
 }

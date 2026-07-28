@@ -18,11 +18,11 @@ import { nip19 } from 'nostr-tools';
 /** Snapshot: regular, pins one version. */
 export const SNAPSHOT_NAPPLET_KIND = 5129;
 /** Root napplet: replaceable, one per pubkey, no `d` tag. */
-export const ROOT_NAPPLET_KIND = 15129;
+const ROOT_NAPPLET_KIND = 15129;
 /** Named napplet: addressable, `d` tag is the identifier. */
 export const NAMED_NAPPLET_KIND = 35129;
 
-export type NappletKind =
+type NappletKind =
   | typeof SNAPSHOT_NAPPLET_KIND
   | typeof ROOT_NAPPLET_KIND
   | typeof NAMED_NAPPLET_KIND;

@@ -60,7 +60,7 @@ export interface MountedNapplet {
   setTheme(theme: NappletTheme): void;
 }
 
-export interface MountOptions extends NappletRuntimeConfig {
+interface MountOptions extends NappletRuntimeConfig {
   /**
    * Distinguishes two copies of the same napplet on one page, for
    * instance-scoped storage. Must be stable across reloads.
