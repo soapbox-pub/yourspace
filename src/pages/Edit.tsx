@@ -11,6 +11,7 @@ import { Blocks, Images, Layers } from 'lucide-react';
 import 'grapesjs/dist/css/grapes.min.css';
 import '@/components/editor/grapesjs.css';
 
+import { Spinner } from '@/components/Spinner';
 import { EditorShell } from '@/components/editor/EditorShell';
 import { OutputPanel } from '@/components/editor/OutputPanel';
 import { AssetList } from '@/components/editor/AssetList';
@@ -20,6 +21,8 @@ import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useOwnNsite } from '@/hooks/useOwnNsite';
 import { useToast } from '@/hooks/useToast';
 import {
   canvasResetCss,
@@ -92,6 +95,35 @@ const RESET_STYLE_ID = 'nsite-canvas-reset';
 const SITE_STYLE_ID = 'nsite-site-css';
 
 const ENTRY_PATH = '/index.html';
+
+/** Long enough that a site which loads promptly never veils the canvas. */
+const LOADING_DELAY = 400;
+
+/**
+ * `active`, but only once it has stayed that way for `delay` — and false again
+ * the moment it stops.
+ *
+ * A wait shorter than this is better not shown at all: something that flashes
+ * up and vanishes reads as a glitch, where nothing at all reads as fast.
+ *
+ * For a wait that happens once. The delay is not re-armed afterwards, so a
+ * second `active` period would show immediately.
+ */
+function useSettled(active: boolean, delay: number): boolean {
+  // Set from the timer and read only while `active`, rather than cleared when
+  // the wait ends: an effect that writes state as it runs makes React render
+  // the whole page twice over to reach the same frame.
+  const [elapsed, setElapsed] = useState(false);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const timer = window.setTimeout(() => setElapsed(true), delay);
+    return () => window.clearTimeout(timer);
+  }, [active, delay]);
+
+  return active && elapsed;
+}
 
 interface StudioProject {
   files: NsiteFile[];
@@ -193,6 +225,7 @@ export function Edit() {
 
   const { nostr } = useNostr();
   const { toast } = useToast();
+  const { user } = useCurrentUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [output, setOutput] = useState({ html: '', json: '' });
@@ -210,6 +243,18 @@ export function Edit() {
     projectRef.current = next;
     setProject(next);
   }, []);
+
+  /*
+   * Opening the editor while signed in opens your own site, if you have one.
+   *
+   * The key is read once, when the page mounts, and the import is a one-shot:
+   * signing in halfway through building something must not replace it, and
+   * switching accounts is not a request to throw away the site on the canvas.
+   * Either of those is what the Import button is for.
+   */
+  const [owner] = useState(() => user?.pubkey);
+  const ownSite = useOwnNsite(owner);
+  const imported = useRef(false);
 
   /** The active page's linked stylesheets, kept for canvas rebuilds. */
   const siteCssRef = useRef('');
@@ -388,6 +433,33 @@ export function Edit() {
     [editor, commit, renderPage, toast],
   );
 
+  useEffect(() => {
+    // `isPending` stays true while the query is disabled, so the settled cases
+    // are the ones with something in hand.
+    if (!editor || imported.current || ownSite.isPending) return;
+
+    // Whatever the answer was, it was for the page as it opened. Acting on it
+    // twice would be overwriting work done since.
+    imported.current = true;
+
+    if (ownSite.data) {
+      // Writing state from an effect, deliberately: the site arrives from the
+      // network, which is exactly the external event an effect is for, and
+      // this runs once in the life of the page rather than on every render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      importSite(ownSite.data);
+    } else if (ownSite.error) {
+      // Not for the absence of a site — that resolves rather than rejects, and
+      // the starting page is already the right thing to offer someone who
+      // hasn't published one. This is a site that exists and wouldn't come.
+      toast({
+        title: 'Could not open your site',
+        description: `${ownSite.error.message} The editor has opened on a blank page instead.`,
+        variant: 'destructive',
+      });
+    }
+  }, [editor, ownSite.isPending, ownSite.data, ownSite.error, importSite, toast]);
+
   /** Replaces the active page with hand-edited markup from the HTML tab. */
   const applyHtml = useCallback(
     (value: string) => {
@@ -400,6 +472,11 @@ export function Edit() {
 
   const pages = pagesOf(project.files);
   const assets = assetsOf(project.files);
+
+  // Covering the canvas for the wait is what keeps the import safe to make:
+  // the starting page underneath is about to be replaced, so it must not be
+  // possible to start editing it.
+  const loadingOwnSite = useSettled(ownSite.isFetching, LOADING_DELAY);
 
   return (
     <EditorShell>
@@ -477,8 +554,15 @@ export function Edit() {
             The inner div is what the editor mounts into, and needs a definite
             size because the canvas positions itself absolutely inside it.
           */}
-          <main className="nsite-studio min-h-0 flex-1 bg-muted/40 p-4">
+          <main className="nsite-studio relative min-h-0 flex-1 bg-muted/40 p-4">
             <div ref={containerRef} className="h-full w-full" />
+
+            {loadingOwnSite && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-sm">
+                <Spinner />
+                <p className="text-sm text-muted-foreground">Loading your published site…</p>
+              </div>
+            )}
           </main>
 
           <aside

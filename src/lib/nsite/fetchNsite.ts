@@ -36,6 +36,20 @@ const CONCURRENCY = 6;
 
 const RELAY_TIMEOUT = 8000;
 
+/**
+ * Nothing is published at that reference.
+ *
+ * Separate from the other failures because it is the ordinary answer for a key
+ * that hasn't made a site yet. Code importing on someone's behalf, rather than
+ * because they pasted an identifier, reads it as "no site" and not as a fault.
+ */
+export class NsiteNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NsiteNotFoundError';
+  }
+}
+
 export interface NsiteImportProgress {
   loaded: number;
   total: number;
@@ -102,7 +116,7 @@ export async function fetchNsite(
 
   const event = latest(events, ref.kind);
   if (!event) {
-    throw new Error(
+    throw new NsiteNotFoundError(
       ref.kind === NAMED_SITE_KIND
         ? `No named site "${ref.identifier}" found for that key.`
         : 'That key has no root nsite published to your relays.',
