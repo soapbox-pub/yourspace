@@ -153,14 +153,6 @@ function heroMarkup(npub: string, metadata: NostrMetadata): string {
   `;
 }
 
-/**
- * The root element as it appears in serialized HTML — no children, because the
- * model generates those. Used to seed the starting page.
- */
-const heroBlock = `<section ${Object.entries(heroAttributes)
-  .map(([name, value]) => `${name}="${escapeHtml(value)}"`)
-  .join(' ')}></section>`;
-
 const aboutBlock = `
   <section style="${card}">
     <h2 style="font-size:24px;font-weight:600;margin:0 0 12px;">About me</h2>
@@ -403,32 +395,27 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
 ];
 
 /*
- * `position:relative` on the root is what makes the starting page free-form
- * rather than a stack. It is the containing block anything positioned inside
- * measures against — including elements dragged in free layout mode, which
- * `core:component-drag` offsets from the nearest ancestor styled `relative` or
- * `absolute`. Without it the first such drag resolves against the page and the
- * element no longer travels with the column it looked like it was part of.
+ * An empty page, and a whole document rather than a fragment.
  *
- * The column itself stays: it is how the blocks below want to be arranged, and
- * anything taken out of flow leaves it without disturbing the rest.
+ * Empty because everything here is the user's to write: a page that opens
+ * holding someone else's sections is a page whose first editing session is
+ * spent deleting them, and the palette is right there.
  *
- * The typeface is set on `body` rather than inline on the root, because that is
- * the rule the inspector's page-level font control writes to. Inline it would
- * win against anything chosen there, and picking a font for the page would
- * appear to do nothing. GrapesJS lifts a `<style>` into the stylesheet whether
- * the page is a document or a fragment, so this survives the round trip.
+ * A document because that is what a site ships, and because the doctype is what
+ * `serializePage` reads to decide whether to serialize one — starting without
+ * it means the `<head>` only appears once something else puts it there. What is
+ * in the head is the minimum a published page needs and nothing that would
+ * render: a charset so the bytes are read as UTF-8, and a viewport so phones
+ * lay the page out at their own width instead of zooming out from 980px.
  */
-export const initialPage = `
-  <style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}</style>
-  <div style="position:relative;max-width:768px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;color:#0f172a;">
-    ${heroBlock}
-    ${aboutBlock}
-    ${linksBlock}
-    ${notesBlock}
-    ${zapBlock}
-    ${footerBlock}
-  </div>
+export const initialPage = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body></body>
+</html>
 `;
 
 /**
@@ -462,8 +449,8 @@ function lockSubtree(parent: Component) {
  * Registered as a plugin rather than after `init`, because `grapesjs.init`
  * loads plugins *before* parsing `components` — the source says so outright:
  * "A plugin might have extended/added some custom type so this is a good point
- * to load stuff like components". Registering afterwards would leave the
- * starting page's hero parsed as an anonymous `<section>`.
+ * to load stuff like components". Registering afterwards would leave a hero in
+ * whatever the editor opened on parsed as an anonymous `<section>`.
  */
 export function nostrComponents(nostr: NPool) {
   return (editor: Editor) => {
@@ -549,8 +536,8 @@ export function nostrComponents(nostr: NPool) {
  * Registered as a plugin, and listening rather than setting defaults, because
  * types like `text` and `image` bring their own model class — extending the
  * `default` type would not reach them. `component:create` fires for every
- * component whatever its type, and plugins run before `init` parses
- * `components`, so the starting page is covered too.
+ * component whatever its type, and plugins run before anything is parsed, so
+ * the page the editor opens on is covered too.
  *
  * Set silently: this is a property of the editor's chrome, not an edit to the
  * page, and it should not land in the undo stack or mark the project dirty.
@@ -687,9 +674,8 @@ export const nsiteDevices = [
  *
  * That makes this compensation for an editor artifact rather than page styling,
  * which is why it applies to an imported site as much as to the starting page.
- * Everything else a page needs it either brings itself or gets from behind the
- * frame: the backdrop is on `.gjs-frame`, and the starting template carries its
- * own font on the root div.
+ * Everything else a page needs it brings itself, or gets from behind the frame:
+ * the backdrop is on `.gjs-frame`.
  *
  * The app's CSP forbids `data:` stylesheets, so this is injected as an inline
  * `<style>` into the canvas document rather than passed to `canvas.styles`.
