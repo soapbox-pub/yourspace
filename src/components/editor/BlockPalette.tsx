@@ -33,7 +33,7 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
   image: Image,
 };
 
-const categories = ['Nostr', 'Basic'] as const;
+const categories = ['Basic', 'Nostr'] as const;
 
 /**
  * Inserts a block without dragging — the keyboard and click path.
