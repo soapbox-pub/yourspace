@@ -86,6 +86,23 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
       },
 
       view: {
+        /*
+         * Where GrapesJS puts — and clears — a component's children.
+         *
+         * `updateContent` runs `getChildrenContainer().innerHTML = ''` on every
+         * render, and this component's element holds a live iframe rather than
+         * children. Left alone, each render tore the napplet out and `onRender`
+         * built a new one, which the next render tore out in turn: a frame that
+         * restarted forever and never got far enough to show anything. Handing
+         * GrapesJS a scratch element to clear instead keeps the real one
+         * untouched, which it can afford because nothing is ever droppable here.
+         */
+        getChildrenContainer() {
+          const view = this as unknown as NappletView;
+          view.scratch ??= view.el.ownerDocument.createElement('div');
+          return view.scratch;
+        },
+
         init() {
           // Traits write to attributes, and GrapesJS emits a per-key change
           // event for each one, so editing the trait reloads the napplet.
@@ -98,32 +115,41 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
 
         reload() {
           const view = this as unknown as NappletView;
-          view.napplet?.destroy();
-          view.napplet = undefined;
-
           const el = view.el;
           const model = view.model;
           const reference = String(model.getAttributes()[NAPPLET_ATTR] ?? '').trim();
 
-          el.innerHTML = '';
+          /*
+           * Nothing has changed and the napplet is still there, so leave it
+           * alone. Remounting would re-resolve the manifest, register the
+           * frame's Service Worker again and throw away whatever state the
+           * napplet had built up — all to arrive back where it already was.
+           */
+          if (view.mounted === reference && view.napplet) return;
+
+          view.napplet?.destroy();
+          view.napplet = undefined;
+          view.chrome?.remove();
+          view.chrome = undefined;
+          view.mounted = reference;
 
           if (!reference) {
-            el.appendChild(notice(el, 'Pick a napplet, or paste an naddr into the panel.'));
+            view.chrome = notice(el, 'Pick a napplet, or paste an naddr into the panel.');
+            el.appendChild(view.chrome);
             return;
           }
 
-          const config = getConfig();
-          let chrome: HTMLElement | null = notice(el, 'Loading napplet…');
-          el.appendChild(chrome);
+          view.chrome = notice(el, 'Loading napplet…');
+          el.appendChild(view.chrome);
 
           view.napplet = mountNapplet(el, reference, {
-            ...config,
+            ...getConfig(),
             theme: pageTheme(el),
             instanceId: model.getId(),
             onStatus: (status: NappletStatus) => {
               if (status.state === 'ready' && !status.missing?.length) {
-                chrome?.remove();
-                chrome = null;
+                view.chrome?.remove();
+                view.chrome = undefined;
                 return;
               }
 
@@ -134,12 +160,14 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
                     ? 'Loading napplet…'
                     : `This page cannot provide: ${status.missing?.join(', ')}.`;
 
-              if (!chrome) {
-                chrome = notice(el, text);
-                el.appendChild(chrome);
+              if (!view.chrome) {
+                view.chrome = notice(el, text);
+                el.appendChild(view.chrome);
               }
-              chrome.textContent = text;
-              chrome.style.inset = status.state === 'ready' ? 'auto 0 0 0' : '0';
+              view.chrome.textContent = text;
+              // A running napplet short of a capability keeps its frame and
+              // gets a footnote; anything else is covered over.
+              view.chrome.style.inset = status.state === 'ready' ? 'auto 0 0 0' : '0';
             },
           });
         },
@@ -148,6 +176,7 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
           const view = this as unknown as NappletView;
           view.napplet?.destroy();
           view.napplet = undefined;
+          view.mounted = undefined;
         },
       },
     });
@@ -159,6 +188,12 @@ interface NappletView {
   el: HTMLElement;
   model: Component;
   napplet?: MountedNapplet;
+  /** The reference currently running, so an unchanged render is a no-op. */
+  mounted?: string;
+  /** The overlay covering a napplet that isn't showing anything yet. */
+  chrome?: HTMLElement;
+  /** Handed to GrapesJS to clear in place of the element holding the frame. */
+  scratch?: HTMLElement;
 }
 
 /**
