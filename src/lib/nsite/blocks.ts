@@ -1,4 +1,9 @@
-import type { Component, Editor, ResizerOptions } from 'grapesjs';
+import type {
+  Component,
+  ComponentResizeEventUpdateProps,
+  Editor,
+  ResizerOptions,
+} from 'grapesjs';
 
 import { isForeign } from '@/lib/nsite/foreign';
 import { isLayoutRow } from '@/lib/nsite/layout';
@@ -140,7 +145,47 @@ export function resizableComponents(editor: Editor) {
     const axis = flexAxis(component.parent()?.getEl());
     if (axis) event.resizable = flexItemResize(component, axis);
   });
+
+  /*
+   * The cap, enforced on the value actually being written.
+   *
+   * `maxDim` stops the resizer's own rectangle, which is what makes the handle
+   * stop alongside the column rather than running on ahead of it — but it is a
+   * single number applied to both axes, so it can only be set for a drag along
+   * one of them. This is the backstop underneath it: the room is read again on
+   * every move, only the property carrying the column's share of the row is
+   * touched, and nothing here depends on which handle was grabbed.
+   */
+  editor.on('component:resize:update', (event: ComponentResizeEventUpdateProps) => {
+    const { component, rect, style, updateStyle, convertPxToUnit } = event;
+    const el = component?.getEl();
+    const axis = flexAxis(component?.parent()?.getEl());
+    if (!el || !axis) return;
+
+    const room = lineRoom(el, axis);
+    if (room === undefined) return;
+
+    const dragged = axis === 'row' ? rect.w : rect.h;
+    if (dragged <= room) return;
+
+    // TEMPORARY: remove once the cap is confirmed in a browser.
+    console.info('[column resize] clamped', { dragged, room });
+
+    updateStyle({
+      ...style,
+      // `el` is already bound inside, and re-stating it is how the exported
+      // signature is satisfied — the same element either way.
+      'flex-basis': convertPxToUnit({
+        el,
+        valuePx: room,
+        unit: '%',
+        isHeight: axis === 'column',
+      }),
+    });
+  });
 }
+
+
 
 /** The mutable half of the `component:resize:init` payload. */
 interface ResizeInitEvent {
@@ -184,6 +229,10 @@ function flexAxis(el: HTMLElement | undefined): 'row' | 'column' | null {
  * settles wider than where it was dropped; without it the column is exactly its
  * basis, and its siblings — which are still growing — absorb the difference.
  * That is what makes the rest of the row give way as one column is dragged.
+ *
+ * `maxDim` is what stops the drag before the line wraps — see `lineRoom`. It is
+ * always assigned, never left alone, because the options object it lands on is
+ * the resizer's own and outlives a single drag.
  */
 function flexItemResize(component: Component, axis: 'row' | 'column'): ResizerOptions {
   const alongMainAxis =
@@ -194,8 +243,112 @@ function flexItemResize(component: Component, axis: 'row' | 'column'): ResizerOp
   return {
     ...alongMainAxis,
     currentUnit: false,
-    onStart: () => freezeFlexSize(component, axis),
+    onStart: (_event, { config, el, resizer }) => {
+      freezeFlexSize(component, axis);
+
+      /*
+       * Only when the drag is along the main axis alone. A corner drags the
+       * cross axis with it, and `maxDim` is one number for both — it would cap
+       * the column's height at the width it may not exceed. Those are left to
+       * the backstop in `resizableComponents`, which clamps the written value
+       * rather than the rectangle.
+       */
+      const sideHandles = axis === 'row' ? ['cl', 'cr'] : ['tc', 'bc'];
+      const handler = resizer.handlerAttr ?? '';
+      config.maxDim = sideHandles.includes(handler) ? lineRoom(el, axis) : undefined;
+    },
   };
+}
+
+/**
+ * How far the dragged edge can travel before its line wraps, in pixels.
+ *
+ * A wrapping flex container breaks lines on each item's *hypothetical* main
+ * size — its basis clamped by min and max — and only shrinks what is left over
+ * afterwards, within a line it has already decided on. So widening one column
+ * squeezes its neighbours right up to their floors and then, with nowhere left
+ * to take the space from, drops the column onto a line of its own. That is the
+ * mobile stacking behaviour firing at desktop width, because the drag has
+ * manufactured exactly the condition a narrow viewport would.
+ *
+ * Capping the drag there is what makes the floor legible: the column stops
+ * against its neighbours instead of tipping over into a different layout.
+ * `maxDim` clamps the resizer's own rectangle rather than just the style it
+ * writes, so the handle stops with the column and the drag feels like it has
+ * hit something.
+ *
+ * The cap is in the pixel space the resizer works in, which is the same space
+ * `freezeFlexSize` measures. GrapesJS converts that to a percentage of the
+ * parent's `offsetWidth` while CSS resolves it against the content box, so the
+ * column settles a padding's worth short of the cap — erring towards stopping
+ * early, which is the safe direction for a limit whose whole job is to prevent
+ * a wrap.
+ */
+function lineRoom(el: HTMLElement, axis: 'row' | 'column'): number | undefined {
+  const parentEl = el.parentElement;
+  const view = el.ownerDocument.defaultView;
+  if (!parentEl || !view) return undefined;
+
+  const parent = view.getComputedStyle(parentEl);
+  // Nothing to hold back: a container that cannot wrap overflows instead, which
+  // is a different problem and one the container itself owns.
+  if (parent.flexWrap === 'nowrap') return undefined;
+
+  const horizontal = axis === 'row';
+
+  // `clientWidth` carries the padding and leaves out the border and any
+  // scrollbar, so the padding is all that has to come off to reach the box the
+  // items are actually laid out in.
+  const inner = horizontal
+    ? parentEl.clientWidth - lengthOf(parent.paddingLeft) - lengthOf(parent.paddingRight)
+    : parentEl.clientHeight - lengthOf(parent.paddingTop) - lengthOf(parent.paddingBottom);
+
+  /*
+   * No `instanceof HTMLElement` here. The canvas is an iframe, so these nodes
+   * belong to a different realm than the one this module was loaded in, and the
+   * check quietly evaluated false for every child — leaving the row looking
+   * childless and the cap set to the full width of it. `children` is already an
+   * element-only collection, so the identity test is the whole filter.
+   */
+  const siblings = Array.from(parentEl.children).filter(
+    (child): child is HTMLElement => child !== el,
+  );
+
+  // One gap per sibling is one fewer than the number of items, which is right.
+  const claimed = siblings.reduce(
+    (total, sibling) => total + itemFloor(sibling, view.getComputedStyle(sibling), horizontal),
+    lengthOf(horizontal ? parent.columnGap : parent.rowGap) * siblings.length,
+  );
+
+  return Math.max(inner - claimed, 0);
+}
+
+/**
+ * The least main-axis room a sibling will give up.
+ *
+ * `flex-shrink` buys nothing at this stage, because line breaking happens
+ * before shrinking does: an item that could shrink still claims its `min-width`
+ * when the line is being formed, and one that cannot shrink claims every pixel
+ * it currently occupies.
+ *
+ * A `min-width` of `auto` claims nothing. Its real floor is the item's
+ * min-content size, which is content-dependent and not worth modelling here —
+ * and reading it as zero errs towards letting the drag continue rather than
+ * stopping it somewhere the user cannot see a reason for.
+ */
+function itemFloor(el: HTMLElement, style: CSSStyleDeclaration, horizontal: boolean): number {
+  const min = lengthOf(horizontal ? style.minWidth : style.minHeight);
+  // `|| 0` because the collection can hold an element without offsets — an
+  // inline SVG, say — and one `undefined` would turn the whole sum into NaN.
+  const rendered = (horizontal ? el.offsetWidth : el.offsetHeight) || 0;
+
+  return lengthOf(style.flexShrink) === 0 ? Math.max(rendered, min) : min;
+}
+
+/** A computed length in pixels, treating keywords like `auto` as no claim. */
+function lengthOf(value: string): number {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 /**
