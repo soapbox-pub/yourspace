@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Editor } from 'grapesjs';
 import { AlertCircle, ChevronRight, Loader2, Search } from 'lucide-react';
 
@@ -17,6 +17,7 @@ import { useGifSearch } from '@/hooks/useGifSearch';
 import { gifUrl, type GifCitiesGif } from '@/lib/gifcities';
 import { escapeHtml } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
+import { CHECKERBOARD } from './checkerboard';
 import { insertContent } from './insertContent';
 import { paletteLinkArrowClass, paletteLinkClass, paletteSectionClass } from './paletteCard';
 
@@ -71,20 +72,6 @@ const SUGGESTIONS = [
   'dancing',
   'star',
 ];
-
-/**
- * Transparency is everywhere in this archive, and a flat panel hides every GIF
- * drawn in white. The checkerboard stays light in both themes, because these
- * were made for light pages and are much more often dark-on-transparent.
- */
-const CHECKERBOARD: CSSProperties = {
-  backgroundColor: '#fff',
-  backgroundImage:
-    'linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%),' +
-    'linear-gradient(45deg,#e2e8f0 25%,transparent 25%,transparent 75%,#e2e8f0 75%)',
-  backgroundSize: '12px 12px',
-  backgroundPosition: '0 0, 6px 6px',
-};
 
 const GRID = 'grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-6';
 
