@@ -1,16 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Editor } from 'grapesjs';
-import {
-  Columns2,
-  Columns3,
-  Frame,
-  Heading2,
-  Image,
-  LayoutGrid,
-  PanelLeft,
-  StretchVertical,
-  Type,
-} from 'lucide-react';
+import { Heading2, Image, Type } from 'lucide-react';
 
 import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
@@ -30,15 +20,7 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
   heading: Heading2,
   text: Type,
   image: Image,
-  'two-columns': Columns2,
-  'three-columns': Columns3,
-  sidebar: PanelLeft,
-  grid: LayoutGrid,
-  'free-area': Frame,
-  spacer: StretchVertical,
 };
-
-const categories = ['Basic', 'Layout'] as const;
 
 function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null }) {
   const Icon = blockIcons[def.id] ?? Type;
@@ -92,22 +74,15 @@ function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null 
  */
 export function BlockPalette({ editor }: BlockPaletteProps) {
   return (
-    <div className="space-y-5">
-      {categories.map((category) => {
-        const defs = nsiteBlockDefs.filter((def) => def.category === category);
-        if (!defs.length) return null;
-
-        return (
-          <section key={category}>
-            <h3 className={cn(paletteSectionClass, 'mb-2 px-1')}>{category}</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {defs.map((def) => (
-                <BlockCard key={def.id} def={def} editor={editor} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+    <section>
+      {/* Named, since the GIFs below are — an unlabelled group over a labelled
+          one reads as though the labels started halfway down the panel. */}
+      <h3 className={cn(paletteSectionClass, 'mb-2 px-1')}>Blocks</h3>
+      <div className="grid grid-cols-2 gap-2">
+        {nsiteBlockDefs.map((def) => (
+          <BlockCard key={def.id} def={def} editor={editor} />
+        ))}
+      </div>
+    </section>
   );
 }
