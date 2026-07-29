@@ -14,9 +14,11 @@ import { fontFamilyValue } from '@/lib/fonts/install';
 import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
 import { isLayoutRow } from '@/lib/nsite/layout';
 import { parseCssUrl } from '@/lib/nsite/siteHtml';
+import { isWordArt } from '@/lib/nsite/wordart';
 import { cn } from '@/lib/utils';
 import { BackgroundPicker } from './BackgroundPicker';
 import { LayoutPanel } from './LayoutPanel';
+import { WordArtGallery } from './WordArtGallery';
 import {
   BoxControl,
   ColorControl,
@@ -735,6 +737,18 @@ export function Inspector({
           </p>
         )}
       </PanelSection>
+
+      {/*
+        Added to the panel rather than replacing it, unlike `LayoutPanel`: a
+        layout row has one decision in it, but word art is an ordinary element
+        that happens to have a gallery — it still wants centring, spacing and a
+        margin, and all of that is below.
+      */}
+      {isWordArt(selected) && (
+        <PanelSection title="Word art">
+          <WordArtGallery component={selected} />
+        </PanelSection>
+      )}
 
       {isText && typography}
 

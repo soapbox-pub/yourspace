@@ -7,6 +7,7 @@ import type {
 
 import { isForeign } from '@/lib/nsite/foreign';
 import { isLayoutRow } from '@/lib/nsite/layout';
+import { wordArtMarkup } from '@/lib/nsite/wordart';
 
 /**
  * The nsite content the builder starts from: its blocks and its starting page.
@@ -60,6 +61,12 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
     label: 'Image',
     description: 'Placeholder image, swap via the asset picker',
     content: { type: 'image', style: { width: '100%', 'border-radius': '12px' } },
+  },
+  {
+    id: 'wordart',
+    label: 'Word art',
+    description: 'Big lettering, styled from a gallery of effects',
+    content: wordArtMarkup(),
   },
 ];
 

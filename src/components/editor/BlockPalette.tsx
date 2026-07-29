@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Editor } from 'grapesjs';
-import { Heading2, Image, Type } from 'lucide-react';
+import { Heading2, Image, Sparkles, Type } from 'lucide-react';
 
 import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ const blockIcons: Record<string, ComponentType<{ className?: string }>> = {
   heading: Heading2,
   text: Type,
   image: Image,
+  wordart: Sparkles,
 };
 
 function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null }) {

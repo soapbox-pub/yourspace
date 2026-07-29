@@ -52,6 +52,7 @@ import {
 } from '@/lib/fonts/install';
 import { foreignComponents, foreignPlaceholderCss } from '@/lib/nsite/foreign';
 import { layoutComponents } from '@/lib/nsite/layout';
+import { wordArtComponents } from '@/lib/nsite/wordart';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import type { StarterLayout } from '@/lib/nsite/starters';
 import { sha256Hex } from '@/lib/nsite/blobs';
@@ -371,6 +372,7 @@ export function Edit() {
         foreignComponents,
         layoutComponents,
         resizableComponents,
+        wordArtComponents,
         nappletComponents(() => nappletConfigRef.current),
       ],
       // Empty, whatever the page is going to hold. `components` has no way to
