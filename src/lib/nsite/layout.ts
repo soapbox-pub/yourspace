@@ -1,7 +1,7 @@
 import type { Component, Editor } from 'grapesjs';
 
 /**
- * A starter layout as one component rather than four loose divs.
+ * A starter layout as one component rather than a handful of loose divs.
  *
  * The columns are the point of the layout and the row is only the frame holding
  * them, but as plain markup the two were indistinguishable: selecting the row
@@ -13,8 +13,9 @@ import type { Component, Editor } from 'grapesjs';
  *
  * Registering it as a type fixes both at once. The row is closed to drops and
  * gets a panel of its own (`LayoutPanel`), and the columns cannot be dragged
- * out, deleted or duplicated — so the four elements behave as the single thing
- * the picker offered, while the insides of each column stay ordinary page.
+ * out, deleted or duplicated — so the row and its columns behave as the single
+ * thing the picker offered, while the insides of each column stay ordinary
+ * page.
  *
  * The columns themselves stay plain `<div>`s. Everything you would want to do
  * to one — a background, some padding, a different share of the row — is
@@ -66,7 +67,7 @@ export type ColumnKind = 'rail' | 'body';
  * panel writes exactly these two properties and a shorthand left in the rule
  * would put back what clearing them is meant to remove.
  */
-export function rowStyle(width: number): string {
+function rowStyle(width: number): string {
   return [
     'display:flex',
     'flex-wrap:wrap',
@@ -95,7 +96,7 @@ export function rowStyle(width: number): string {
  * draws are what makes an empty column visible while editing, and a border set
  * here would survive into the published page.
  */
-export const columnStyle: Record<ColumnKind, string> = {
+const columnStyle: Record<ColumnKind, string> = {
   rail: 'flex-grow:0;flex-shrink:0;flex-basis:220px;align-self:stretch;min-height:120px;',
   body: 'flex-grow:1;flex-shrink:1;flex-basis:0%;min-width:320px;align-self:stretch;min-height:120px;',
 };

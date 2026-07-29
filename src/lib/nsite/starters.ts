@@ -1,10 +1,5 @@
 import { sitePage } from '@/lib/nsite/blocks';
-import {
-  columnStyle,
-  layoutRowMarkup,
-  rowStyle,
-  type ColumnKind,
-} from '@/lib/nsite/layout';
+import { layoutRowMarkup, type ColumnKind } from '@/lib/nsite/layout';
 
 /**
  * The layouts offered when the editor opens on a site that doesn't exist yet.
@@ -15,29 +10,16 @@ import {
  * the part the palette makes easy. So a starter is a set of empty columns and
  * nothing else: no headings, no sample copy, nothing to delete before starting.
  *
- * Written as inline styles for the same reason the blocks are: the canvas is an
- * iframe holding real HTML, where the app's Tailwind classes don't reach. The
- * shapes themselves live in `layout.ts`, which is also where the row and its
- * columns are registered as components.
- *
- * 3 columns is the one built on those components so far; the rest are still
- * plain divs, and will follow once the panel that comes with them has settled.
+ * Each is a row of columns from `layout.ts`, which is where the shapes live and
+ * where the row and its columns are registered as components — so a starter
+ * arrives as one layout with a panel of its own, rather than a handful of loose
+ * divs that can be pulled apart by a drop that misses. All that is left here is
+ * which columns each offers, and how wide the row holding them runs.
  */
 
-/**
- * A page holding one centred row of the given columns, as loose markup.
- *
- * The pre-component form: the row and the columns are ordinary `<div>`s, so
- * everything about them is edited through the general element panel.
- */
+/** A page holding one centred row of the given columns. */
 function starterPage(width: number, columns: ColumnKind[]): string {
-  const cells = columns.map((kind) => `      <div style="${columnStyle[kind]}"></div>`).join('\n');
-
-  return sitePage(`
-    <div style="${rowStyle(width)}">
-${cells}
-    </div>
-  `);
+  return sitePage(`\n${layoutRowMarkup(columns, width)}\n  `);
 }
 
 export interface StarterLayout {
@@ -84,6 +66,6 @@ export const starterLayouts: StarterLayout[] = [
     label: '3 columns',
     description: 'A rail either side',
     columns: [0.34, 1, 0.34],
-    page: sitePage(`\n${layoutRowMarkup(['rail', 'body', 'rail'], 1200)}\n  `),
+    page: starterPage(1200, ['rail', 'body', 'rail']),
   },
 ];
