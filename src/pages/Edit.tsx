@@ -88,12 +88,7 @@ import { isHtmlDocument, toCanvasHtml, toSiteHtml } from '@/lib/nsite/siteHtml';
  * single stylesheet and an nsite's don't.
  */
 
-const blocks = nsiteBlockDefs.map(({ id, label, category, content }) => ({
-  id,
-  label,
-  category,
-  content,
-}));
+const blocks = nsiteBlockDefs.map(({ id, label, content }) => ({ id, label, content }));
 
 /**
  * The page surface has a border and rounded corners here, and a classic

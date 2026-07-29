@@ -25,74 +25,12 @@ export function escapeHtml(value: string): string {
   );
 }
 
-/* --------------------------------------------------------------------------
- * Layout
- *
- * Structural blocks: containers with nothing in them, whose only job is to give
- * the page a shape other than one column of stacked sections.
- * ------------------------------------------------------------------------ */
-
-/**
- * "Take an equal share of the row", spelled out.
- *
- * `flex: 1` says exactly this in one declaration, but it is a shorthand, and
- * resizing a column writes the `flex-basis` longhand — which a `flex: 1` left
- * sitting in the same rule would override. The inspector collapses `padding`
- * and `background` on edit for the same reason.
- */
-const flexFill = 'flex-grow:1;flex-shrink:1;flex-basis:0%;';
-
-/**
- * An empty drop target.
- *
- * Given a minimum height because a div with no children is zero tall and
- * therefore impossible to drag anything onto. Nothing marks it out visually:
- * the "Show element outlines" toggle already draws a dashed box around every
- * component while editing, and a border set here would survive into the
- * published page, where an empty slot should look like empty space.
- */
-const dropZone = (style = flexFill) => `<div style="${style}min-height:80px;"></div>`;
-
-const columnsBlock = (count: number) =>
-  `<div style="display:flex;gap:16px;">${Array.from({ length: count }, () => dropZone()).join('')}</div>`;
-
-/** Deliberately uneven, which is the whole reason to reach for it over "2 columns". */
-const sidebarBlock = `
-  <div style="display:flex;gap:16px;">
-    ${dropZone('flex-grow:0;flex-shrink:0;flex-basis:30%;')}
-    ${dropZone()}
-  </div>
-`;
-
-const gridBlock = `
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-    ${dropZone('').repeat(6)}
-  </div>
-`;
-
-/**
- * A positioning context.
- *
- * `position:relative` is what makes the children of this block placeable:
- * `core:component-drag` walks up from the element being dragged looking for an
- * ancestor styled `relative` or `absolute`, and measures its offsets from the
- * first one it finds. Without such an ancestor the coordinates are resolved
- * against the page instead, which is fine but means the group can't be moved
- * as a unit afterwards.
- */
-const freeAreaBlock = `
-  <div style="position:relative;min-height:320px;"></div>
-`;
-
-const spacerBlock = `<div style="height:64px;"></div>`;
-
 /** Block content as GrapesJS accepts it: markup, or a component reference. */
 export type BlockContent = string | { type: string; style?: Record<string, string> };
 
 export interface NsiteBlockDef {
   id: string;
   label: string;
-  category: 'Basic' | 'Layout';
   /** One line of "what does dropping this give me", shown in the studio palette. */
   description: string;
   content: BlockContent;
@@ -102,65 +40,20 @@ export const nsiteBlockDefs: NsiteBlockDef[] = [
   {
     id: 'heading',
     label: 'Heading',
-    category: 'Basic',
     description: 'A single section heading',
     content: '<h2 style="font-size:24px;font-weight:600;">Section heading</h2>',
   },
   {
     id: 'text',
     label: 'Text',
-    category: 'Basic',
     description: 'An editable paragraph',
     content: '<p style="font-size:18px;line-height:1.7;color:#475569;">Write something here.</p>',
   },
   {
     id: 'image',
     label: 'Image',
-    category: 'Basic',
     description: 'Placeholder image, swap via the asset picker',
     content: { type: 'image', style: { width: '100%', 'border-radius': '12px' } },
-  },
-  {
-    id: 'two-columns',
-    label: '2 columns',
-    category: 'Layout',
-    description: 'Two equal drop zones side by side',
-    content: columnsBlock(2),
-  },
-  {
-    id: 'three-columns',
-    label: '3 columns',
-    category: 'Layout',
-    description: 'Three equal drop zones side by side',
-    content: columnsBlock(3),
-  },
-  {
-    id: 'sidebar',
-    label: 'Sidebar + main',
-    category: 'Layout',
-    description: 'A narrow rail beside a wide column',
-    content: sidebarBlock,
-  },
-  {
-    id: 'grid',
-    label: 'Grid',
-    category: 'Layout',
-    description: 'Six cells in a 3-across grid, resizable',
-    content: gridBlock,
-  },
-  {
-    id: 'free-area',
-    label: 'Free area',
-    category: 'Layout',
-    description: 'A positioned region — place anything anywhere inside it',
-    content: freeAreaBlock,
-  },
-  {
-    id: 'spacer',
-    label: 'Spacer',
-    category: 'Layout',
-    description: 'Empty vertical room between blocks',
-    content: spacerBlock,
   },
 ];
 
