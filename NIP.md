@@ -73,18 +73,23 @@ follows NIP-5D.
 
 ### NAP capabilities
 
-The runtime injects `window.napplet` with four domains. A napplet declaring
-anything else in a `["requires", "<domain>"]` tag is still loaded, told the
-truth in `shell.init`, and shown a notice — NIP-5D requires napplets to degrade
-gracefully, and refusing to load them outright would be the less useful half of
-the "reject or warn" the spec allows.
+The runtime injects `window.napplet` with seven domains — every NAP merged into
+the [naps registry](https://github.com/napplet/naps), plus the two drafts
+(`relay`, `storage`) it already served. A napplet declaring anything else in a
+`["requires", "<domain>"]` tag is still loaded, told the truth in `shell.init`,
+and shown a notice — NIP-5D requires napplets to degrade gracefully, and
+refusing to load them outright would be the less useful half of the "reject or
+warn" the spec allows.
 
 | Domain | Spec | Notes |
 |--------|------|-------|
-| `shell` | NAP-SHELL | Complete. |
+| `shell` | NAP-SHELL | Complete. Capability calls are refused until the handshake. |
 | `relay` | NAP-RELAY | **Read only.** `subscribe`, `query` and `close` work. |
 | `storage` | NAP-STORAGE | Complete, backed by `localStorage`, 512 KB per napplet. |
 | `theme` | NAP-THEME | `theme.get` and `theme.changed`. Sourced from the host page's own computed colours, not from a kind 16767 event. |
+| `inc` | NAP-INC | Complete: topics and channels, scoped to one page. |
+| `intent` | NAP-INTENT | Complete, with the default handler decided by document order. |
+| `identity` | NAP-IDENTITY | Complete except `getBlocked`, and answers for nobody on a published page. |
 
 **Why relay writes are refused.** NAP-RELAY makes publishing the shell's job
 precisely so the shell can decide, and this shell has nothing to decide with: it
@@ -93,6 +98,31 @@ no claim on the reader's. A signature there would be either forged or coerced
 out of a visitor who came to look at a homepage. So `relay.publish` and
 `relay.publishEncrypted` return `{ ok: false, error }` — a truthful refusal
 rather than a capability quietly missing.
+
+**The page is the shell.** NAP-INC and NAP-INTENT describe a runtime that
+composes napplets, and here that runtime is one HTML page: the switchboard is
+per-document, so two napplets can reach each other exactly when they were placed
+on the same page. A napplet published as a *root* napplet (kind 15129) has no
+`d` tag, so it can emit, subscribe and invoke, but cannot be named as a channel
+target or resolved as an intent handler — NAP-INC and NAP-INTENT both address
+peers by `dTag`, and a name every root napplet shares is no name at all.
+
+**Default handlers, without a user to ask.** NAP-INTENT requires a
+user-overridable default handler per archetype and an "open with…" chooser. A
+published page has neither a settings screen nor chrome of its own to draw a
+chooser in. The default is therefore the first candidate in document order —
+which is the page author's arrangement, the closest thing a static page has to a
+user expressing a preference — and `handler: "choose"` resolves only when there
+is exactly one candidate, otherwise failing with `no chooser available` rather
+than letting the shell pick on the user's behalf.
+
+**NAP-IDENTITY has no signer to report.** On a published page `getPublicKey()`
+returns `""`, which the spec defines as "no signer connected". The reader's
+NIP-07 extension is deliberately not consulted: `getPublicKey()` puts a
+permission prompt in front of someone who came to look at a homepage. In the
+editor the capability is live, reporting the signed-in user. `getBlocked()`
+always returns `[]` — no NIP defines a block list distinct from a mute list, and
+answering with mutes would report one thing as another.
 
 ### Sandboxing — a departure from NIP-5D
 

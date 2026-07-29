@@ -315,12 +315,15 @@ export function Edit() {
         config.useAppBlossomServers,
       ),
       sandboxDomain: config.sandboxDomain,
+      // NAP-IDENTITY's shell user. The editor has one; a published page won't.
+      pubkey: user?.pubkey,
     }),
     [
       config.relayMetadata,
       config.blossomServerMetadata,
       config.useAppBlossomServers,
       config.sandboxDomain,
+      user?.pubkey,
     ],
   );
 

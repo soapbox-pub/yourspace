@@ -2,8 +2,10 @@ import { deriveIframeSubdomain } from '@/lib/iframeSubdomain';
 import { getMimeType } from '@/lib/sandbox/mimeTypes';
 
 import { decodeNappletRef, describeNapplet, NAPPLET_ENTRY } from '../manifest';
+import type { NappletBus } from './bus';
 import { guestShim } from './guest';
 import { NAPPLET_ALLOW, NAPPLET_SANDBOX, SHIM_PATH, withShim } from './frame';
+import type { NappletIdentityService } from './identity';
 import { RelayPool } from './relayPool';
 import { fetchNappletBlob, resolveNapplet, resolveRelays } from './resolve';
 import { serveSandbox, type ServedFile } from './sandboxHost';
@@ -107,6 +109,16 @@ interface MountOptions extends NappletRuntimeConfig {
   onStatus?: (status: NappletStatus) => void;
   /** Shared between every napplet on the page, so one socket serves all. */
   pool?: RelayPool;
+  /**
+   * The page's NAP-INC / NAP-INTENT switchboard.
+   *
+   * Shared, and necessarily so: two napplets can only reach each other through
+   * a shell that is hosting them both, so a bus per napplet would be a page of
+   * napplets that each believe they are alone.
+   */
+  bus: NappletBus;
+  /** The shell user, for NAP-IDENTITY. Shared for the same reason. */
+  user: NappletIdentityService;
 }
 
 /**
@@ -235,14 +247,38 @@ export function mountNapplet(
     frame.style.cssText = 'position:absolute;inset:0;display:block;width:100%;height:100%;border:0;';
     if (!interactive) frame.style.pointerEvents = 'none';
 
-    session = new NappletSession(
+    session = new NappletSession({
       identity,
-      (message) => sandbox?.push(message),
+      title: describeNapplet(manifest),
+      archetypes: manifest.archetypes,
+      send: (message) => sandbox?.push(message),
       pool,
       relays,
-      options.instanceId,
-      options.theme ?? pageTheme(),
-    );
+      instanceId: options.instanceId,
+      theme: options.theme ?? pageTheme(),
+      bus: options.bus,
+      user: options.user,
+      /*
+       * NAP-INTENT's `behavior.focus`. A shell with windows would raise one;
+       * this one has slots in a page, so the equivalent is bringing the slot to
+       * the reader and handing it the keyboard.
+       */
+      focus: () => {
+        const reduced = host.ownerDocument.defaultView?.matchMedia(
+          '(prefers-reduced-motion: reduce)',
+        ).matches;
+        host.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+        frame?.focus();
+      },
+    });
+
+    /*
+     * Registered now, before the napplet has loaded, because NAP-INTENT sources
+     * availability from the installed catalog rather than from what is running:
+     * a handler that is still booting is one a caller can be told about, and an
+     * intent aimed at it waits for it rather than failing.
+     */
+    options.bus.register(session);
 
     sandbox = serveSandbox({
       frame,

@@ -1,3 +1,6 @@
+import type { NappletArchetype } from '../manifest';
+import type { IntentRequest, NappletBus, NappletEndpoint } from './bus';
+import type { NappletIdentityService } from './identity';
 import { isRelayUrl, RelayPool } from './relayPool';
 import { NappletStorage } from './storage';
 import type {
@@ -19,7 +22,15 @@ import type {
  */
 
 /** The domains this runtime serves. Order is the order a napplet sees them. */
-export const GRANTED_DOMAINS = ['shell', 'relay', 'storage', 'theme'] as const;
+export const GRANTED_DOMAINS = [
+  'shell',
+  'relay',
+  'storage',
+  'theme',
+  'inc',
+  'intent',
+  'identity',
+] as const;
 
 /** NAP-RELAY caps nothing by default; an unbounded filter is a hostile one. */
 const MAX_LIMIT = 500;
@@ -27,11 +38,42 @@ const MAX_LIMIT = 500;
 /** Enough for a napplet to be useful, few enough that one can't exhaust the pool. */
 const MAX_SUBSCRIPTIONS = 16;
 
+/** Likewise for topics: a napplet coordinating with its neighbours needs a handful. */
+const MAX_TOPICS = 32;
+
+/** Long enough for any convention identity, short enough not to be a payload. */
+const MAX_TOPIC_LENGTH = 512;
+
 type Send = (message: Record<string, unknown>) => void;
 
 interface RelayEventResult {
   event: NappletNostrEvent;
   sidecar?: { relayHints?: string[] };
+}
+
+export interface NappletSessionOptions {
+  /** Computed from the verified bytes; never anything the napplet claimed. */
+  identity: NappletIdentity;
+  /** A human label, for a NAP-INTENT candidate list. */
+  title: string;
+  /** The roles the manifest declared this napplet fulfills. */
+  archetypes: NappletArchetype[];
+  send: Send;
+  pool: RelayPool;
+  /** The relays a scoped NAP-RELAY subscription may name. */
+  relays: string[];
+  /**
+   * Distinguishes two copies of the same napplet on one page, for
+   * instance-scoped storage and as NAP-INTENT's `windowId`.
+   */
+  instanceId: string;
+  theme: NappletTheme;
+  /** The page's NAP-INC / NAP-INTENT switchboard, shared by every napplet on it. */
+  bus: NappletBus;
+  /** The shell user, for NAP-IDENTITY. Shared for the same reason. */
+  user: NappletIdentityService;
+  /** Brings this napplet's slot into view, for NAP-INTENT's `behavior.focus`. */
+  focus: () => void;
 }
 
 /**
@@ -53,33 +95,93 @@ function sanitizeFilters(value: unknown): NappletNostrFilter[] {
     });
 }
 
-export class NappletSession {
+/** A topic string the bus can route on, or nothing. */
+function topicOf(value: unknown): string | null {
+  if (typeof value !== 'string' || !value || value.length > MAX_TOPIC_LENGTH) return null;
+  return value;
+}
+
+export class NappletSession implements NappletEndpoint {
+  readonly identity: NappletIdentity;
+  readonly title: string;
+  readonly archetypes: NappletArchetype[];
+  readonly windowId: string;
+
   private readonly storage: NappletStorage;
   private readonly closers = new Map<string, () => void>();
+  private readonly subscribedTopics = new Set<string>();
+  private readonly send: Send;
+  private readonly pool: RelayPool;
+  private readonly relays: string[];
+  private readonly bus: NappletBus;
+  private readonly user: NappletIdentityService;
+  private readonly focusSlot: () => void;
+  private stopWatchingUser: (() => void) | null = null;
+  private theme: NappletTheme;
   private handshaken = false;
   private destroyed = false;
 
-  constructor(
-    readonly identity: NappletIdentity,
-    private readonly send: Send,
-    private readonly pool: RelayPool,
-    private readonly relays: string[],
-    instanceId: string,
-    private theme: NappletTheme,
-  ) {
-    this.storage = new NappletStorage(identity, instanceId);
+  constructor(options: NappletSessionOptions) {
+    this.identity = options.identity;
+    this.title = options.title;
+    this.archetypes = options.archetypes;
+    this.windowId = options.instanceId;
+
+    this.send = options.send;
+    this.pool = options.pool;
+    this.relays = options.relays;
+    this.bus = options.bus;
+    this.user = options.user;
+    this.focusSlot = options.focus;
+    this.theme = options.theme;
+
+    this.storage = new NappletStorage(options.identity, options.instanceId);
+  }
+
+  /* ---- the bus's view of this napplet ----------------------------------- */
+
+  get dTag(): string {
+    return this.identity.dTag;
+  }
+
+  live(): boolean {
+    return this.handshaken && !this.destroyed;
+  }
+
+  /**
+   * Delivers a shell-initiated message.
+   *
+   * Dropped before the handshake: NAP-SHELL makes `shell.ready` the moment a
+   * napplet's receiver exists, so anything sent earlier lands nowhere and
+   * pretending otherwise would have the bus believing a message was delivered.
+   */
+  push(message: Record<string, unknown>): void {
+    if (!this.live()) return;
+    this.send(message);
+  }
+
+  focus(): void {
+    this.focusSlot();
   }
 
   /** Pushes a new theme to the napplet (NAP-THEME's shell-initiated message). */
   setTheme(theme: NappletTheme): void {
     this.theme = theme;
-    if (this.handshaken) this.send({ type: 'theme.changed', theme });
+    this.push({ type: 'theme.changed', theme });
   }
 
   destroy(): void {
     this.destroyed = true;
     for (const close of this.closers.values()) close();
     this.closers.clear();
+
+    this.stopWatchingUser?.();
+    this.stopWatchingUser = null;
+
+    // Last, because unregistering tells the peers of every channel this napplet
+    // held that it has gone, and that is a message about a napplet that is
+    // already torn down rather than one on its way out.
+    this.bus.unregister(this);
   }
 
   /**
@@ -94,10 +196,16 @@ export class NappletSession {
     const type = message.type;
     if (typeof type !== 'string') return;
 
-    switch (type) {
-      case 'shell.ready':
-        return this.onReady();
+    if (type === 'shell.ready') return this.onReady();
 
+    /*
+     * NAP-SHELL gates everything else. Until the handshake has happened there
+     * is no session to serve, which gives the shell one place to refuse a
+     * napplet every capability at once rather than a check per domain.
+     */
+    if (!this.handshaken) return;
+
+    switch (type) {
       case 'relay.subscribe':
         return this.onSubscribe(message);
       case 'relay.close':
@@ -116,6 +224,38 @@ export class NappletSession {
 
       case 'theme.get':
         return this.send({ type: 'theme.get.result', id: message.id, theme: this.theme });
+
+      case 'inc.emit':
+      case 'inc.subscribe':
+      case 'inc.unsubscribe':
+      case 'inc.channel.open':
+      case 'inc.channel.emit':
+      case 'inc.channel.broadcast':
+      case 'inc.channel.list':
+      case 'inc.channel.close':
+        return this.onInc(message, type);
+
+      case 'intent.invoke':
+      case 'intent.available':
+      case 'intent.handlers':
+        return this.onIntent(message, type);
+
+      case 'identity.getPublicKey':
+        return this.send({
+          type: 'identity.getPublicKey.result',
+          id: message.id,
+          pubkey: this.user.getPublicKey(),
+        });
+
+      case 'identity.getRelays':
+      case 'identity.getProfile':
+      case 'identity.getFollows':
+      case 'identity.getList':
+      case 'identity.getZaps':
+      case 'identity.getMutes':
+      case 'identity.getBlocked':
+      case 'identity.getBadges':
+        return void this.onIdentity(message, type);
 
       default:
         // Silently ignored, per NIP-5D: an unknown type must not be
@@ -139,6 +279,12 @@ export class NappletSession {
       type: 'shell.init',
       capabilities: { domains: [...GRANTED_DOMAINS] },
       services: [],
+    });
+
+    // NAP-IDENTITY requires loaded napplets to be told when the user changes,
+    // so they never have to poll for a signer that might appear.
+    this.stopWatchingUser = this.user.onChanged((pubkey) => {
+      this.push({ type: 'identity.changed', pubkey });
     });
   }
 
@@ -262,6 +408,165 @@ export class NappletSession {
         id,
         error: error instanceof Error ? error.message : 'The storage request failed.',
       });
+    }
+  }
+
+  /**
+   * NAP-INC, which is almost entirely the bus's business.
+   *
+   * What is left here is the part that must not be delegated: the emitting
+   * napplet is this session, whatever the message says, so every call passes
+   * `this` and no call passes a sender.
+   */
+  private onInc(message: Record<string, unknown>, type: string): void {
+    const id = message.id;
+
+    switch (type) {
+      case 'inc.emit': {
+        const topic = topicOf(message.topic);
+        if (topic) this.bus.emit(this, topic, message.payload);
+        return;
+      }
+
+      case 'inc.subscribe': {
+        const topic = topicOf(message.topic);
+        if (!topic) {
+          return this.send({ type: 'inc.subscribe.result', id, error: 'unusable topic' });
+        }
+        if (!this.subscribedTopics.has(topic) && this.subscribedTopics.size >= MAX_TOPICS) {
+          return this.send({ type: 'inc.subscribe.result', id, error: 'too many topics' });
+        }
+
+        this.subscribedTopics.add(topic);
+        this.bus.subscribe(this, topic);
+        return this.send({ type: 'inc.subscribe.result', id });
+      }
+
+      case 'inc.unsubscribe': {
+        const topic = topicOf(message.topic);
+        if (!topic) return;
+        this.subscribedTopics.delete(topic);
+        return this.bus.unsubscribe(this, topic);
+      }
+
+      case 'inc.channel.open': {
+        const target = typeof message.target === 'string' ? message.target : '';
+        const opened = this.bus.openChannel(this, target);
+        return this.send({ type: 'inc.channel.open.result', id, ...opened });
+      }
+
+      case 'inc.channel.emit': {
+        const channelId = typeof message.channelId === 'string' ? message.channelId : '';
+        return this.bus.channelEmit(this, channelId, message.payload);
+      }
+
+      case 'inc.channel.broadcast':
+        return this.bus.channelBroadcast(this, message.payload);
+
+      case 'inc.channel.list':
+        return this.send({
+          type: 'inc.channel.list.result',
+          id,
+          channels: this.bus.channelList(this),
+        });
+
+      default: {
+        const channelId = typeof message.channelId === 'string' ? message.channelId : '';
+        return this.bus.closeChannel(this, channelId);
+      }
+    }
+  }
+
+  private onIntent(message: Record<string, unknown>, type: string): void {
+    const id = message.id;
+
+    if (type === 'intent.handlers') {
+      return this.send({ type: 'intent.handlers.result', id, handlers: this.bus.handlers() });
+    }
+
+    if (type === 'intent.available') {
+      const archetype = typeof message.archetype === 'string' ? message.archetype : '';
+      return this.send({
+        type: 'intent.available.result',
+        id,
+        availability: this.bus.availability(archetype),
+      });
+    }
+
+    const request = (
+      message.request && typeof message.request === 'object' ? message.request : {}
+    ) as IntentRequest;
+
+    return this.send({ type: 'intent.invoke.result', id, result: this.bus.invoke(this, request) });
+  }
+
+  /**
+   * One NAP-IDENTITY query.
+   *
+   * Every one of these answers with the same `id` whatever happens, because a
+   * napplet that asked has a promise waiting: a failure is an `error` field
+   * beside an empty result, never a message that never comes.
+   */
+  private async onIdentity(message: Record<string, unknown>, type: string): Promise<void> {
+    const id = message.id;
+    const query = this.identityQuery(message, type);
+    if (!query) return;
+
+    const { field, empty, load } = query;
+
+    try {
+      const value = await load();
+      if (this.destroyed) return;
+      this.send({ type: `${type}.result`, id, [field]: value });
+    } catch (error) {
+      if (this.destroyed) return;
+      this.send({
+        type: `${type}.result`,
+        id,
+        [field]: empty,
+        error: error instanceof Error ? error.message : 'The identity query failed.',
+      });
+    }
+  }
+
+  /**
+   * What a NAP-IDENTITY query reads, and what it answers with when it can't.
+   *
+   * The loads go through the shared cache rather than the service directly, so
+   * a page of napplets all asking who the user follows costs one subscription
+   * between them.
+   */
+  private identityQuery(
+    message: Record<string, unknown>,
+    type: string,
+  ): { field: string; empty: unknown; load: () => Promise<unknown> } | null {
+    const user = this.user;
+
+    switch (type) {
+      case 'identity.getRelays':
+        return { field: 'relays', empty: {}, load: () => user.cached('relays', () => user.getRelays()) };
+      case 'identity.getProfile':
+        return { field: 'profile', empty: null, load: () => user.cached('profile', () => user.getProfile()) };
+      case 'identity.getFollows':
+        return { field: 'pubkeys', empty: [], load: () => user.cached('follows', () => user.getFollows()) };
+      case 'identity.getMutes':
+        return { field: 'pubkeys', empty: [], load: () => user.cached('mutes', () => user.getMutes()) };
+      case 'identity.getBlocked':
+        return { field: 'pubkeys', empty: [], load: () => user.getBlocked() };
+      case 'identity.getZaps':
+        return { field: 'zaps', empty: [], load: () => user.cached('zaps', () => user.getZaps()) };
+      case 'identity.getBadges':
+        return { field: 'badges', empty: [], load: () => user.cached('badges', () => user.getBadges()) };
+      case 'identity.getList': {
+        const listType = typeof message.listType === 'string' ? message.listType : '';
+        return {
+          field: 'entries',
+          empty: [],
+          load: () => user.cached(`list:${listType}`, () => user.getList(listType)),
+        };
+      }
+      default:
+        return null;
     }
   }
 }

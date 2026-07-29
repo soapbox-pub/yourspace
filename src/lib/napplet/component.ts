@@ -1,7 +1,10 @@
 import type { Component, Editor } from 'grapesjs';
 
 import { NAPPLET_ATTR } from './constants';
+import { NappletBus } from './runtime/bus';
+import { NappletIdentityService } from './runtime/identity';
 import { mountNapplet, pageTheme, type MountedNapplet } from './runtime/mount';
+import { RelayPool } from './runtime/relayPool';
 import type { NappletStatus } from './runtime/types';
 
 /**
@@ -26,6 +29,15 @@ export interface NappletCanvasConfig {
   relays: string[];
   blossomServers: string[];
   sandboxDomain: string;
+  /**
+   * The signed-in user, for NAP-IDENTITY.
+   *
+   * The editor is the one place this runtime has one: a published page is read
+   * by a stranger with no signer the page may ask about, but whoever is editing
+   * is signed in here — so a napplet on the canvas can be shown the identity it
+   * would see in a shell that has one.
+   */
+  pubkey?: string;
 }
 
 /** How a napplet with no reference yet, or one that failed, presents itself. */
@@ -61,6 +73,34 @@ export function nappletMarkup(reference: string): string {
  */
 export function nappletComponents(getConfig: () => NappletCanvasConfig) {
   return (editor: Editor) => {
+    /*
+     * One switchboard for the canvas, so two napplets on the page being edited
+     * find each other exactly as they will once it is published — NAP-INC and
+     * NAP-INTENT are the same page-wide thing here as they are there.
+     */
+    const bus = new NappletBus();
+
+    /*
+     * NAP-IDENTITY reads relays of its own rather than borrowing a napplet's,
+     * because in the editor each napplet mounts its own pool and the user's
+     * profile belongs to none of them. Rebuilt when the relay list changes, so
+     * editing relays reaches identity queries the same way it reaches manifests.
+     */
+    let identity: { key: string; pool: RelayPool; service: NappletIdentityService } | null = null;
+
+    const userService = (config: NappletCanvasConfig): NappletIdentityService => {
+      const key = config.relays.join(' ');
+
+      if (!identity || identity.key !== key) {
+        identity?.pool.destroy();
+        const pool = new RelayPool(config.relays);
+        identity = { key, pool, service: new NappletIdentityService(pool) };
+      }
+
+      identity.service.setPublicKey(config.pubkey ?? '');
+      return identity.service;
+    };
+
     editor.DomComponents.addType(NAPPLET_TYPE, {
       isComponent: (el) =>
         el.tagName === 'DIV' && el.hasAttribute?.(NAPPLET_ATTR)
@@ -143,8 +183,12 @@ export function nappletComponents(getConfig: () => NappletCanvasConfig) {
           view.chrome = notice(el, 'Loading napplet…');
           el.appendChild(view.chrome);
 
+          const config = getConfig();
+
           view.napplet = mountNapplet(el, reference, {
-            ...getConfig(),
+            ...config,
+            bus,
+            user: userService(config),
             theme: pageTheme(el),
             instanceId: model.getId(),
             interactive: isSelected(model),

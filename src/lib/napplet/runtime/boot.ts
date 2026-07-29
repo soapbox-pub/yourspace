@@ -1,6 +1,8 @@
 import { APP_BLOSSOM_SERVERS } from '@/lib/appBlossom';
 import { APP_RELAYS } from '@/lib/appRelays';
 
+import { NappletBus } from './bus';
+import { NappletIdentityService } from './identity';
 import { mountNapplet, pageTheme, type MountedNapplet } from './mount';
 import { isRelayUrl, RelayPool } from './relayPool';
 import { resolveRelays } from './resolve';
@@ -132,6 +134,22 @@ function bootNapplets(root: ParentNode = document): () => void {
   }
 
   const pool = new RelayPool([...all]);
+
+  // One switchboard for the page, so the napplets on it can reach each other.
+  const bus = new NappletBus();
+
+  /*
+   * NAP-IDENTITY, with nobody signed in.
+   *
+   * A published page is a static document a stranger is reading; it holds no
+   * key and has no signer to ask. The extension a reader may have installed is
+   * deliberately not consulted — `getPublicKey()` puts a permission prompt in
+   * front of someone who came to look at a homepage, and no napplet asking who
+   * the user is has earned that. So the capability is offered and answers
+   * truthfully: the empty string, which NAP-IDENTITY defines as "no signer".
+   */
+  const user = new NappletIdentityService(pool);
+
   const mounted: MountedNapplet[] = [];
 
   hosts.forEach((host, index) => {
@@ -154,6 +172,8 @@ function bootNapplets(root: ParentNode = document): () => void {
         // page is sitting on white, whatever the page around it is doing.
         theme: pageTheme(host),
         pool,
+        bus,
+        user,
         // Stable across reloads, and distinct between two copies of the same
         // napplet, which is exactly what NAP-STORAGE's instance scope requires.
         instanceId: `${location.pathname}#${index}`,

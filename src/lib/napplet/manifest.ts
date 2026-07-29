@@ -36,6 +36,27 @@ export interface NappletRef {
   relays?: string[];
 }
 
+/**
+ * A role the napplet declares it fulfills, from an `["archetype", slug,
+ * convention]` tag.
+ *
+ * NAP-INTENT routes by the slug and parses by the convention, and treats the
+ * two as independent — so the tags are grouped by slug, and one role may
+ * accumulate several conventions from several tags.
+ */
+export interface NappletArchetype {
+  /** The NAAT slug, e.g. `note`. */
+  archetype: string;
+  /** Stable, queryless convention identities, in manifest order. */
+  conventions: string[];
+  /**
+   * The actions the role answers to, read off the conventions' intent segments
+   * (`napplet:note/open` answers `open`). A role that declares no convention
+   * answers `open`, which is NAP-INTENT's default action.
+   */
+  actions: string[];
+}
+
 export interface NappletManifest {
   ref: NappletRef;
   event: NostrEvent;
@@ -43,6 +64,8 @@ export interface NappletManifest {
   description?: string;
   /** `source` tag: where the napplet's code came from. */
   source?: string;
+  /** `archetype` tags: the roles this napplet can be invoked by (NAP-INTENT). */
+  archetypes: NappletArchetype[];
   /** Absolute path to sha256, in manifest order, deduplicated by path. */
   paths: { path: string; sha256: string }[];
   /** `server` tag hints for where the blobs can be found. */
@@ -105,6 +128,53 @@ function isHttpsUrl(url: string): boolean {
 }
 
 /**
+ * A convention's stable identity, or nothing if the tag doesn't name one.
+ *
+ * NAP-INTENT advertises conventions by their *queryless* identity: the query is
+ * payload sugar for a caller, never part of what a handler matches on. A tag
+ * carrying a fragment names nothing at all and is dropped rather than trimmed.
+ */
+function stableConvention(value: string | undefined): string | undefined {
+  if (!value || value.includes('#')) return undefined;
+
+  const stable = value.split('?')[0];
+  return /^napplet:[a-z0-9-]+\/[a-z0-9-]+$/i.test(stable) ? stable : undefined;
+}
+
+/**
+ * The roles a manifest claims, grouped by slug.
+ *
+ * A napplet with no `archetype` tag is perfectly valid — it simply cannot be
+ * reached by role, which is what NAP-INTENT says about it.
+ */
+function parseArchetypes(event: NostrEvent): NappletArchetype[] {
+  const roles = new Map<string, NappletArchetype>();
+
+  for (const [tag, slug, convention] of event.tags) {
+    if (tag !== 'archetype' || !slug || !/^[a-z0-9-]+$/i.test(slug)) continue;
+
+    const role = roles.get(slug) ?? { archetype: slug, conventions: [], actions: [] };
+    roles.set(slug, role);
+
+    const stable = stableConvention(convention);
+    if (!stable || role.conventions.includes(stable)) continue;
+
+    role.conventions.push(stable);
+
+    const action = stable.slice(stable.indexOf('/') + 1);
+    if (!role.actions.includes(action)) role.actions.push(action);
+  }
+
+  // NAP-INTENT's `action` defaults to `open`, so a role that named no
+  // convention still answers the one every caller sends.
+  for (const role of roles.values()) {
+    if (!role.actions.length) role.actions.push('open');
+  }
+
+  return [...roles.values()];
+}
+
+/**
  * Reads the parts of a manifest the runtime acts on.
  *
  * Malformed `path` tags are dropped rather than failing the whole manifest, as
@@ -137,6 +207,7 @@ export function parseNappletManifest(event: NostrEvent, ref: NappletRef): Napple
     title: firstTag(event, 'title'),
     description: firstTag(event, 'description'),
     source: source && isHttpsUrl(source) ? source : undefined,
+    archetypes: parseArchetypes(event),
     paths,
     servers: event.tags
       .filter(([tag]) => tag === 'server')

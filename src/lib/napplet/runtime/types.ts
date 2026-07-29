@@ -45,6 +45,57 @@ export interface NappletTheme {
   title?: string;
 }
 
+/** The user a napplet is told about (NAP-IDENTITY's `ProfileData`). */
+export interface NappletProfile {
+  name?: string;
+  displayName?: string;
+  about?: string;
+  picture?: string;
+  banner?: string;
+  nip05?: string;
+  lud16?: string;
+  website?: string;
+}
+
+/** One zap receipt, flattened the way NAP-IDENTITY asks for it. */
+export interface NappletZapReceipt {
+  eventId: string;
+  sender: string;
+  /** Millisats, per NAP-IDENTITY. */
+  amount: number;
+  content?: string;
+}
+
+/** One badge award (NIP-58), as NAP-IDENTITY reports it. */
+export interface NappletBadge {
+  id: string;
+  name?: string;
+  description?: string;
+  image?: string;
+  thumbs?: string[];
+  awardedBy: string;
+}
+
+/** NAP-IDENTITY's `RelayMap`: relay URL to what the user does there. */
+export type NappletRelayMap = Record<string, { read: boolean; write: boolean }>;
+
+/** One napplet that can be reached by role (NAP-INTENT's `IntentCandidate`). */
+export interface NappletIntentCandidate {
+  dTag: string;
+  title?: string;
+  actions: string[];
+  conventions: string[];
+  isDefault?: boolean;
+}
+
+/** What NAP-INTENT answers `available()` and `handlers()` with. */
+export interface NappletIntentAvailability {
+  archetype: string;
+  available: boolean;
+  candidates: NappletIntentCandidate[];
+  hasDefault: boolean;
+}
+
 /** Everything the runtime needs to resolve and host napplets. */
 export interface NappletRuntimeConfig {
   /** Relays to resolve manifests from and to serve NAP-RELAY reads with. */
