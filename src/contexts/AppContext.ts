@@ -17,6 +17,19 @@ export interface BlossomServerMetadata {
   updatedAt: number;
 }
 
+/** A GifCities animation the user has placed on a page, and how often. */
+export interface GifUse {
+  /** Base32 digest naming the GIF on the archive's blob host. */
+  checksum: string;
+  /** Words describing it, used as the alt text when it is placed. */
+  text: string;
+  /** Intrinsic size, or 0 when the archive didn't record it. */
+  width: number;
+  height: number;
+  /** How many times it has been placed. */
+  uses: number;
+}
+
 export interface AppConfig {
   /** Current theme */
   theme: Theme;
@@ -51,6 +64,15 @@ export interface AppConfig {
    * tells a finished screenshot from the placeholder served while one renders.
    */
   screenshotUrl: string;
+  /**
+   * GIFs the user has placed, most-used first, so the editor can offer them
+   * back without a search.
+   *
+   * Only the digest is kept. The URL is rebuilt from it, which keeps an edited
+   * config from putting anything of its own choosing into an `img` on the
+   * canvas — a same-origin frame, where a `src` is worth attacking.
+   */
+  frequentGifs: GifUse[];
 }
 
 export interface AppContextType {

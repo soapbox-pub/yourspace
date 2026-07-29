@@ -15,7 +15,12 @@ import {
 import { nsiteBlockDefs, type NsiteBlockDef } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 import { insertContent } from './insertContent';
-import { paletteCardClass, paletteIconClass } from './paletteCard';
+import {
+  paletteIconClass,
+  paletteLabelClass,
+  paletteSectionClass,
+  paletteTileClass,
+} from './paletteCard';
 
 interface BlockPaletteProps {
   editor: Editor | null;
@@ -69,17 +74,13 @@ function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null 
       onDrag={(event) => editor?.BlockManager.__drag(event.nativeEvent)}
       onDragEnd={() => editor?.BlockManager.__endDrag()}
       onClick={() => editor && insertContent(editor, def.content)}
-      className={cn(paletteCardClass, 'cursor-grab active:cursor-grabbing')}
+      // What the row of prose under each name used to say, kept where it costs
+      // no room: the panel is a grid to be scanned, not read.
+      title={`${def.description}. Drag onto the page, or click to drop it below the selection.`}
+      className={cn(paletteTileClass, 'cursor-grab active:cursor-grabbing')}
     >
-      <span className={paletteIconClass}>
-        <Icon className="size-4" aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium leading-tight text-foreground">{def.label}</span>
-        <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-          {def.description}
-        </span>
-      </span>
+      <Icon className={paletteIconClass} aria-hidden="true" />
+      <span className={paletteLabelClass}>{def.label}</span>
     </button>
   );
 }
@@ -91,17 +92,15 @@ function BlockCard({ def, editor }: { def: NsiteBlockDef; editor: Editor | null 
  */
 export function BlockPalette({ editor }: BlockPaletteProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {categories.map((category) => {
         const defs = nsiteBlockDefs.filter((def) => def.category === category);
         if (!defs.length) return null;
 
         return (
           <section key={category}>
-            <h3 className="mb-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {category}
-            </h3>
-            <div className="space-y-0.5">
+            <h3 className={cn(paletteSectionClass, 'mb-2 px-1')}>{category}</h3>
+            <div className="grid grid-cols-2 gap-2">
               {defs.map((def) => (
                 <BlockCard key={def.id} def={def} editor={editor} />
               ))}
@@ -109,10 +108,6 @@ export function BlockPalette({ editor }: BlockPaletteProps) {
           </section>
         );
       })}
-
-      <p className="px-2.5 pt-1 text-xs leading-relaxed text-muted-foreground/80">
-        Drag a block onto the page, or click to drop it below the current selection.
-      </p>
     </div>
   );
 }

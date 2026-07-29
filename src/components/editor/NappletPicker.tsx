@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Editor } from 'grapesjs';
 import type { NostrEvent } from '@nostrify/nostrify';
-import { AlertCircle, Blocks, ExternalLink, Search, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ChevronRight, ExternalLink, Search, ShieldCheck } from 'lucide-react';
 
 import {
   Dialog,
@@ -26,7 +26,7 @@ import {
 import { GRANTED_DOMAINS } from '@/lib/napplet/runtime/session';
 import { cn } from '@/lib/utils';
 import { insertContent } from './insertContent';
-import { paletteCardClass, paletteIconClass } from './paletteCard';
+import { paletteLinkArrowClass, paletteLinkClass } from './paletteCard';
 
 interface NappletPickerProps {
   editor: Editor | null;
@@ -155,22 +155,14 @@ export function NappletPicker({ editor }: NappletPickerProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          type="button"
-          disabled={!editor}
-          className={cn(paletteCardClass, 'disabled:pointer-events-none disabled:opacity-50')}
-        >
-          <span className={paletteIconClass}>
-            <Blocks className="size-4" aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium leading-tight text-foreground">
-              Browse Napplets
-            </span>
-            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-              Sandboxed mini-apps that run on your page
-            </span>
-          </span>
+        {/*
+          Quiet on purpose. Napplets are the panel's most exotic offering and
+          its least reached for, so they get a line of text rather than a card
+          competing with the blocks above.
+        */}
+        <button type="button" disabled={!editor} className={cn(paletteLinkClass, 'px-1')}>
+          Browse napplets
+          <ChevronRight className={paletteLinkArrowClass} aria-hidden="true" />
         </button>
       </DialogTrigger>
 

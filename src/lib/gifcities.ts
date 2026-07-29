@@ -21,6 +21,21 @@ const BLOB_HOST = 'https://blob.gifcities.org/gifcities';
  */
 const CHECKSUM = /^[A-Z2-7]{32}$/;
 
+/** Whether `value` is a digest safe to build a URL — and then markup — from. */
+export function isGifChecksum(value: string): boolean {
+  return CHECKSUM.test(value);
+}
+
+/**
+ * Where the GIF named by `checksum` is served from.
+ *
+ * Exported so that a digest remembered from an earlier session can be turned
+ * back into a GIF without the caller keeping — and having to re-trust — a URL.
+ */
+export function gifUrl(checksum: string): string {
+  return `${BLOB_HOST}/${checksum}.gif`;
+}
+
 export interface GifCitiesGif {
   /** Base32 digest of the GIF's bytes, and its name on the blob host. */
   checksum: string;
@@ -48,11 +63,11 @@ function toGif(raw: unknown): GifCitiesGif | null {
   if (typeof raw !== 'object' || raw === null) return null;
 
   const { checksum, url_text, width, height } = raw as RawGif;
-  if (typeof checksum !== 'string' || !CHECKSUM.test(checksum)) return null;
+  if (typeof checksum !== 'string' || !isGifChecksum(checksum)) return null;
 
   return {
     checksum,
-    url: `${BLOB_HOST}/${checksum}.gif`,
+    url: gifUrl(checksum),
     text: typeof url_text === 'string' ? url_text : '',
     width: size(width),
     height: size(height),

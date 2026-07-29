@@ -48,6 +48,7 @@ const defaultConfig: AppConfig = {
   discoverPubkeys: DISCOVER_PUBKEYS,
   nsiteGatewayDomain: 'shakespeare.to',
   screenshotUrl: 'https://s.wordpress.com/mshots/v1/{url}?w=600&h=400',
+  frequentGifs: [],
 };
 
 export function App() {
