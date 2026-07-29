@@ -39,6 +39,9 @@ export function setStyle(target: StyleTarget, patch: Record<string, string>) {
 
 const PAGE_SELECTOR = 'body';
 
+/** Everything the page's cursor has to cover. See `cursorTarget`. */
+const CURSOR_SELECTOR = 'body, a';
+
 /**
  * The page's own styles, held as a `body` rule rather than on the wrapper
  * component.
@@ -56,6 +59,36 @@ export function pageTarget(editor: Editor): StyleTarget {
     getStyle: () => editor.Css.getRule(PAGE_SELECTOR)?.getStyle() ?? {},
     addStyle: (patch) =>
       (editor.Css.getRule(PAGE_SELECTOR) ?? editor.Css.setRule(PAGE_SELECTOR, {})).addStyle(patch),
+  };
+}
+
+/**
+ * The page's cursor, which needs a wider rule than the rest of the page's
+ * styles and so gets one of its own.
+ *
+ * `cursor` inherits, so `body{…}` reaches almost everything — but inheritance
+ * only applies where nothing else matches, and browsers ship `a:any-link {
+ * cursor: pointer }` in their own stylesheet. Author rules beat the user agent
+ * whatever their specificity, so naming `a` at all is enough; not naming it
+ * leaves every link on the page wearing the arrow while the text between them
+ * wears the choice, which reads as a bug rather than as a decision.
+ *
+ * Form fields are left out on purpose. Their cursors say where you can type and
+ * that is worth more than the effect, which is the same reason the caret is
+ * still a caret inside a text box on a page that has set one.
+ *
+ * Kept apart from `pageTarget` rather than folded into it because a grouped
+ * selector is one rule to GrapesJS: `body, a{…}` is parsed back as itself, and
+ * the properties written there would be invisible to a `getRule('body')` — so
+ * the two targets read and write cleanly past each other.
+ */
+export function cursorTarget(editor: Editor): StyleTarget {
+  return {
+    getStyle: () => editor.Css.getRule(CURSOR_SELECTOR)?.getStyle() ?? {},
+    addStyle: (patch) =>
+      (editor.Css.getRule(CURSOR_SELECTOR) ?? editor.Css.setRule(CURSOR_SELECTOR, {})).addStyle(
+        patch,
+      ),
   };
 }
 

@@ -17,6 +17,7 @@ import { parseCssUrl } from '@/lib/nsite/siteHtml';
 import { isWordArt } from '@/lib/nsite/wordart';
 import { cn } from '@/lib/utils';
 import { BackgroundPicker } from './BackgroundPicker';
+import { CursorPicker } from './CursorPicker';
 import { LayoutPanel } from './LayoutPanel';
 import { WordArtGallery } from './WordArtGallery';
 import {
@@ -35,6 +36,7 @@ import { componentName, useEditorEvent, useSelectedComponent } from './editorHoo
 import {
   backgroundFit,
   backgroundValues,
+  cursorTarget,
   fitPatches,
   pageTarget,
   setBackground,
@@ -491,8 +493,9 @@ function EmptyState() {
  * Separate from the element panel rather than a set of hidden sections, because
  * almost nothing they show applies: the page has no traits, cannot be
  * duplicated or deleted, and GrapesJS restricts the wrapper to background
- * properties. That leaves two decisions — what the page sits on and what it is
- * set in — and both are answered here by looking rather than by typing.
+ * properties. That leaves three decisions — what the page sits on, what it is
+ * set in, and what you point at it with — and each is answered here by looking
+ * rather than by typing.
  *
  * So this one is deliberately unlike the rest of the inspector: no uppercase
  * section rules, no field labels, no paragraph under each control explaining
@@ -529,6 +532,8 @@ function PagePanel({
         onInstallFont={onInstallFont}
         onFontChanged={onFontChanged}
       />
+
+      <CursorPicker target={cursorTarget(editor)} onUpload={onUpload} />
     </div>
   );
 }
