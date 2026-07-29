@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Editor } from 'grapesjs';
-import { AlertCircle, Loader2, Search, Sparkles } from 'lucide-react';
+import { AlertCircle, ChevronRight, Loader2, Search } from 'lucide-react';
 
 import {
   Dialog,
@@ -12,25 +12,26 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFrequentGifs } from '@/hooks/useFrequentGifs';
 import { useGifSearch } from '@/hooks/useGifSearch';
-import type { GifCitiesGif } from '@/lib/gifcities';
+import { gifUrl, type GifCitiesGif } from '@/lib/gifcities';
 import { escapeHtml } from '@/lib/nsite/blocks';
 import { cn } from '@/lib/utils';
 import { insertContent } from './insertContent';
-import { paletteCardClass, paletteIconClass } from './paletteCard';
+import { paletteLinkArrowClass, paletteLinkClass, paletteSectionClass } from './paletteCard';
 
 interface GifPickerProps {
   editor: Editor | null;
 }
 
-/** How many tiles the grid shows, and grows by as it is scrolled. */
+/** How many tiles the dialog's grid shows, and grows by as it is scrolled. */
 const PAGE = 48;
 
 /** Long enough that typing a word is one search rather than five. */
 const DEBOUNCE = 350;
 
 /**
- * What fills the grid before anything has been typed.
+ * What fills the dialog before anything has been typed.
  *
  * There is no browsing the archive: the service answers an empty query with
  * `null`, so something has to be asked for. This is the broadest term that is
@@ -39,6 +40,25 @@ const DEBOUNCE = 350;
  * archive, which are also the most recognisable.
  */
 const BROWSE = 'animated';
+
+/** How many GIFs the sidebar keeps within reach. Two rows of three. */
+const SHELF = 6;
+
+/**
+ * What the shelf holds until the user has placed anything of their own: six of
+ * the genre's landmarks, addressed by digest so they cost no search to show.
+ *
+ * The alt text is written rather than taken from the archive, whose own is the
+ * GeoCities path each GIF was found at ("me tiers quebec images construction").
+ */
+const SHELF_SEED: GifCitiesGif[] = [
+  { checksum: '7BOAHEMLEP2SFBRAZOGOQUDV4N346WV6', text: 'Under construction', width: 177, height: 175 },
+  { checksum: 'LUWH64YFAZNHXQKUUK22GUGIQDOCUQJA', text: 'Email', width: 86, height: 50 },
+  { checksum: 'CAOUOG6W4BV7DCCLCVCK4SYKMMQM45Z4', text: 'Guestbook', width: 112, height: 105 },
+  { checksum: 'TTH2ESLVPZMWGJ3K4XIVOMFNNSRGOEUY', text: 'Spinning globe', width: 90, height: 90 },
+  { checksum: 'H4LATVQPXRYRGJKHBTAAR6ZYSRYHVJBD', text: 'Flames', width: 256, height: 256 },
+  { checksum: 'YXRSO5PPGFYRYZ27A4ZBJA6UDRIDXQQD', text: 'Dancing skeleton', width: 144, height: 117 },
+].map((gif) => ({ ...gif, url: gifUrl(gif.checksum) }));
 
 /** Quick jumps to the genre's landmarks, for anyone without a word in mind. */
 const SUGGESTIONS = [
@@ -97,14 +117,23 @@ function gifMarkup(gif: GifCitiesGif): string {
   return `<img src="${gif.url}" alt="${escapeHtml(gif.text)}"${size} style="max-width:100%;height:auto;display:inline-block;"/>`;
 }
 
-function GifTile({ gif, onPick }: { gif: GifCitiesGif; onPick: (gif: GifCitiesGif) => void }) {
+function GifTile({
+  gif,
+  onPick,
+  disabled,
+}: {
+  gif: GifCitiesGif;
+  onPick: (gif: GifCitiesGif) => void;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => onPick(gif)}
       title={gif.text || 'Untitled'}
       style={CHECKERBOARD}
-      className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border p-1.5 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border p-1.5 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50"
     >
       {/* Lazily: a query leaves thousands of tiles below the fold. */}
       <img
@@ -118,16 +147,8 @@ function GifTile({ gif, onPick }: { gif: GifCitiesGif; onPick: (gif: GifCitiesGi
   );
 }
 
-/**
- * Full-text search over GifCities, dropping the chosen GIF onto the canvas.
- *
- * The GIF is linked from the Internet Archive's blob host rather than copied
- * into the site's own files. Those URLs are content-addressed, so they are as
- * durable as the archive itself, and a homepage that borrows a dozen of them
- * ships nothing heavier than a dozen `<img>` tags.
- */
-export function GifPicker({ editor }: GifPickerProps) {
-  const [open, setOpen] = useState(false);
+/** Full-text search over the whole archive, for when the shelf hasn't got it. */
+function GifSearchDialog({ open, onPick }: { open: boolean; onPick: (gif: GifCitiesGif) => void }) {
   const [query, setQuery] = useState('');
 
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -139,8 +160,7 @@ export function GifPicker({ editor }: GifPickerProps) {
   const typed = useDebounced(query.trim(), DEBOUNCE);
   const term = typed || BROWSE;
 
-  // Nothing is fetched until the dialog is open, so the sidebar button costs
-  // nothing to render.
+  // Nothing is fetched until the dialog is open, so the shelf costs no request.
   const { data, isFetching, error } = useGifSearch(open ? term : '');
 
   /*
@@ -194,135 +214,167 @@ export function GifPicker({ editor }: GifPickerProps) {
     if (scroller) scroller.scrollTop = 0;
   }, [term]);
 
+  return (
+    <DialogContent className="flex max-h-[85dvh] flex-col gap-0 sm:max-w-3xl">
+      <DialogHeader className="shrink-0">
+        <DialogTitle>Find a GIF</DialogTitle>
+        <DialogDescription>
+          The animated GIFs the Internet Archive rescued from GeoCities. Pick one to drop it below
+          your selection.
+        </DialogDescription>
+      </DialogHeader>
+
+      {/*
+        The padding is on the wrapper and the positioning context is the
+        field itself. Putting both on one element centres `top-1/2` on the
+        padding box, which leaves the icons riding half the padding high.
+      */}
+      <div className="shrink-0 pt-4">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            value={query}
+            autoFocus
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="Search the archive…"
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Search GifCities"
+            aria-invalid={Boolean(error)}
+            className="px-9"
+          />
+          {searching && (
+            <Loader2
+              className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-wrap gap-1.5 py-3">
+        {SUGGESTIONS.map((suggestion) => (
+          <button
+            key={suggestion}
+            type="button"
+            onClick={() => setQuery(suggestion)}
+            aria-pressed={typed === suggestion}
+            className={cn(
+              'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              typed === suggestion
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            )}
+          >
+            {suggestion}
+          </button>
+        ))}
+      </div>
+
+      <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
+        {error ? (
+          <p className="flex items-start gap-1.5 py-8 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            {error instanceof Error ? error.message : 'Could not reach GifCities.'}
+          </p>
+        ) : searching ? (
+          <div className={GRID}>
+            {Array.from({ length: 18 }, (_unused, index) => (
+              <Skeleton key={index} className="aspect-square rounded-lg" />
+            ))}
+          </div>
+        ) : !gifs.length ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Nothing in the archive matches “{term}”.
+          </p>
+        ) : (
+          <>
+            <div className={GRID}>
+              {gifs.slice(0, shown).map((gif) => (
+                <GifTile key={gif.checksum} gif={gif} onPick={onPick} />
+              ))}
+            </div>
+
+            {more && (
+              <div ref={setSentinel} className="flex justify-center py-4" aria-hidden="true">
+                <Loader2 className="size-4 text-muted-foreground motion-safe:animate-spin" />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {gifs.length > 0 && !error && (
+        <p className="shrink-0 border-t pt-3 text-xs text-muted-foreground">
+          {typed
+            ? `${gifs.length.toLocaleString()} matches for “${typed}”`
+            : `${gifs.length.toLocaleString()} of the archive’s most-used animations`}{' '}
+          — served by the Internet Archive.
+        </p>
+      )}
+    </DialogContent>
+  );
+}
+
+/**
+ * A shelf of GIFs ready to place, and search over the rest of the archive.
+ *
+ * The shelf is the point. A page in this genre wants half a dozen animations on
+ * it, and going through a search dialog for each one is the difference between
+ * decorating and shopping. It fills with whatever the user reaches for most, so
+ * after a site or two it is their own palette rather than a suggestion.
+ *
+ * Every GIF is linked from the Internet Archive's blob host rather than copied
+ * into the site's own files. Those URLs are content-addressed, so they are as
+ * durable as the archive itself, and a homepage that borrows a dozen of them
+ * ships nothing heavier than a dozen `<img>` tags.
+ */
+export function GifPicker({ editor }: GifPickerProps) {
+  const [open, setOpen] = useState(false);
+  const { gifs: frequent, remember } = useFrequentGifs();
+
+  // The user's own first, topped up from the seed — so the shelf is full on the
+  // first visit and has turned over entirely by the sixth GIF they place.
+  const shelf = useMemo(() => {
+    const mine = frequent.slice(0, SHELF);
+    const seen = new Set(mine.map((gif) => gif.checksum));
+
+    return [...mine, ...SHELF_SEED.filter((gif) => !seen.has(gif.checksum))].slice(0, SHELF);
+  }, [frequent]);
+
   const pick = (gif: GifCitiesGif) => {
     if (!editor) return;
+
     insertContent(editor, gifMarkup(gif));
+    remember(gif);
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          disabled={!editor}
-          className={cn(paletteCardClass, 'disabled:pointer-events-none disabled:opacity-50')}
-        >
-          <span className={paletteIconClass}>
-            <Sparkles className="size-4" aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium leading-tight text-foreground">
-              Find a GIF
-            </span>
-            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-              Animations rescued from GeoCities
-            </span>
-          </span>
-        </button>
-      </DialogTrigger>
+    <section>
+      <div className="mb-2 flex items-center justify-between gap-2 px-1">
+        <h3 className={paletteSectionClass}>GIFs</h3>
 
-      <DialogContent className="flex max-h-[85dvh] flex-col gap-0 sm:max-w-3xl">
-        <DialogHeader className="shrink-0">
-          <DialogTitle>Find a GIF</DialogTitle>
-          <DialogDescription>
-            The animated GIFs the Internet Archive rescued from GeoCities. Pick one to drop it below
-            your selection.
-          </DialogDescription>
-        </DialogHeader>
-
-        {/*
-          The padding is on the wrapper and the positioning context is the
-          field itself. Putting both on one element centres `top-1/2` on the
-          padding box, which leaves the icons riding half the padding high.
-        */}
-        <div className="shrink-0 pt-4">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={query}
-              autoFocus
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="Search the archive…"
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search GifCities"
-              aria-invalid={Boolean(error)}
-              className="px-9"
-            />
-            {searching && (
-              <Loader2
-                className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground motion-safe:animate-spin"
-                aria-hidden="true"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap gap-1.5 py-3">
-          {SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => setQuery(suggestion)}
-              aria-pressed={typed === suggestion}
-              className={cn(
-                'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                typed === suggestion
-                  ? 'border-primary/30 bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-              )}
-            >
-              {suggestion}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <button type="button" disabled={!editor} className={paletteLinkClass}>
+              Search the archive
+              <ChevronRight className={paletteLinkArrowClass} aria-hidden="true" />
             </button>
-          ))}
-        </div>
+          </DialogTrigger>
 
-        <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto">
-          {error ? (
-            <p className="flex items-start gap-1.5 py-8 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {error instanceof Error ? error.message : 'Could not reach GifCities.'}
-            </p>
-          ) : searching ? (
-            <div className={GRID}>
-              {Array.from({ length: 18 }, (_unused, index) => (
-                <Skeleton key={index} className="aspect-square rounded-lg" />
-              ))}
-            </div>
-          ) : !gifs.length ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nothing in the archive matches “{term}”.
-            </p>
-          ) : (
-            <>
-              <div className={GRID}>
-                {gifs.slice(0, shown).map((gif) => (
-                  <GifTile key={gif.checksum} gif={gif} onPick={pick} />
-                ))}
-              </div>
+          <GifSearchDialog open={open} onPick={pick} />
+        </Dialog>
+      </div>
 
-              {more && (
-                <div ref={setSentinel} className="flex justify-center py-4" aria-hidden="true">
-                  <Loader2 className="size-4 text-muted-foreground motion-safe:animate-spin" />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {gifs.length > 0 && !error && (
-          <p className="shrink-0 border-t pt-3 text-xs text-muted-foreground">
-            {typed
-              ? `${gifs.length.toLocaleString()} matches for “${typed}”`
-              : `${gifs.length.toLocaleString()} of the archive’s most-used animations`}{' '}
-            — served by the Internet Archive.
-          </p>
-        )}
-      </DialogContent>
-    </Dialog>
+      <div className="grid grid-cols-3 gap-2">
+        {shelf.map((gif) => (
+          <GifTile key={gif.checksum} gif={gif} onPick={pick} disabled={!editor} />
+        ))}
+      </div>
+    </section>
   );
 }

@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import { z } from 'zod';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { AppContext, type AppConfig, type AppContextType, type Theme, type RelayMetadata, type BlossomServerMetadata } from '@/contexts/AppContext';
+import { AppContext, type AppConfig, type AppContextType, type Theme, type RelayMetadata, type BlossomServerMetadata, type GifUse } from '@/contexts/AppContext';
 
 interface AppProviderProps {
   children: ReactNode;
@@ -27,6 +27,17 @@ const BlossomServerMetadataSchema = z.object({
   updatedAt: z.number(),
 }) satisfies z.ZodType<BlossomServerMetadata>;
 
+// Zod schema for a remembered GIF. The digest is held to the archive's base32
+// alphabet here as well as on the way in, since this is where a hand-edited
+// config re-enters the app.
+const GifUseSchema = z.object({
+  checksum: z.string().regex(/^[A-Z2-7]{32}$/),
+  text: z.string(),
+  width: z.number(),
+  height: z.number(),
+  uses: z.number(),
+}) satisfies z.ZodType<GifUse>;
+
 // Zod schema for AppConfig validation
 const AppConfigSchema = z.object({
   theme: z.enum(['dark', 'light', 'system']),
@@ -37,6 +48,9 @@ const AppConfigSchema = z.object({
   discoverPubkeys: z.array(z.string()),
   nsiteGatewayDomain: z.string(),
   screenshotUrl: z.string(),
+  // Contained, so that one unreadable entry costs the GIF list rather than
+  // every setting stored beside it.
+  frequentGifs: z.array(GifUseSchema).catch([]),
 }) satisfies z.ZodType<AppConfig>;
 
 export function AppProvider(props: AppProviderProps) {

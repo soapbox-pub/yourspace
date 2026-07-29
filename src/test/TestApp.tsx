@@ -37,6 +37,7 @@ export function TestApp({ children }: TestAppProps) {
     discoverPubkeys: [],
     nsiteGatewayDomain: 'shakespeare.to',
     screenshotUrl: 'https://s.wordpress.com/mshots/v1/{url}?w=600&h=400',
+    frequentGifs: [],
   };
 
   return (

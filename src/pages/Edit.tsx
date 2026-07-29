@@ -849,11 +849,9 @@ export function Edit() {
                 <Blocks className="size-3.5 text-muted-foreground" aria-hidden="true" />
                 Components
               </h2>
-              <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-3">
-                <div className="mb-4 space-y-0.5">
-                  <GifPicker editor={editor} />
-                  <NappletPicker editor={editor} />
-                </div>
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+                <GifPicker editor={editor} />
+                <NappletPicker editor={editor} />
                 <BlockPalette editor={editor} />
               </div>
             </div>
