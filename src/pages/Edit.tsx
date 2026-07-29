@@ -22,6 +22,7 @@ import { Inspector } from '@/components/editor/Inspector';
 import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
+import { ResetSiteDialog } from '@/components/editor/ResetSiteDialog';
 import { StarterPicker } from '@/components/editor/StarterPicker';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { registerTextAlign } from '@/components/editor/richText';
@@ -622,6 +623,28 @@ export function Edit() {
   );
 
   /**
+   * Empties the editor and puts the starter layouts back on offer.
+   *
+   * The blobs go back first, because nothing is about to be left holding a
+   * reference to them, and the asset rail is rebuilt from the empty project for
+   * the same reason — its thumbnails are those object URLs, which stop
+   * resolving the moment they are released. The canvas's `@font-face` rules
+   * need no such care: `renderPage` clears the stylesheet on its way in.
+   *
+   * Offering the starters again is the point rather than a side effect. This is
+   * a site with no shape once more, which is the one condition the picker is
+   * for, and it is the same blank page it would be covering on a first visit.
+   */
+  const resetSite = useCallback(() => {
+    if (!editor) return;
+
+    releaseFiles(projectRef.current.files);
+    startFresh();
+    registerAssets(editor, projectRef.current.files);
+    setChoosingStarter(true);
+  }, [editor, startFresh]);
+
+  /**
    * Puts an image on Blossom and into the site.
    *
    * Both halves are needed: the upload is what makes the bytes fetchable by
@@ -788,6 +811,13 @@ export function Edit() {
                 disabled={!editor}
               />
               <ImportNsiteDialog onImport={importSite} disabled={!editor} />
+              {/*
+                Disabled for the wait for the same reason publishing is: the
+                canvas is empty until the site lands, so there is nothing yet
+                to reset — and the site that's coming would land on top of the
+                starters anyway.
+              */}
+              <ResetSiteDialog onReset={resetSite} disabled={!editor || awaitingOwnSite} />
               {project.origin && (
                 <span
                   title={project.origin}
