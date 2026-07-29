@@ -848,8 +848,8 @@ export function Edit() {
                 Components
               </h2>
               <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 pb-4">
-                <BlockPalette editor={editor} />
                 <GifPicker editor={editor} />
+                <BlockPalette editor={editor} />
                 <NappletPicker editor={editor} />
               </div>
             </div>
