@@ -182,6 +182,62 @@ export function SegmentedControl({
   );
 }
 
+interface RangeControlProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  /** The current value, spelled for a reader — `1200px` rather than `1200`. */
+  valueLabel: string;
+  onChange: (value: number) => void;
+}
+
+/**
+ * A slider with its value read out beside the label.
+ *
+ * For the one kind of number where the answer is "however it looks" rather than
+ * a figure anyone knows in advance. Dragging shows the page changing under the
+ * pointer, which is the whole judgement being made; the readout is there so the
+ * result can still be matched somewhere else later.
+ *
+ * Controlled rather than keyed like `TextControl`, because a range input has no
+ * caret to lose — and it has to follow the model, or the thumb springs back to
+ * where it started as the editor's change events land mid-drag.
+ */
+export function RangeControl({
+  label,
+  value,
+  min,
+  max,
+  step,
+  valueLabel,
+  onChange,
+}: RangeControlProps) {
+  const id = useId();
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <label htmlFor={id} className="text-xs font-medium leading-none text-muted-foreground">
+          {label}
+        </label>
+        <span className="text-xs font-medium tabular-nums text-foreground">{valueLabel}</span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      />
+    </div>
+  );
+}
+
 interface ColorControlProps {
   label: string;
   value: string;

@@ -1,6 +1,7 @@
 import type { Component, Editor, ResizerOptions } from 'grapesjs';
 
 import { isForeign } from '@/lib/nsite/foreign';
+import { isLayoutRow } from '@/lib/nsite/layout';
 
 /**
  * The nsite content the builder starts from: its blocks and its starting page.
@@ -117,6 +118,10 @@ export function resizableComponents(editor: Editor) {
     // A placeholder serializes to the markup it stands for, so a size written
     // onto it would be discarded on save — handles that do nothing.
     if (isForeign(component)) return;
+    // A layout row is sized by its own panel, and the width a handle writes
+    // would fight the max-width that panel sets. Its columns keep their
+    // handles: dragging the edge between two of them is how a row is shared out.
+    if (isLayoutRow(component)) return;
     if (component.get('resizable')) return;
 
     component.set('resizable', true, { silent: true });

@@ -1,6 +1,7 @@
 import type { Editor } from 'grapesjs';
 
 import type { BlockContent } from '@/lib/nsite/blocks';
+import { layoutColumnFor } from '@/lib/nsite/layout';
 
 /**
  * Adds content to the page without dragging — the click and keyboard path.
@@ -13,6 +14,20 @@ import type { BlockContent } from '@/lib/nsite/blocks';
  */
 export function insertContent(editor: Editor, content: BlockContent) {
   const selected = editor.getSelected();
+
+  /*
+   * A layout is a unit, so "next to" does not apply inside one. Aiming at the
+   * row would put the block beside the columns and break the layout apart, and
+   * aiming at a column means the inside of it rather than a fourth column — so
+   * either lands in a column, which is the only place content belongs.
+   */
+  const column = selected && layoutColumnFor(selected);
+  if (column) {
+    const [added] = column.append(content);
+    if (added) editor.select(added);
+    return;
+  }
+
   const parent = selected?.parent();
 
   if (selected && parent) {
@@ -27,6 +42,7 @@ export function insertContent(editor: Editor, content: BlockContent) {
 
   const children = wrapper.components();
   const root = children.length === 1 ? (children.at(0) ?? wrapper) : wrapper;
-  const [added] = root.append(content);
+  const target = layoutColumnFor(root) ?? root;
+  const [added] = target.append(content);
   if (added) editor.select(added);
 }

@@ -51,6 +51,7 @@ import {
   pruneFontFiles,
 } from '@/lib/fonts/install';
 import { foreignComponents, foreignPlaceholderCss } from '@/lib/nsite/foreign';
+import { layoutComponents } from '@/lib/nsite/layout';
 import type { NsiteImport } from '@/lib/nsite/fetchNsite';
 import type { StarterLayout } from '@/lib/nsite/starters';
 import { sha256Hex } from '@/lib/nsite/blobs';
@@ -368,6 +369,7 @@ export function Edit() {
       customUI: true,
       plugins: [
         foreignComponents,
+        layoutComponents,
         resizableComponents,
         nappletComponents(() => nappletConfigRef.current),
       ],

@@ -12,9 +12,11 @@ import {
 import type { FontFamily } from '@/lib/fonts/catalogue';
 import { fontFamilyValue } from '@/lib/fonts/install';
 import { isImageFile, type NsiteFile } from '@/lib/nsite/files';
+import { isLayoutRow } from '@/lib/nsite/layout';
 import { parseCssUrl } from '@/lib/nsite/siteHtml';
 import { cn } from '@/lib/utils';
 import { BackgroundPicker } from './BackgroundPicker';
+import { LayoutPanel } from './LayoutPanel';
 import {
   BoxControl,
   ColorControl,
@@ -567,6 +569,10 @@ export function Inspector({
       />
     );
   }
+
+  // A layout row is a frame around its columns rather than an element on the
+  // page, and has one decision in it. Everything below is about the other kind.
+  if (isLayoutRow(selected)) return <LayoutPanel row={selected} />;
 
   const id = selected.getId();
   const traits = selected.getTraits();
