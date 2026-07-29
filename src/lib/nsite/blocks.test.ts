@@ -105,6 +105,13 @@ function capFor(handler: string) {
     resizer: { handlerAttr: handler } as never,
   });
 
+  // An editor left running keeps its observers and timers on the event loop, so
+  // the process never exits once the assertions are done — the tests pass and
+  // then vitest hangs until it is killed. `config` is a plain copy, so the cap
+  // read below survives the teardown.
+  editor.destroy();
+  container.remove();
+
   return config.maxDim;
 }
 
