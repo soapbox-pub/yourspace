@@ -508,6 +508,22 @@ function glossySkull(cx, cy, size, rotDeg = 0) {
   return out;
 }
 
+// cute emo ghost: wavy-bottom sheet ghost, big shiny eyes, blush, held heart
+function glossyGhost(cx, cy, size, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<path d="M14 92 L14 48 C14 20 30 8 50 8 C70 8 86 20 86 48 L86 92 Q78 82 71 92 Q64 82 57 92 Q50 82 43 92 Q36 82 29 92 Q21 82 14 92 Z" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  out += `<ellipse cx="38" cy="46" rx="8" ry="12" fill="${C.navy}"/>`;
+  out += `<ellipse cx="62" cy="46" rx="8" ry="12" fill="${C.navy}"/>`;
+  out += `<circle cx="35" cy="42" r="3" fill="#FFFFFF"/>`;
+  out += `<circle cx="59" cy="42" r="3" fill="#FFFFFF"/>`;
+  out += `<ellipse cx="28" cy="58" rx="7" ry="4" fill="${C.pink}" opacity="0.55"/>`;
+  out += `<ellipse cx="72" cy="58" rx="7" ry="4" fill="${C.pink}" opacity="0.55"/>`;
+  out += `<path d="M44 60 Q47 64 50 60 Q53 64 56 60" fill="none" stroke="${C.navy}" stroke-width="3" stroke-linecap="round"/>`;
+  out += `</g>`;
+  return out;
+}
+
 // shooting star with three tapering trails
 function shootingStar(x, y, r, id) {
   let out = '';
@@ -550,14 +566,6 @@ function cloud(cx, cy, sc) {
   out += `<circle cx="34" cy="4" r="26" fill="#FFFFFF"/>`;
   out += `<rect x="-40" y="4" width="80" height="24" rx="12" fill="#FFFFFF"/>`;
   out += `</g>`;
-  return out;
-}
-
-function smoothSmiley(cx, cy, r, face, feature) {
-  let out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${face}"/>`;
-  out += `<ellipse cx="${cx - r * 0.35}" cy="${cy - r * 0.2}" rx="${r * 0.12}" ry="${r * 0.2}" fill="${feature}"/>`;
-  out += `<ellipse cx="${cx + r * 0.35}" cy="${cy - r * 0.2}" rx="${r * 0.12}" ry="${r * 0.2}" fill="${feature}"/>`;
-  out += `<path d="M ${cx - r * 0.5} ${cy + r * 0.15} Q ${cx} ${cy + r * 0.65} ${cx + r * 0.5} ${cy + r * 0.15}" fill="none" stroke="${feature}" stroke-width="${(r * 0.13).toFixed(1)}" stroke-linecap="round"/>`;
   return out;
 }
 
@@ -619,7 +627,7 @@ function zebraBand(bx, by, len, h) {
 // Wallpaper for the Ditto theme, in the language of an actual 2005 MySpace
 // profile: a dithered purple sky, glossy glitter clip-art (stars, hearts,
 // sparkles, music notes, a CD, a rainbow with clouds), a zebra ribbon, a
-// profile-views counter, a watermark smiley, and faint CRT scanlines.
+// profile-views counter, and faint CRT scanlines.
 function background() {
   const W = 1920;
   const H = 1080;
@@ -636,8 +644,9 @@ function background() {
   // smooth shapes get their own antialiasing
   s += `<g shape-rendering="auto">`;
 
-  // ---- watermark smiley, tucked behind the zebra ribbon
-  s += `<g opacity="0.4">${smoothSmiley(1680, 740, 170, '#8A52C9', '#3A1260')}</g>`;
+  // ---- cute emo ghost holding a heart, above the zebra ribbon
+  s += glossyGhost(1685, 700, 300, 4);
+  s += glossyHeart(1795, 795, 70, 'pink', 12);
 
   // ---- zebra ribbon across the lower third
   s += `<g transform="rotate(10 960 840)">${zebraBand(-200, 795, 2400, 90)}</g>`;
@@ -658,7 +667,7 @@ function background() {
   s += glossyNote(870, 300, 80, C.cyan, 14);
   s += glossyNote(1120, 430, 92, C.violet, -10);
   s += glossyNote(530, 690, 76, C.lime, -8);
-  s += glossyNote(1630, 560, 68, C.pink, 10);
+  s += glossyNote(1630, 530, 68, C.pink, 10);
 
   // ---- glitter clusters (like tiled glitter-GIF stamps)
   const clusters = [[620, 300], [1030, 620], [1450, 480], [170, 580], [880, 960]];
