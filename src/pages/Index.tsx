@@ -734,7 +734,7 @@ const Index = () => {
               <Alien className="ml-3 inline-block w-9 -rotate-6 align-[-0.3em] sm:w-11" />
             </h2>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              Browse the latest homepages published to Nostr
+              browse the latest homepages published to nostr
             </p>
           </div>
 
@@ -755,7 +755,7 @@ const Index = () => {
               make it urs !!
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-ys-lavender">
-              This page is built from blocks, the way yours will be. Drag a block by its
+              this page is built from blocks, the way urs will be. drag a block by its
               grip to move it, type in its boxes, restyle it:
             </p>
           </div>
@@ -1028,14 +1028,14 @@ const Index = () => {
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-dusk sm:flex-row sm:justify-between sm:text-left">
           <Logo className="text-white" />
           <p>
-            Built on{' '}
+            built on{' '}
             <a
               href="https://github.com/nostr-protocol/nips"
               target="_blank"
               rel="noreferrer noopener"
               className="underline underline-offset-4 hover:text-ys-pink"
             >
-              Nostr
+              nostr
             </a>{' '}
             and nsites (NIP-5A).
           </p>
