@@ -228,21 +228,23 @@ function lcg(seed) {
 function avatar() {
   const W = 1000;
   let s = svgOpen(W, W);
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
+  s += glossDefs(ids);
   s += checker(0, 0, W, W, 50, C.purpleA, C.purpleB);
 
   // framed box: pink outer, cyan inner, navy fill
-  s += `<rect x="110" y="110" width="780" height="780" fill="${C.pink}"/>`;
-  s += `<rect x="134" y="134" width="732" height="732" fill="${C.cyan}"/>`;
-  s += `<rect x="152" y="152" width="696" height="696" fill="${C.navy}"/>`;
+  s += `<rect x="110" y="110" width="780" height="780" rx="28" fill="${C.pink}"/>`;
+  s += `<rect x="134" y="134" width="732" height="732" rx="20" fill="${C.cyan}"/>`;
+  s += `<rect x="152" y="152" width="696" height="696" rx="14" fill="${C.navy}"/>`;
 
-  // smiley: 16 cols * 40 = 640, centered
-  s += smiley(180, 180, 40, C.yellow, C.navy);
+  // cute scene skull with the hair bow, front and center
+  s += glossySkull(500, 470, 470);
 
-  // corner sparkles inside the navy box
-  s += sparkle(232, 238, 90, C.lime);
-  s += sparkle(776, 748, 110, C.pink);
-  s += sparkle(748, 226, 54, C.white);
-  s += pixelHeart(184, 744, 14, C.pink);
+  // glossy corner sparkles + a held pixel heart, matching the OG/banner
+  s += sparkle(238, 250, 84, C.lime);
+  s += sparkle(768, 742, 100, C.pink);
+  s += sparkle(756, 238, 50, C.white);
+  s += pixelHeart(196, 742, 14, C.pink);
 
   s += '</svg>';
   return s;
@@ -313,11 +315,11 @@ function banner() {
   const tagStyle = `font-family="Fira Sans ExtraBold" font-size="38" font-style="italic"`;
   s += `<text x="62" y="258" ${tagStyle} fill="#FFFFFF" stroke="${C.navyEdge}" stroke-width="6" stroke-linejoin="round" paint-order="stroke">a home page that&#8217;s actually <tspan fill="url(#g_pink)">YOURS !!</tspan></text>`;
 
-  // ---- gel URL pill
-  s += `<g transform="rotate(-1 215 325)">`;
-  s += `<rect x="64" y="290" width="300" height="68" rx="34" fill="url(#g_lime)" stroke="${C.navyEdge}" stroke-width="6"/>`;
-  s += `<ellipse cx="214" cy="310" rx="124" ry="14" fill="#FFFFFF" opacity="0.45"/>`;
-  s += `<text x="214" y="334" font-family="Fira Sans ExtraBold" font-size="36" fill="${C.navy}" text-anchor="middle">yourspace.live</text>`;
+  // ---- gel URL pill (right side; the profile avatar covers the bottom left)
+  s += `<g transform="rotate(-1 980 385)">`;
+  s += `<rect x="830" y="350" width="300" height="68" rx="34" fill="url(#g_lime)" stroke="${C.navyEdge}" stroke-width="6"/>`;
+  s += `<ellipse cx="980" cy="370" rx="124" ry="14" fill="#FFFFFF" opacity="0.45"/>`;
+  s += `<text x="980" y="394" font-family="Fira Sans ExtraBold" font-size="36" fill="${C.navy}" text-anchor="middle">yourspace.live</text>`;
   s += `</g>`;
 
   // ---- glitter dust
