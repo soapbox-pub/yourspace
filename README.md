@@ -77,7 +77,7 @@ The canonical repository lives on Nostr, published with ngit under the Team Soap
 to [GitLab](https://gitlab.com/soapbox-pub/yourspace):
 
 ```
-nostr://npub10qdp2fc9ta6vraczxrcs8prqnv69fru2k6s2dj48gqjcylulmtjsg9arpj/yourspace
+nostr://npub10qdp2fc9ta6vraczxrcs8prqnv69fru2k6s2dj48gqjcylulmtjsg9arpj/relay.ngit.dev/yourspace
 ```
 
 The app itself ships as an nsite. `npm run deploy:nsite` builds `dist/` and publishes it with
