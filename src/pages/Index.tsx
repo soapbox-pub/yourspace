@@ -214,194 +214,82 @@ function ShootingStar({ className, style }: StickerProps) {
 }
 
 /*
- * Ballpoint-pen doodles for the notebook-paper section: one wobbly stroke
- * each, no gloss, colored via currentColor like real ink.
+ * One continuous ballpoint border, the bored-study-period kind: a vine that
+ * snakes the whole margin with swirl offshoots, leaves, a looped flower, a
+ * star on a thread, a hanging heart, dot chains, bubbles, plus-sign fillers,
+ * a smiley, and a tiny ghost. The tile meets itself end to end, so the
+ * strips repeat seamlessly for any page height.
  */
-function DoodleStar({ className, style }: StickerProps) {
+function DoodleVineTile() {
   return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M50 10 Q52 24 55 36 Q70 35 84 38 Q73 47 64 55 Q69 70 72 84 Q60 76 50 69 Q39 77 28 85 Q32 70 36 55 Q26 47 15 37 Q30 36 45 36 Q47 23 50 10 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleHeart({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M50 82 Q22 56 20 36 Q19 18 34 17 Q46 16 50 29 Q54 16 66 17 Q81 18 80 36 Q78 56 50 82 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M26 12 L20 4 M38 8 L36 0 M15 24 L6 20" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DoodleSpiral({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M52 48 Q57 50 55 55 Q52 61 44 58 Q35 54 38 44 Q42 33 54 36 Q68 40 64 54 Q59 70 42 66 Q24 61 29 42 Q35 22 56 26 Q78 31 74 56"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleSmiley({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M50 14 Q82 14 84 46 Q86 80 50 82 Q16 82 16 48 Q16 16 50 14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path d="M38 38 L38 46 M62 38 L62 46" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M32 56 Q50 74 68 56" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DoodleBolt({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M58 6 L34 51 L47 49 L38 92 L69 43 L54 46 L66 8 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleCube({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M22 36 L21 76 L61 77 L61 37 Z M22 36 L38 23 L78 23 L61 37 M78 23 L78 63 L61 77"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleFlower({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      {[0, 60, 120, 180, 240, 300].map((r) => (
-        <path
-          key={r}
-          d="M50 42 Q41 18 50 10 Q59 18 50 42"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-          transform={`rotate(${r} 50 50)`}
-        />
+    <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      {/* the vine itself, entering and leaving at the same x */}
+      <path d="M32 0 C12 24 52 44 32 66 C14 86 14 104 32 120 C52 138 50 160 32 176 C14 192 14 214 32 230 C52 246 50 268 32 284 C15 299 16 318 32 332 C50 347 48 372 32 386 C18 399 20 420 32 432 C40 442 36 452 32 460" />
+      {/* swirl offshoots */}
+      <path d="M32 66 Q45 60 50 50 Q53 42 46 39 Q40 38 39 45 Q39 52 47 53" strokeWidth="2.5" />
+      <path d="M38 434 Q50 430 53 422 Q55 415 49 413 Q44 413 44 419 Q45 425 51 425" strokeWidth="2.5" />
+      {/* leaf pairs */}
+      <path d="M23 100 Q10 96 6 84 Q18 88 23 100 Z" strokeWidth="2.5" />
+      <path d="M22 108 Q8 110 2 122 Q16 118 22 108 Z" strokeWidth="2.5" />
+      <path d="M20 300 Q8 294 4 282 Q16 288 20 300 Z" strokeWidth="2.5" />
+      <path d="M19 308 Q6 310 2 322 Q14 318 19 308 Z" strokeWidth="2.5" />
+      {/* smiley tucked in the bend */}
+      <circle cx="14" cy="140" r="9" strokeWidth="2.5" />
+      <path d="M10.5 137 L10.5 140 M17.5 137 L17.5 140" strokeWidth="2.5" />
+      <path d="M10 144 Q14 148 18 144" strokeWidth="2.5" />
+      {/* looped flower on a stem */}
+      <path d="M32 176 Q42 172 47 179" strokeWidth="2.5" />
+      {[0, 72, 144, 216, 288].map((r) => (
+        <path key={r} d="M48 184 Q43 174 48 170 Q53 174 48 184" strokeWidth="2.5" transform={`rotate(${r} 48 184)`} />
       ))}
-      <circle cx="50" cy="50" r="9" fill="none" stroke="currentColor" strokeWidth="4" />
-    </svg>
+      <circle cx="48" cy="184" r="3" strokeWidth="2.5" />
+      {/* dot chain */}
+      <circle cx="50" cy="204" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="54" cy="214" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="51" cy="224" r="1.8" fill="currentColor" stroke="none" />
+      {/* star on a thread */}
+      <path d="M32 230 Q40 240 43 248" strokeWidth="2.5" />
+      <path d="M46 247 L49 254 L57 254 L51 259 L53 267 L46 262 L39 267 L41 259 L35 254 L43 254 Z" strokeWidth="2.5" />
+      {/* plus-sign fillers */}
+      <path d="M14 44 L14 52 M10 48 L18 48" strokeWidth="2.5" />
+      <path d="M52 296 L52 304 M48 300 L56 300" strokeWidth="2.5" />
+      {/* hanging heart */}
+      <path d="M32 332 Q22 336 17 344" strokeWidth="2.5" />
+      <path d="M13 361 Q4 352 4 347 Q4 341 9 341 Q13 341 13 346 Q13 341 17 341 Q22 341 22 347 Q22 352 13 361 Z" strokeWidth="2.5" />
+      {/* bubble trail */}
+      <circle cx="50" cy="356" r="3.5" strokeWidth="2.5" />
+      <circle cx="56" cy="364" r="2.5" strokeWidth="2.5" />
+      <circle cx="52" cy="371" r="1.5" fill="currentColor" stroke="none" />
+      {/* zigzag */}
+      <path d="M36 408 L40 400 L44 408 L48 400 L52 408" strokeWidth="2.5" />
+      {/* tiny ghost */}
+      <path d="M4 430 L4 414 Q4 406 12 406 Q20 406 20 414 L20 430 Q17.3 427 14.7 430 Q12 427 9.3 430 Q6.7 427 4 430 Z" strokeWidth="2.5" />
+      <path d="M9 414 L9 418 M15 414 L15 418" strokeWidth="2.5" />
+    </g>
   );
 }
 
-function DoodleNote({ className, style }: StickerProps) {
+/*
+ * A strip of the vine border: repeats DoodleVineTile down its full length.
+ * Vertical by default; `horizontal` rotates the chain to run along the top
+ * or bottom edge.
+ */
+function DoodleVineStrip({ horizontal = false, className }: { horizontal?: boolean; className?: string }) {
+  const id = useId();
   return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M46 70 Q46 79 37 79 Q28 79 28 71 Q28 63 37 63 Q46 63 46 70 L45 18 Q60 22 66 36"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleGhost({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M22 84 L22 42 Q24 14 50 14 Q76 14 78 42 L78 84 Q71 76 64 84 Q57 76 50 84 Q43 76 36 84 Q29 76 22 84 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M41 42 L41 51 M59 42 L59 51" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
-      <path d="M44 62 Q50 67 56 62" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DoodleUfo({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path d="M36 36 Q37 20 50 20 Q63 20 64 36" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <path
-        d="M20 46 Q21 34 50 34 Q79 34 80 46 Q79 57 50 57 Q21 57 20 46 Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M39 65 L35 77 M50 67 L50 79 M61 65 L65 77" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DoodleZigzag({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M6 68 L22 34 L38 64 L54 32 L70 62 L86 30"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DoodleArrow({ className, style }: StickerProps) {
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <path
-        d="M12 24 Q46 22 62 40 Q76 56 64 78"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-      <path d="M64 78 L54 64 M64 78 L78 70" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    <svg className={className} aria-hidden="true">
+      <defs>
+        <pattern
+          id={id}
+          width="64"
+          height="460"
+          patternUnits="userSpaceOnUse"
+          patternTransform={horizontal ? 'rotate(90)' : undefined}
+        >
+          <DoodleVineTile />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
     </svg>
   );
 }
@@ -681,23 +569,12 @@ const Index = () => {
               'linear-gradient(90deg, transparent 40px, rgb(255 45 158 / 0.16) 40px, rgb(255 45 158 / 0.16) 42px, transparent 42px), repeating-linear-gradient(transparent 0 31px, rgb(77 124 255 / 0.14) 31px 32px)',
           }}
         />
-        {/* The margins, doodled all over like a real notebook */}
-        <div className="pointer-events-none absolute inset-0 text-[#3f63d2]" aria-hidden="true">
-          {/* left margin, top to bottom */}
-          <DoodleSmiley className="absolute top-[5%] left-[0.5%] w-10 -rotate-6 opacity-40" />
-          <DoodleZigzag className="absolute top-[20%] left-[0.3%] hidden w-12 rotate-3 opacity-35 sm:block" />
-          <DoodleBolt className="absolute top-[36%] left-[1%] w-9 rotate-6 opacity-40" />
-          <DoodleCube className="absolute top-[52%] left-[0.5%] hidden w-11 -rotate-3 opacity-35 md:block" />
-          <DoodleFlower className="absolute top-[68%] left-[0.8%] hidden w-11 rotate-12 opacity-40 sm:block" />
-          <DoodleHeart className="absolute bottom-[4%] left-[0.8%] w-12 -rotate-12 opacity-40" />
-          {/* right margin, top to bottom */}
-          <DoodleStar className="absolute top-8 right-[1.5%] w-14 rotate-6 opacity-40" />
-          <DoodleUfo className="absolute top-[24%] right-[0.8%] hidden w-14 -rotate-6 opacity-40 sm:block" />
-          <DoodleSpiral className="absolute top-[46%] right-[1%] hidden w-11 rotate-12 opacity-35 md:block" />
-          <DoodleNote className="absolute top-[63%] right-[1.2%] hidden w-10 rotate-6 opacity-40 sm:block" />
-          <DoodleGhost className="absolute bottom-[5%] right-[1%] w-12 -rotate-6 opacity-40" />
-          {/* one arrow curling from the heading toward the pages */}
-          <DoodleArrow className="absolute top-[9%] right-[22%] hidden w-16 rotate-[24deg] opacity-35 lg:block" />
+        {/* The border, doodled corner to corner like a bored study period */}
+        <div className="pointer-events-none absolute inset-0 text-[#3f63d2] opacity-40" aria-hidden="true">
+          <DoodleVineStrip className="absolute inset-y-0 left-0 h-full w-16" />
+          <DoodleVineStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
+          <DoodleVineStrip horizontal className="absolute top-0 left-16 right-16 hidden h-16 md:block" />
+          <DoodleVineStrip horizontal className="absolute bottom-0 left-16 right-16 hidden h-16 -scale-y-100 md:block" />
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
