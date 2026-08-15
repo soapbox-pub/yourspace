@@ -317,6 +317,89 @@ function banner() {
   return s;
 }
 
+// ================================================================ OG IMAGE
+// Same look as the banner, re-laid out for the taller 1200x630 card.
+function og() {
+  const W = 1200;
+  const H = 630;
+  const BAR = 48;
+  const MARQ = 48;
+  let s = svgOpen(W, H);
+
+  // ---- title bar
+  s += `<rect x="0" y="0" width="${W}" height="${BAR}" fill="${C.navyBar}"/>`;
+  s += `<rect x="0" y="0" width="${W}" height="4" fill="${C.barHi}"/>`;
+  s += `<rect x="0" y="${BAR - 4}" width="${W}" height="4" fill="${C.navyEdge}"/>`;
+  s += sparkle(34, BAR / 2, 26, C.yellow);
+  s += pixelText('YOURSPACE.LIVE - UR SPACE ONLINE', 62, 10, 4, C.lavender);
+  s += winButton(1054, 10, 28, '_');
+  s += winButton(1090, 10, 28, 'o');
+  s += winButton(1126, 10, 28, 'x');
+
+  // ---- content: purple checker
+  s += checker(0, BAR, W, H - BAR - MARQ, 28, C.purpleA, C.purpleB);
+
+  // scattered deco (kept off the text)
+  s += sparkle(48, 100, 40, C.white);
+  s += sparkle(200, 440, 36, C.yellow);
+  s += sparkle(700, 410, 30, C.white);
+  s += sparkle(640, 470, 24, C.cyan);
+  s += pixelHeart(420, 420, 8, C.violet);
+  s += pixelHeart(30, 340, 7, C.pink);
+
+  // ---- headline
+  const HEAD = 'YOURSPACE';
+  const hs = 18;
+  const hx = 70;
+  const hy = 115;
+  const rainbow = [C.pink, C.orange, C.yellow, C.lime, C.cyan, C.blue, C.violet, C.pink, C.orange];
+  const jitter = [0, -8, 6, 0, -6, 10, -10, 6, 0];
+  s += outlinedText(HEAD, hx, hy, hs, rainbow, jitter, 6, 11, 13, C.navyEdge);
+
+  // ---- tagline
+  const TAG = "A HOME PAGE THAT'S ACTUALLY YOURS !!";
+  const ts = Math.floor(1020 / textCols(TAG)) || 4;
+  const tagY = hy + 7 * hs + 36;
+  const nChars = TAG.replace(/ /g, '').length;
+  const tagFills = Array.from({ length: nChars }, (_, i) => (i >= nChars - 7 ? C.pink : C.white));
+  s += pixelText(TAG, hx + 4, tagY, ts, tagFills);
+
+  // ---- ONLINE NOW! pill
+  const pillY = 500;
+  s += `<rect x="70" y="${pillY}" width="330" height="56" rx="28" fill="${C.navy}"/>`;
+  s += `<circle cx="106" cy="${pillY + 28}" r="12" fill="${C.green}"/>`;
+  s += pixelText('ONLINE NOW!', 132, pillY + 12, 4, C.lime);
+
+  // ---- smiley sticker, tilted, lower right
+  s += `<g transform="rotate(6 1030 430)">`;
+  s += `<rect x="930" y="330" width="200" height="200" fill="${C.pink}"/>`;
+  s += `<rect x="937" y="337" width="186" height="186" fill="${C.cyan}"/>`;
+  s += `<rect x="943" y="343" width="174" height="174" fill="${C.navy}"/>`;
+  s += smiley(950, 350, 10, C.yellow, C.navy);
+  s += `</g>`;
+
+  // ---- NEW! starburst, top right
+  s += starburst(1090, 118, 72, 40, 9, C.yellow, C.navyEdge, 6, 0.3);
+  s += `<g transform="rotate(-8 1090 118)">${pixelText('NEW!', 1090 - (textCols('NEW!') * 5) / 2, 118 - 17, 5, C.pink)}</g>`;
+
+  // ---- made w/ heart sticker
+  s += `<g transform="rotate(-3 690 529)">`;
+  s += `<rect x="580" y="505" width="220" height="48" fill="${C.white}" stroke="${C.pink}" stroke-width="5" stroke-dasharray="10 6"/>`;
+  s += pixelText('MADE W/ \u2665', 602, 517, 4, C.pink);
+  s += `</g>`;
+
+  // ---- marquee strip
+  s += `<rect x="0" y="${H - MARQ}" width="${W}" height="${MARQ}" fill="${C.navy}"/>`;
+  const MARQUEE = '*.:* WELCOME 2 YOURSPACE *:. UR OWN HOME PAGE ON NOSTR .:*';
+  const ms = Math.floor((W - 60) / textCols(MARQUEE)) || 4;
+  const mw = textCols(MARQUEE) * ms;
+  s += pixelText(MARQUEE, (W - mw) / 2, H - MARQ + (MARQ - 7 * ms) / 2, ms, C.lime);
+
+  s += '</svg>';
+  return s;
+}
+
 writeFileSync(join(OUT, 'avatar.svg'), avatar());
 writeFileSync(join(OUT, 'banner.svg'), banner());
-console.log('wrote avatar.svg + banner.svg');
+writeFileSync(join(OUT, 'og-image.svg'), og());
+console.log('wrote avatar.svg + banner.svg + og-image.svg');
