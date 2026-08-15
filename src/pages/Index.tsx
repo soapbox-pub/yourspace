@@ -987,7 +987,7 @@ const Index = () => {
 
       {/* Closing call to action */}
       <section className="relative bg-[#8fe800]">
-        <Bunny className="absolute bottom-0 left-4 w-16 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
+        <Bunny className="absolute bottom-0 left-6 w-20 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
         <DevilHeart className="absolute top-1/2 right-[12%] hidden w-32 -translate-y-1/2 rotate-12 sm:block" />
 
         <div className="overflow-hidden" aria-hidden="true">
@@ -997,8 +997,10 @@ const Index = () => {
         <div className="px-6 py-24">
           <div className="relative mx-auto max-w-2xl text-center">
             <h2 className="ys-outline relative z-10 mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
-              your space is waiting...
-              <DevilHeart className="ml-2 inline-block w-9 rotate-12 align-[-0.35em] sm:hidden" />
+              <span className="relative inline-block">
+                your space is waiting...
+                <DevilHeart className="absolute -top-6 right-0 w-10 rotate-12 sm:hidden" />
+              </span>
             </h2>
 
             {user ? (
