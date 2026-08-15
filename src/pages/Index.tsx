@@ -987,7 +987,7 @@ const Index = () => {
 
       {/* Closing call to action */}
       <section className="relative bg-[#8fe800]">
-        <Bunny className="absolute bottom-0 left-6 w-20 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
+        <Bunny className="absolute top-1/2 left-[12%] hidden w-36 -translate-y-1/2 -rotate-6 sm:block" />
         <DevilHeart className="absolute top-1/2 right-[12%] hidden w-32 -translate-y-1/2 rotate-12 sm:block" />
 
         <div className="overflow-hidden" aria-hidden="true">
@@ -997,25 +997,24 @@ const Index = () => {
         <div className="px-6 py-24">
           <div className="relative mx-auto max-w-2xl text-center">
             <h2 className="ys-outline relative z-10 mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
-              <span className="relative inline-block">
-                your space is waiting...
-                <DevilHeart className="absolute -top-6 right-0 w-10 rotate-12 sm:hidden" />
-              </span>
+              your space is waiting...
             </h2>
 
-            {user ? (
-              <Link
-                to="/edit"
-                className="ys-gel relative z-10 px-10 py-4 text-2xl"
-                style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)', color: '#ffffff' }}
-              >
-                start building
-              </Link>
-            ) : (
-              <div className="relative z-10 flex justify-center">
-                <LoginArea className="w-full max-w-xs" />
-              </div>
-            )}
+            <div className="relative z-10 flex items-center justify-center gap-3">
+              <Bunny className="w-14 shrink-0 -rotate-6 sm:hidden" />
+              {user ? (
+                <Link
+                  to="/edit"
+                  className="ys-gel px-10 py-4 text-2xl"
+                  style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)', color: '#ffffff' }}
+                >
+                  start building
+                </Link>
+              ) : (
+                <LoginArea className="w-auto max-w-xs" />
+              )}
+              <DevilHeart className="w-12 shrink-0 rotate-12 sm:hidden" />
+            </div>
           </div>
         </div>
       </section>
