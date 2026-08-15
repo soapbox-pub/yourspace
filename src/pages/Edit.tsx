@@ -859,7 +859,13 @@ export function Edit() {
               </div>
             </div>
 
-            <div className="flex max-h-[38%] shrink-0 flex-col border-t">
+            {/*
+              Every section below Components scrolls internally and is capped
+              so the two together can never take more than about half the
+              column: the pickers are the toolbox and keep the majority no
+              matter how deep the page's outline grows.
+            */}
+            <div className="flex max-h-[30%] shrink-0 flex-col border-t">
               <h2 className="flex shrink-0 items-center gap-2 px-4 pb-2 pt-3 text-xs font-semibold text-foreground">
                 <Layers className="size-3.5 text-muted-foreground" aria-hidden="true" />
                 Outline
@@ -871,7 +877,7 @@ export function Edit() {
 
             {/* Only an imported site has files that aren't pages. */}
             {assets.length > 0 && (
-              <div className="flex max-h-[30%] shrink-0 flex-col border-t">
+              <div className="flex max-h-[25%] shrink-0 flex-col border-t">
                 <h2 className="flex shrink-0 items-center gap-2 px-4 pb-2 pt-3 text-xs font-semibold text-foreground">
                   <Images className="size-3.5 text-muted-foreground" aria-hidden="true" />
                   Assets
