@@ -322,27 +322,20 @@
 }
 
 /*
- * Old-web starfield for the demo section: tiled star specks over a deep
- * green night gradient, the GeoCities night-sky wallpaper. The crescent
- * moon and glossy stars live in the component.
+ * Scene-kid wallpaper for the demo section: bold diagonal stripes, the
+ * MySpace layout-site staple. Hot pink and navy bands with mint hairlines,
+ * so the section's interactive accent lives in the pattern itself.
  */
-.ys-starfield {
-  background:
-    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.04) 0 1px, transparent 1px 4px),
-    radial-gradient(1.5px 1.5px at 30px 40px, rgb(255 255 255 / 0.9) 50%, transparent 51%),
-    radial-gradient(1px 1px at 90px 110px, rgb(255 255 255 / 0.5) 50%, transparent 51%),
-    radial-gradient(2px 2px at 150px 60px, rgb(20 255 137 / 0.7) 50%, transparent 51%),
-    radial-gradient(1px 1px at 190px 140px, rgb(255 255 255 / 0.4) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 60px 180px, rgb(255 210 240 / 0.6) 50%, transparent 51%),
-    linear-gradient(165deg, #0d4d31 0%, #083323 50%, #041e14 100%);
-  background-size:
-    auto,
-    220px 220px,
-    220px 220px,
-    220px 220px,
-    220px 220px,
-    220px 220px,
-    auto;
+.ys-stripes {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff2d9e 0 18px,
+    #0c1130 18px 22px,
+    #1b2350 22px 40px,
+    #14ff89 40px 42px,
+    #0c1130 42px 46px,
+    #1b2350 46px 64px
+  );
 }
 
 /* Glossy navy sticker card. */

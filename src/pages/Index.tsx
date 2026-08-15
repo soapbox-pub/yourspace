@@ -225,30 +225,6 @@ function Rainbow({ className, style }: StickerProps) {
   );
 }
 
-/* Old browser window chrome: navy bar, yellow sparkle, _ □ X buttons. */
-function WinBar({ title }: { title: string }) {
-  return (
-    <div className="flex h-12 items-center gap-3 border-b-4 border-ys-edge bg-[#1b2350] px-4" aria-hidden="true">
-      <svg viewBox="0 0 100 100" className="w-5 shrink-0">
-        <path d="M50 2 Q58 42 98 50 Q58 58 50 98 Q42 58 2 50 Q42 42 50 2 Z" fill="#ffd400" />
-      </svg>
-      <span className="flex-1 truncate font-display text-sm font-bold italic tracking-wide text-ys-lavender">
-        {title}
-      </span>
-      <span className="flex gap-1.5">
-        {['_', '□', '×'].map((glyph) => (
-          <span
-            key={glyph}
-            className="flex size-5 items-center justify-center border-2 border-ys-edge bg-[#c9cfe8] text-[10px] font-black leading-none text-ys-edge"
-          >
-            {glyph}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
 /* Jagged starburst, like the NEW! one overlapping the banner's sticker. */
 function Starburst({ label, className, style }: { label: string; className?: string; style?: React.CSSProperties }) {
   const pts = [];
@@ -266,26 +242,6 @@ function Starburst({ label, className, style }: { label: string; className?: str
         {label}
       </span>
     </span>
-  );
-}
-
-/* Crescent moon, for the starfield. */
-function Moon({ className, style }: StickerProps) {
-  const { id, stops } = useGloss('#ffd400');
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <Gloss id={id} stops={stops} />
-      <path
-        d="M58 6 A44 44 0 1 0 58 94 A36 36 0 1 1 58 6 Z"
-        fill={`url(#${id})`}
-        stroke="#0c1130"
-        strokeWidth="5"
-        strokeLinejoin="round"
-      />
-      <circle cx="34" cy="38" r="6" fill="#0c1130" opacity="0.15" />
-      <circle cx="28" cy="58" r="4" fill="#0c1130" opacity="0.15" />
-      <ellipse cx="38" cy="22" rx="9" ry="5" fill="#ffffff" opacity="0.5" transform="rotate(-30 38 22)" />
-    </svg>
   );
 }
 
@@ -396,20 +352,13 @@ const Index = () => {
   return (
     <div className="ys-min-below-bar overflow-x-hidden bg-ys-grape text-white">
       {/*
-        The hero is the banner, live: a browser window (title bar, marquee
-        strip at the foot), the wordmark huge on the left, and the ghost in
-        a tilted framed sticker with a starburst on its corner. Deco stays
-        at the corners and edges, exactly like the banner.
+        The hero is the banner's content, live: the wordmark huge on the
+        left, the ghost free on the right with the rainbow overhead and a
+        starburst on its corner, deco at the corners and edges only, and the
+        marquee at the foot. Motion is a two-frame twinkle.
       */}
       <div className="ys-sky relative overflow-hidden">
-        <WinBar title="YOURSPACE.LIVE - UR SPACE ONLINE" />
-
-        {/*
-          The banner cast, zoned the way the banner zones it: the text lane
-          stays clear, the art clusters on the right, and small deco sits at
-          the corners and edges only. Motion is a two-frame twinkle.
-        */}
-        <ShootingStar className="absolute top-20 left-[2%] w-36 sm:w-44" />
+        <ShootingStar className="absolute top-[4%] left-[2%] w-36 sm:w-44" />
         <div className="absolute top-[10%] right-[4%] rotate-12" aria-hidden="true">
           <GlossyHeart color="#ff2d9e" className="w-9 sm:w-12" />
           <Sparkle color="#ffffff" className="ys-twinkle absolute -left-4 -top-2 w-5" style={{ animationDelay: '0.4s' }} />
@@ -470,24 +419,16 @@ const Index = () => {
               </div>
             </div>
 
-            {/* The framed sticker: ghost in the tilted box, starburst on the corner */}
+            {/* The ghost, free: rainbow overhead, starburst on its corner */}
             <div className="relative shrink-0 pt-10 lg:pt-0">
               <Rainbow className="absolute -top-24 -right-16 hidden w-72 rotate-3 lg:block" />
-              <div className="relative rotate-6">
-                <div className="rounded-sm border-[3px] border-ys-edge bg-ys-pink p-2.5 shadow-[0_14px_0_rgb(12_17_48/0.4)]">
-                  <div className="bg-ys-cyan p-2">
-                    <div className="bg-ys-navy p-3">
-                      <img
-                        src="/icon.svg"
-                        alt="The YourSpace ghost, holding a heart"
-                        className="w-44 sm:w-56 lg:w-64"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <Starburst label="NEW!" className="absolute -top-12 -right-12 w-24 sm:w-28" />
-              </div>
-              <Skull className="absolute -left-20 top-2 hidden w-16 -rotate-6 lg:block" />
+              <Skull className="absolute -left-24 top-0 hidden w-16 -rotate-6 lg:block" />
+              <img
+                src="/icon.svg"
+                alt="The YourSpace ghost, holding a heart"
+                className="relative w-52 -rotate-3 drop-shadow-[0_18px_24px_rgb(12_17_48/0.5)] sm:w-64 lg:w-80"
+              />
+              <Starburst label="NEW!" className="absolute -top-10 -right-10 w-24 sm:w-28" />
             </div>
           </div>
         </div>
@@ -523,26 +464,25 @@ const Index = () => {
       {/*
         The demo. No feature lists: a little page built from blocks, and the
         visitor works it directly — click blocks to rearrange them, type in
-        its text boxes, restyle it from the sidebar. Old-web starfield
-        behind it, the GeoCities night sky.
+        its text boxes, restyle it from the sidebar. Scene-kid diagonal
+        stripes behind it, the MySpace layout-site staple.
       */}
-      <section className="ys-starfield relative overflow-hidden px-6 py-24">
+      <section className="ys-stripes relative overflow-hidden px-6 py-24">
         {/* Wallpaper scatter */}
-        <Moon className="absolute top-[6%] right-[6%] w-16 rotate-12 sm:w-20" />
-        <GlossyStar color="#14ff89" className="absolute top-[10%] left-[4%] w-10 -rotate-6" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute top-[18%] left-[10%] w-5" />
-        <GlossyHeart color="#ff2d9e" className="absolute bottom-[10%] right-[4%] w-9 rotate-12" />
-        <Bolt color="#ffd400" className="absolute bottom-[14%] left-[3%] hidden w-9 rotate-6 sm:block" />
-        <Note color="#00d9ff" className="absolute right-[10%] top-[42%] hidden w-10 -rotate-12 lg:block" />
-        <Sparkle color="#14ff89" className="ys-twinkle absolute left-[42%] top-[6%] hidden w-6 lg:block" style={{ animationDelay: '0.5s' }} />
-        <Skull className="absolute bottom-[6%] left-[30%] hidden w-12 rotate-6 lg:block" />
+        <GlossyStar color="#14ff89" className="absolute top-[8%] left-[4%] w-10 -rotate-6" />
+        <Sparkle color="#ffffff" className="ys-twinkle absolute top-[16%] left-[10%] w-5" />
+        <GlossyHeart color="#ffd400" className="absolute top-[10%] right-[5%] w-9 rotate-12" />
+        <Bolt color="#14ff89" className="absolute bottom-[12%] left-[3%] hidden w-9 rotate-6 sm:block" />
+        <Note color="#ffd400" className="absolute right-[4%] bottom-[16%] hidden w-10 -rotate-12 sm:block" />
+        <Sparkle color="#ffffff" className="ys-twinkle absolute right-[12%] top-[38%] hidden w-6 lg:block" style={{ animationDelay: '0.5s' }} />
+        <Skull className="absolute bottom-[6%] right-[28%] hidden w-12 rotate-6 lg:block" />
 
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">
               go ahead, touch it
             </h2>
-            <p className="mx-auto max-w-2xl text-lg text-[#c8f5dd]">
+            <p className="mx-auto max-w-2xl text-lg text-white [text-shadow:0_2px_0_rgb(12_17_48/0.6)]">
               This page is built from blocks, the way yours will be. Click a block to move
               it, type in its boxes, restyle it:
             </p>
