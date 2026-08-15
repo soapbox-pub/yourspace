@@ -9,7 +9,6 @@
     "wss://purplerelay.com",
     "wss://offchain.pub"
   ],
-  "publishServerList": true,
   "id": "yourspace",
   "servers": [
     "https://blossom.primal.net",
