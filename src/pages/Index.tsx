@@ -647,7 +647,7 @@ const Index = () => {
         <Bat className="absolute top-[42%] right-[2%] hidden w-14 -rotate-12 lg:block" />
         <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[18%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-12 pb-20 sm:pt-16 sm:pb-24">
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-12 pb-12 sm:pt-16 sm:pb-24">
           <div className="flex flex-col items-center gap-10 lg:flex-row lg:gap-4">
             <div className="flex-1 text-center lg:text-left">
               <h1 aria-label="YourSpace" className="-rotate-2 select-none">
@@ -694,7 +694,7 @@ const Index = () => {
             </div>
 
             {/* The ghost, free: rainbow overhead, starburst on its corner */}
-            <div className="relative shrink-0 pt-10 lg:pt-0">
+            <div className="relative shrink-0">
               <Rainbow className="absolute -top-40 -right-16 hidden w-72 rotate-3 lg:block" />
               <Skull className="absolute -left-24 top-0 hidden w-16 -rotate-6 lg:block" />
               <img
@@ -738,7 +738,7 @@ const Index = () => {
         </div>
         <div className="relative mx-auto max-w-6xl pl-16 sm:pr-16 xl:pl-0 xl:pr-0">
           <div className="mb-10">
-            <h2 className="mb-0 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
+            <h2 className="mb-8 font-display text-4xl font-black italic tracking-tight sm:mb-0 sm:text-5xl">
               other people’s spaces
               <Alien className="ml-3 inline-block w-9 -rotate-6 align-[-0.3em] sm:w-11" />
             </h2>
@@ -987,8 +987,8 @@ const Index = () => {
 
       {/* Closing call to action */}
       <section className="relative bg-[#8fe800]">
-        <Bunny className="absolute bottom-4 left-2 w-16 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
-        <DevilHeart className="absolute top-3 right-2 w-14 rotate-12 sm:top-1/2 sm:right-[12%] sm:w-32 sm:-translate-y-1/2" />
+        <Bunny className="absolute bottom-0 left-4 w-16 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
+        <DevilHeart className="absolute top-1/2 right-[12%] hidden w-32 -translate-y-1/2 rotate-12 sm:block" />
 
         <div className="overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
@@ -998,6 +998,7 @@ const Index = () => {
           <div className="relative mx-auto max-w-2xl text-center">
             <h2 className="ys-outline relative z-10 mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
               your space is waiting...
+              <DevilHeart className="ml-2 inline-block w-9 rotate-12 align-[-0.35em] sm:hidden" />
             </h2>
 
             {user ? (
