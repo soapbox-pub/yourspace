@@ -230,21 +230,13 @@ function avatar() {
   let s = svgOpen(W, W);
   const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
   s += glossDefs(ids);
-  s += checker(0, 0, W, W, 50, C.purpleA, C.purpleB);
+  s += `<rect x="0" y="0" width="${W}" height="${W}" fill="${C.purpleA}"/>`;
 
-  // framed box: pink outer, cyan inner, navy fill
-  s += `<rect x="110" y="110" width="780" height="780" rx="28" fill="${C.pink}"/>`;
-  s += `<rect x="134" y="134" width="732" height="732" rx="20" fill="${C.cyan}"/>`;
-  s += `<rect x="152" y="152" width="696" height="696" rx="14" fill="${C.navy}"/>`;
-
-  // cute ghost holding a heart, front and center
-  s += glossyGhost(500, 460, 500, 2);
-  s += glossyHeart(690, 660, 130, 'pink', 12);
-
-  // glossy corner sparkles
-  s += sparkle(238, 250, 84, C.lime);
-  s += sparkle(240, 750, 90, C.pink);
-  s += sparkle(756, 238, 50, C.white);
+  // cute ghost holding a heart, front and center, nothing else
+  s += `<g shape-rendering="auto">`;
+  s += glossyGhost(500, 480, 560, 2);
+  s += glossyHeart(700, 680, 140, 'pink', 12);
+  s += `</g>`;
 
   s += '</svg>';
   return s;
