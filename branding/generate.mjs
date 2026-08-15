@@ -720,8 +720,28 @@ function background() {
   return s;
 }
 
+// ================================================================ SITE ICON
+// The ghost zoomed in to fill the frame, for favicons and app icons.
+// bg=false: transparent (favicon.svg/png/ico). bg=true: flat purple square
+// (apple-touch-icon, manifest icons).
+function icon(bg) {
+  const W = 1000;
+  let s = svgOpen(W, W);
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
+  s += glossDefs(ids);
+  if (bg) s += `<rect x="0" y="0" width="${W}" height="${W}" fill="${C.purpleA}"/>`;
+  s += `<g shape-rendering="auto">`;
+  s += glossyGhost(500, 500, 1150, 2);
+  s += glossyHeart(870, 840, 210, 'pink', 12);
+  s += `</g>`;
+  s += '</svg>';
+  return s;
+}
+
 writeFileSync(join(OUT, 'avatar.svg'), avatar());
 writeFileSync(join(OUT, 'banner.svg'), banner());
 writeFileSync(join(OUT, 'og-image.svg'), og());
 writeFileSync(join(OUT, 'background.svg'), background());
-console.log('wrote avatar.svg + banner.svg + og-image.svg + background.svg');
+writeFileSync(join(OUT, 'icon.svg'), icon(false));
+writeFileSync(join(OUT, 'icon-square.svg'), icon(true));
+console.log('wrote avatar.svg + banner.svg + og-image.svg + background.svg + icon.svg + icon-square.svg');
