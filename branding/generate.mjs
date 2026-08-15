@@ -758,24 +758,10 @@ function glossyCassette(cx, cy, size, rotDeg = 0) {
   return out;
 }
 
-// glossy silver safety pin, the punk staple
-function glossySafetyPin(cx, cy, size, rotDeg = 0) {
-  const sc = (size / 100).toFixed(3);
-  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
-  out += `<ellipse cx="50" cy="50" rx="38" ry="16" fill="none" stroke="url(#g_silver)" stroke-width="7"/>`;
-  out += `<rect x="14" y="47" width="72" height="5" fill="url(#g_silver)"/>`;
-  out += `<circle cx="16" cy="50" r="8" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="3"/>`;
-  out += `<circle cx="16" cy="50" r="3" fill="${C.navy}"/>`;
-  out += `<rect x="78" y="40" width="14" height="20" rx="4" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="3"/>`;
-  out += `<ellipse cx="50" cy="40" rx="16" ry="4" fill="#FFFFFF" opacity="0.45"/>`;
-  out += `</g>`;
-  return out;
-}
-
 // ================================================================ SECTION BG
 // Wallpaper for the homepage demo section: a little punk, cool, retro
-// internet. Dark dithered sky, glossy cassette, safety pin, ska checker
-// band, skull, bolts, a broken heart, glitter dust, scanlines.
+// internet. Dark dithered sky, glossy cassette, ska checker band, skull,
+// bolts, a broken heart, glitter dust, scanlines.
 function sectionBg() {
   const W = 1600;
   const H = 900;
@@ -798,8 +784,7 @@ function sectionBg() {
   s += glossyCassette(330, 300, 210, -8);
   s += glossySkull(1080, 330, 165, 6);
 
-  // ---- safety pin and bolts
-  s += glossySafetyPin(1180, 620, 150, 30);
+  // ---- bolts
   s += glossyBolt(700, 190, 74, 'yellow', 8);
   s += glossyBolt(1470, 700, 62, 'pink', -12);
 

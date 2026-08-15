@@ -246,24 +246,6 @@ function Starburst({ label, className, style }: { label: string; className?: str
   );
 }
 
-/* The CD with the rainbow sheen, from the background graphic. */
-function CD({ className, style }: StickerProps) {
-  const { id, stops } = useGloss('#c9cfe8');
-  return (
-    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
-      <Gloss id={id} stops={stops} />
-      <circle cx="50" cy="50" r="46" fill={`url(#${id})`} stroke="#8890b0" strokeWidth="3" />
-      <path d="M50 50 L96 50 A46 46 0 0 1 50 96 Z" fill="#00d9ff" opacity="0.18" />
-      <path d="M50 50 L50 96 A46 46 0 0 1 4 50 Z" fill="#ff2d9e" opacity="0.18" />
-      <path d="M50 50 L4 50 A46 46 0 0 1 50 4 Z" fill="#ffd400" opacity="0.18" />
-      <path d="M50 50 L50 4 A46 46 0 0 1 96 50 Z" fill="#b14dff" opacity="0.18" />
-      <circle cx="50" cy="50" r="15" fill="#ffffff" />
-      <circle cx="50" cy="50" r="7" fill="#131a3a" />
-      <ellipse cx="34" cy="32" rx="14" ry="7" fill="#ffffff" opacity="0.5" transform="rotate(-30 34 32)" />
-    </svg>
-  );
-}
-
 /*
  * The zebra ribbon, as actual SVG: a pink band with navy teeth and navy
  * edges, identical to the one in the graphics.
@@ -533,20 +515,24 @@ const Index = () => {
                 )}
 
                 {blocks.map((block) => {
-                  const shared = `relative w-full rounded-lg border-2 border-dashed p-3 transition-colors ${
+                  const shared = `relative w-full rounded-lg border-2 border-dashed p-3 pl-9 transition-colors ${
                     dropTarget === block ? 'ring-2 ring-white/80' : ''
                   }`;
                   const grip = (
                     <span
                       draggable
-                      onDragStart={() => (dragBlock.current = block)}
+                      onDragStart={(e) => {
+                        dragBlock.current = block;
+                        e.dataTransfer.setData('text/plain', block);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                       onDragEnd={() => {
                         dragBlock.current = null;
                         setDropTarget(null);
                       }}
                       title="Drag to rearrange"
                       aria-label={`Drag the ${block} block to rearrange`}
-                      className="absolute right-1.5 top-1.5 z-10 cursor-grab rounded p-0.5 text-ys-lavender/60 hover:text-white active:cursor-grabbing"
+                      className="absolute inset-y-0 left-0 z-10 flex w-7 cursor-grab items-center justify-center rounded-l-md bg-white/5 text-ys-lavender/70 hover:bg-white/10 hover:text-white active:cursor-grabbing"
                     >
                       <GripVertical className="size-4" aria-hidden="true" />
                     </span>
@@ -636,8 +622,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* The controls */}
-            <div className="w-full max-w-md space-y-5 lg:max-w-56">
+            {/* The controls, on their own glossy panel so they read over the wallpaper */}
+            <div className="ys-card-gloss w-full max-w-md space-y-5 p-5 lg:max-w-60">
               <div>
                 <p className="mb-2 font-display text-lg font-extrabold italic text-white">color</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Accent color">
