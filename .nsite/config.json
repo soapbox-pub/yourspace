@@ -4,9 +4,12 @@
     "wss://relay.ditto.pub",
     "wss://relay.primal.net",
     "wss://relay.damus.io",
-    "wss://nos.lol",
-    "wss://relay.nostr.band"
+    "wss://relay.nostr.band",
+    "wss://nostrue.com",
+    "wss://purplerelay.com",
+    "wss://offchain.pub"
   ],
+  "publishServerList": true,
   "servers": [
     "https://blossom.primal.net",
     "https://cdn.hzrd149.com"
