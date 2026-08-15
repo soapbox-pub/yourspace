@@ -245,6 +245,24 @@ function Starburst({ label, className, style }: { label: string; className?: str
   );
 }
 
+/* The CD with the rainbow sheen, from the background graphic. */
+function CD({ className, style }: StickerProps) {
+  const { id, stops } = useGloss('#c9cfe8');
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <Gloss id={id} stops={stops} />
+      <circle cx="50" cy="50" r="46" fill={`url(#${id})`} stroke="#8890b0" strokeWidth="3" />
+      <path d="M50 50 L96 50 A46 46 0 0 1 50 96 Z" fill="#00d9ff" opacity="0.18" />
+      <path d="M50 50 L50 96 A46 46 0 0 1 4 50 Z" fill="#ff2d9e" opacity="0.18" />
+      <path d="M50 50 L4 50 A46 46 0 0 1 50 4 Z" fill="#ffd400" opacity="0.18" />
+      <path d="M50 50 L50 4 A46 46 0 0 1 96 50 Z" fill="#b14dff" opacity="0.18" />
+      <circle cx="50" cy="50" r="15" fill="#ffffff" />
+      <circle cx="50" cy="50" r="7" fill="#131a3a" />
+      <ellipse cx="34" cy="32" rx="14" ry="7" fill="#ffffff" opacity="0.5" transform="rotate(-30 34 32)" />
+    </svg>
+  );
+}
+
 /*
  * The zebra ribbon, as actual SVG: a pink band with navy teeth and navy
  * edges, identical to the one in the graphics.
@@ -327,7 +345,7 @@ const Index = () => {
   const [pattern, setPattern] = useState<(typeof PATTERNS)[number]>('checker');
   const [sticker, setSticker] = useState<(typeof STICKERS)[number]>('heart');
   const [name, setName] = useState('ur demo page');
-  const [about, setAbout] = useState('hi !! this is ur demo page. every block on it can be moved, restyled, or deleted — that’s the whole editor.');
+  const [about, setAbout] = useState('hi !! this is ur demo page. every block on it can be moved, restyled, or deleted: that’s the whole editor.');
   const [links, setLinks] = useState(['my blog', 'my pics', 'zap me !!']);
   const [blocks, setBlocks] = useState(['header', 'about', 'links', 'music']);
   const [glitter, setGlitter] = useState(true);
@@ -346,7 +364,7 @@ const Index = () => {
   useSeoMeta({
     title: 'YourSpace: Build a homepage that is actually yours',
     description:
-      'Where nostalgia meets innovation. Design your own homepage with drag-and-drop blocks and publish it to Nostr as an nsite — no platform, no takedowns, no algorithm.',
+      'Where nostalgia meets innovation. Design your own homepage with drag-and-drop blocks and publish it to Nostr as an nsite: no platform, no takedowns, no algorithm.',
   });
 
   return (
@@ -396,8 +414,9 @@ const Index = () => {
               </p>
 
               <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ys-lavender lg:mx-0">
-                Remember when your homepage was something you made? Build one again — laid out
-                block by block, styled however you like, and published to Nostr so it stays yours.
+                remember when ur homepage was something u made? bring it back: stack some
+                blocks, glitter it up however u like, and publish it to nostr. it's urs
+                4ever: no takedowns, no algorithm, no corporate overlords.
               </p>
 
               <div className="mt-9 flex flex-col items-center gap-4 lg:items-start">
@@ -421,7 +440,7 @@ const Index = () => {
 
             {/* The ghost, free: rainbow overhead, starburst on its corner */}
             <div className="relative shrink-0 pt-10 lg:pt-0">
-              <Rainbow className="absolute -top-24 -right-16 hidden w-72 rotate-3 lg:block" />
+              <Rainbow className="absolute -top-40 -right-16 hidden w-72 rotate-3 lg:block" />
               <Skull className="absolute -left-24 top-0 hidden w-16 -rotate-6 lg:block" />
               <img
                 src="/icon.svg"
@@ -433,7 +452,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Zebra ribbon, then the marquee — the banner's foot, attached */}
+        {/* Zebra ribbon, then the marquee: the banner's foot, attached */}
         <div className="relative overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full -rotate-1 scale-x-110 sm:h-12" />
         </div>
@@ -442,7 +461,7 @@ const Index = () => {
 
       {/*
         Published homepages, on the app's own surface rather than the brand
-        one — these are other people's pages, and they read better against a
+        one: these are other people's pages, and they read better against a
         neutral background than on the sky.
       */}
       <section className="bg-background px-6 py-20 text-foreground">
@@ -463,26 +482,34 @@ const Index = () => {
 
       {/*
         The demo. No feature lists: a little page built from blocks, and the
-        visitor works it directly — click blocks to rearrange them, type in
-        its text boxes, restyle it from the sidebar. Scene-kid diagonal
-        stripes behind it, the MySpace layout-site staple.
+        visitor works it directly: click blocks to rearrange them, type in
+        its text boxes, restyle it from the sidebar. Behind it, the glossy
+        purple night of the brand graphics: rainbow, CD, glitter clusters.
       */}
-      <section className="ys-stripes relative overflow-hidden px-6 py-24">
-        {/* Wallpaper scatter */}
-        <GlossyStar color="#14ff89" className="absolute top-[8%] left-[4%] w-10 -rotate-6" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute top-[16%] left-[10%] w-5" />
-        <GlossyHeart color="#ffd400" className="absolute top-[10%] right-[5%] w-9 rotate-12" />
-        <Bolt color="#14ff89" className="absolute bottom-[12%] left-[3%] hidden w-9 rotate-6 sm:block" />
-        <Note color="#ffd400" className="absolute right-[4%] bottom-[16%] hidden w-10 -rotate-12 sm:block" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute right-[12%] top-[38%] hidden w-6 lg:block" style={{ animationDelay: '0.5s' }} />
+      <section className="ys-gloss relative overflow-hidden px-6 py-24">
+        {/* The clip-art cast, mint accents woven in */}
+        <Rainbow className="absolute top-6 right-[3%] w-48 rotate-3 opacity-95 sm:w-56" />
+        <CD className="absolute top-10 left-[3%] w-14 -rotate-12 sm:w-16" />
+        <div className="absolute top-[32%] left-[2%] -rotate-6" aria-hidden="true">
+          <GlossyStar color="#14ff89" className="w-10" />
+          <Sparkle color="#ffffff" className="ys-twinkle absolute -right-4 top-7 w-5" />
+          <Sparkle color="#ff2d9e" className="absolute -left-3 top-9 w-4" />
+        </div>
+        <GlossyHeart color="#ff2d9e" className="absolute bottom-[10%] left-[6%] w-9 rotate-12" />
+        <div className="absolute right-[3%] bottom-[14%] hidden -rotate-12 sm:block" aria-hidden="true">
+          <Note color="#b14dff" className="w-11" />
+          <Sparkle color="#14ff89" className="ys-twinkle absolute -left-5 top-7 w-5" style={{ animationDelay: '0.5s' }} />
+        </div>
+        <Bolt color="#ffd400" className="absolute top-[56%] right-[2%] hidden w-9 rotate-6 sm:block" />
         <Skull className="absolute bottom-[6%] right-[28%] hidden w-12 rotate-6 lg:block" />
+        <Sparkle color="#14ff89" className="ys-twinkle absolute left-[40%] top-[8%] hidden w-6 lg:block" style={{ animationDelay: '0.8s' }} />
 
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">
               go ahead, touch it
             </h2>
-            <p className="mx-auto max-w-2xl text-lg text-white [text-shadow:0_2px_0_rgb(12_17_48/0.6)]">
+            <p className="mx-auto max-w-2xl text-lg text-ys-lavender">
               This page is built from blocks, the way yours will be. Click a block to move
               it, type in its boxes, restyle it:
             </p>
@@ -726,7 +753,7 @@ const Index = () => {
                   <p className="mt-1 text-sm text-ys-lavender">currently: under construction ♥</p>
                   <p className="mt-3 text-sm leading-relaxed text-ys-lavender">
                     no walled gardens, no algorithm, no feed to please. the pic, the colors, the
-                    blocks — all up to u. published under ur own key, so it stays urs.
+                    blocks: all up to u. published under ur own key, so it stays urs.
                   </p>
 
                   <div className="mt-6">

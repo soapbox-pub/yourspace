@@ -322,20 +322,14 @@
 }
 
 /*
- * Scene-kid wallpaper for the demo section: bold diagonal stripes, the
- * MySpace layout-site staple. Hot pink and navy bands with mint hairlines,
- * so the section's interactive accent lives in the pattern itself.
+ * The glossy purple night from the brand graphics, for the demo section:
+ * a smooth violet-to-grape gradient with faint scanlines. The clip-art
+ * scatter (rainbow, CD, glitter clusters) lives in the component.
  */
-.ys-stripes {
-  background: repeating-linear-gradient(
-    -45deg,
-    #ff2d9e 0 18px,
-    #0c1130 18px 22px,
-    #1b2350 22px 40px,
-    #14ff89 40px 42px,
-    #0c1130 42px 46px,
-    #1b2350 46px 64px
-  );
+.ys-gloss {
+  background:
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.05) 0 1px, transparent 1px 4px),
+    linear-gradient(160deg, #5b2b90 0%, #4a1d7a 45%, #2c0b4e 100%);
 }
 
 /* Glossy navy sticker card. */
