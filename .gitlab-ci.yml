@@ -25,3 +25,20 @@ pages:
   only:
     variables:
       - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME
+
+# Publishes dist/ as the named nsite (.nsite/config.json) signed with
+# $NSITE_SECRET, a masked+protected CI variable holding an nbunksec
+# (preferred, from `nsyte ci <bunker-url>`) or an nsec. The secrets scan
+# is skipped because it prompts on false positives in our own bundle
+# (pubkeys and bunker:// parsing code), which would hang a CI run.
+nsite:
+  stage: deploy
+  timeout: 10 minutes
+  script:
+    - npm run build
+    - curl -sSL -o /usr/local/bin/nsyte https://github.com/sandwichfarm/nsyte/releases/download/v0.27.2/nsyte-linux-0.27.2
+    - chmod +x /usr/local/bin/nsyte
+    - nsyte deploy dist --sec "$NSITE_SECRET" --use-fallback-relays --non-interactive --skip-secrets-scan
+  only:
+    variables:
+      - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME
