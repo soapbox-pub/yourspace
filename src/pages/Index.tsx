@@ -551,22 +551,26 @@ const WORDMARK = [
 /** Demo page options. */
 const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
 const PATTERNS = ['plain', 'checker', 'stripes', 'zebra'] as const;
+const BG_COLORS = ['#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2'] as const;
 const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
 
-function patternStyle(pattern: (typeof PATTERNS)[number]): React.CSSProperties {
-  if (pattern === 'checker') {
+type Background = (typeof PATTERNS)[number] | (typeof BG_COLORS)[number];
+
+function bgStyle(bg: Background): React.CSSProperties {
+  if (bg === 'checker') {
     return {
       background:
         'repeating-conic-gradient(rgb(12 17 48 / 0.1) 0% 25%, rgb(255 255 255 / 0.5) 0% 50%) 0 0 / 18px 18px, #e7d9ff',
     };
   }
-  if (pattern === 'stripes') {
+  if (bg === 'stripes') {
     return {
       background:
         'repeating-linear-gradient(45deg, rgb(12 17 48 / 0.07) 0 8px, transparent 8px 22px), #e7d9ff',
     };
   }
-  return { background: '#e7d9ff' };
+  if (bg === 'plain' || bg === 'zebra') return { background: '#e7d9ff' };
+  return { background: bg };
 }
 
 function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[number]; accent: string; className?: string }) {
@@ -583,7 +587,7 @@ function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[numb
 const Index = () => {
   const { user } = useCurrentUser();
   const [accent, setAccent] = useState('#8fe800');
-  const [pattern, setPattern] = useState<(typeof PATTERNS)[number]>('checker');
+  const [bg, setBg] = useState<Background>('checker');
   const [sticker, setSticker] = useState<(typeof STICKERS)[number]>('heart');
   const [name, setName] = useState('ur demo page');
   const [about, setAbout] = useState('hi !! this is ur demo page. every block on it can be moved, restyled, or deleted: that’s the whole editor.');
@@ -782,9 +786,9 @@ const Index = () => {
                 </span>
               </div>
 
-              {pattern === 'zebra' && <ZebraStrip className="block h-6 w-full" />}
+              {bg === 'zebra' && <ZebraStrip className="block h-6 w-full" />}
 
-              <div className="relative flex flex-1 flex-col justify-center space-y-4 p-5 transition-colors" style={patternStyle(pattern)}>
+              <div className="relative flex flex-1 flex-col justify-center space-y-4 p-5 transition-colors" style={bgStyle(bg)}>
                 {glitter && (
                   <>
                     <Sparkle color="#ffffff" className="ys-twinkle absolute top-2 right-3 z-10 w-4" />
@@ -929,21 +933,34 @@ const Index = () => {
 
               <div>
                 <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">background</p>
-                <div className="flex flex-wrap gap-2.5" role="group" aria-label="Background pattern">
+                <div className="flex flex-wrap gap-2.5" role="group" aria-label="Background">
                   {PATTERNS.map((p) => (
                     <button
                       key={p}
                       type="button"
-                      onClick={() => setPattern(p)}
+                      onClick={() => setBg(p)}
                       aria-label={`Background ${p}`}
-                      aria-pressed={pattern === p}
+                      aria-pressed={bg === p}
                       className={`h-9 w-14 overflow-hidden rounded-md border-[3px] border-ys-edge transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                        pattern === p ? 'ring-4 ring-white' : ''
+                        bg === p ? 'ring-4 ring-white' : ''
                       }`}
-                      style={patternStyle(p)}
+                      style={bgStyle(p)}
                     >
                       {p === 'zebra' && <ZebraStrip className="block h-full w-full" />}
                     </button>
+                  ))}
+                  {BG_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setBg(c)}
+                      aria-label={`Background color ${c}`}
+                      aria-pressed={bg === c}
+                      className={`h-9 w-14 overflow-hidden rounded-md border-[3px] border-ys-edge transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                        bg === c ? 'ring-4 ring-white' : ''
+                      }`}
+                      style={{ background: c }}
+                    />
                   ))}
                 </div>
               </div>
