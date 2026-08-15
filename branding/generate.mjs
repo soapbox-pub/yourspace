@@ -412,78 +412,113 @@ function og() {
   return s;
 }
 
-// generic bitmap stamp (merged horizontal runs)
-function stamp(rows, x, y, s, fill) {
+// ---------------------------------------------------------- glossy clip-art
+// The mid-2000s glitter-graphic look: gradient fill, dark outline, white
+// gloss highlight. These are smooth vectors, not pixel art.
+
+function lighten(hex, f) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (v) => Math.round(v + (255 - v) * f);
+  const r = mix((n >> 16) & 255);
+  const g = mix((n >> 8) & 255);
+  const b = mix(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+function glossDefs(colors) {
+  let d = '<defs>';
+  for (const [id, c] of Object.entries(colors)) {
+    d += `<linearGradient id="g_${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lighten(c, 0.55)}"/><stop offset="1" stop-color="${c}"/></linearGradient>`;
+  }
+  d += `<linearGradient id="g_silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2F4FC"/><stop offset="1" stop-color="#B9BFD8"/></linearGradient>`;
+  d += '</defs>';
+  return d;
+}
+
+function starPts(cx, cy, r) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const rr = i % 2 === 0 ? r : r * 0.45;
+    const a = -Math.PI / 2 + (Math.PI * i) / 5;
+    pts.push(`${(cx + rr * Math.cos(a)).toFixed(1)},${(cy + rr * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(' ');
+}
+
+function glossyStar(cx, cy, r, id, rotDeg = 0) {
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy})">`;
+  out += `<polygon points="${starPts(cx, cy, r)}" fill="url(#g_${id})" stroke="${C.navyEdge}" stroke-width="${(r * 0.12).toFixed(1)}" stroke-linejoin="round"/>`;
+  out += `<circle cx="${cx - r * 0.28}" cy="${cy - r * 0.3}" r="${(r * 0.16).toFixed(1)}" fill="#FFFFFF" opacity="0.65"/>`;
+  out += `</g>`;
+  return out;
+}
+
+const HEART_PATH = 'M50 30 C50 12 32 4 22 13 C10 24 12 42 26 54 L50 78 L74 54 C88 42 90 24 78 13 C68 4 50 12 50 30 Z';
+
+function glossyHeart(cx, cy, size, id, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<path d="${HEART_PATH}" fill="url(#g_${id})" stroke="${C.navyEdge}" stroke-width="7" stroke-linejoin="round"/>`;
+  out += `<ellipse cx="33" cy="27" rx="11" ry="7" fill="#FFFFFF" opacity="0.55" transform="rotate(-22 33 27)"/>`;
+  out += `</g>`;
+  return out;
+}
+
+// beamed pair of eighth notes
+function glossyNote(cx, cy, size, color, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<polygon points="34,26 96,16 96,32 34,42" fill="${color}"/>`;
+  out += `<rect x="34" y="30" width="7" height="52" fill="${color}"/>`;
+  out += `<rect x="89" y="24" width="7" height="48" fill="${color}"/>`;
+  out += `<ellipse cx="28" cy="84" rx="15" ry="10" fill="${color}" transform="rotate(-20 28 84)"/>`;
+  out += `<ellipse cx="84" cy="74" rx="15" ry="10" fill="${color}" transform="rotate(-20 84 74)"/>`;
+  out += `<ellipse cx="24" cy="81" rx="5" ry="3" fill="#FFFFFF" opacity="0.6" transform="rotate(-20 24 81)"/>`;
+  out += `</g>`;
+  return out;
+}
+
+function smoothRainbow(cx, cy, r, w) {
+  const colors = [C.pink, C.orange, C.yellow, C.lime, C.cyan, C.violet];
   let out = '';
-  rows.forEach((row, r) => {
-    let c = 0;
-    while (c < row.length) {
-      if (row[c] === '#') {
-        let run = c;
-        while (run < row.length && row[run] === '#') run++;
-        out += `<rect x="${x + c * s}" y="${y + r * s}" width="${(run - c) * s}" height="${s}" fill="${fill}"/>`;
-        c = run;
-      } else c++;
-    }
+  colors.forEach((c, i) => {
+    const rr = r - i * w;
+    out += `<path d="M ${cx - rr} ${cy} A ${rr} ${rr} 0 0 1 ${cx + rr} ${cy}" fill="none" stroke="${c}" stroke-width="${w}"/>`;
   });
   return out;
 }
 
-const STAR5 = [
-  '.....#.....',
-  '....###....',
-  '....###....',
-  '...#####...',
-  '###########',
-  '.#########.',
-  '..#######..',
-  '..#######..',
-  '.####.####.',
-  '##.......##',
-];
-
-const NOTE = [
-  '....##.',
-  '....###',
-  '....#.#',
-  '....#..',
-  '....#..',
-  '..###..',
-  '.####..',
-  '..##...',
-];
-
-// pixel rainbow arch: 1px bands radiating from the bottom-center
-function rainbowArch(x, y, s) {
-  const colors = [C.pink, C.orange, C.yellow, C.lime, C.cyan, C.violet];
-  let out = '';
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 16; c++) {
-      const d = Math.hypot(c + 0.5 - 8, r + 0.5 - 8);
-      if (d < 8 && d >= 2) {
-        const band = Math.floor(8 - d);
-        if (band < 6) out += `<rect x="${x + c * s}" y="${y + r * s}" width="${s}" height="${s}" fill="${colors[band]}"/>`;
-      }
-    }
-  }
+function cloud(cx, cy, sc) {
+  let out = `<g transform="translate(${cx} ${cy}) scale(${sc})">`;
+  out += `<circle cx="-34" cy="4" r="26" fill="#FFFFFF"/>`;
+  out += `<circle cx="0" cy="-12" r="34" fill="#FFFFFF"/>`;
+  out += `<circle cx="34" cy="4" r="26" fill="#FFFFFF"/>`;
+  out += `<rect x="-40" y="4" width="80" height="24" rx="12" fill="#FFFFFF"/>`;
+  out += `</g>`;
   return out;
 }
 
-// classic pointer arrow, 8x12
-const ARROW = [
-  '#.......',
-  '##......',
-  '###.....',
-  '####....',
-  '#####...',
-  '######..',
-  '#######.',
-  '########',
-  '###.....',
-  '#.##....',
-  '..##....',
-  '...#....',
-];
+function smoothSmiley(cx, cy, r, face, feature) {
+  let out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${face}"/>`;
+  out += `<ellipse cx="${cx - r * 0.35}" cy="${cy - r * 0.2}" rx="${r * 0.12}" ry="${r * 0.2}" fill="${feature}"/>`;
+  out += `<ellipse cx="${cx + r * 0.35}" cy="${cy - r * 0.2}" rx="${r * 0.12}" ry="${r * 0.2}" fill="${feature}"/>`;
+  out += `<path d="M ${cx - r * 0.5} ${cy + r * 0.15} Q ${cx} ${cy + r * 0.65} ${cx + r * 0.5} ${cy + r * 0.15}" fill="none" stroke="${feature}" stroke-width="${(r * 0.13).toFixed(1)}" stroke-linecap="round"/>`;
+  return out;
+}
+
+function smoothCD(cx, cy, r) {
+  let out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#g_silver)" stroke="#8890B0" stroke-width="3"/>`;
+  const sectors = [[C.cyan, 0], [C.pink, 90], [C.yellow, 180], [C.violet, 270]];
+  for (const [c, a0] of sectors) {
+    const a = (a0 * Math.PI) / 180;
+    const b = a + Math.PI / 2;
+    out += `<path d="M ${cx} ${cy} L ${(cx + r * Math.cos(a)).toFixed(1)} ${(cy + r * Math.sin(a)).toFixed(1)} A ${r} ${r} 0 0 1 ${(cx + r * Math.cos(b)).toFixed(1)} ${(cy + r * Math.sin(b)).toFixed(1)} Z" fill="${c}" opacity="0.18"/>`;
+  }
+  out += `<circle cx="${cx}" cy="${cy}" r="${(r * 0.32).toFixed(1)}" fill="#FFFFFF"/>`;
+  out += `<circle cx="${cx}" cy="${cy}" r="${(r * 0.14).toFixed(1)}" fill="${C.navy}"/>`;
+  out += `<ellipse cx="${cx - r * 0.35}" cy="${cy - r * 0.4}" rx="${(r * 0.3).toFixed(1)}" ry="${(r * 0.14).toFixed(1)}" fill="#FFFFFF" opacity="0.5" transform="rotate(-30 ${cx - r * 0.35} ${cy - r * 0.4})"/>`;
+  return out;
+}
 
 // ordered-dither vertical gradient (Bayer 4x4), the 256-color-GIF way
 function ditherSky(W, H, cell, ramp) {
@@ -525,77 +560,37 @@ function zebraBand(bx, by, len, h) {
   return out;
 }
 
-// marquee ribbon: navy band, checker trim, repeating pixel text
-function marqueeBand(bx, by, len, text) {
-  const h = 78;
-  let out = `<rect x="${bx}" y="${by}" width="${len}" height="${h}" fill="${C.navy}"/>`;
-  out += checker(bx, by, len, 10, 10, C.pink, C.white);
-  out += checker(bx, by + h - 10, len, 10, 10, C.white, C.pink);
-  let repeated = text;
-  while (textCols(repeated) * 4 < len + 400) repeated += text;
-  out += pixelText(repeated, bx + 10, by + 25, 4, C.lime);
-  return out;
-}
-
-// 88x31-style web button, scaled 2x
-function webBadge(x, y, line1, line2, c1, c2) {
-  const w = 176;
-  const h = 62;
-  let out = `<rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" fill="${C.btnHi}"/>`;
-  out += `<rect x="${x + 2}" y="${y + 2}" width="${w + 2}" height="${h + 2}" fill="${C.btnLo}"/>`;
-  out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${C.navy}"/>`;
-  out += pixelText(line1, x + (w - textCols(line1) * 2) / 2, y + 12, 2, c1);
-  out += pixelText(line2, x + (w - textCols(line2) * 2) / 2, y + 34, 2, c2);
-  return out;
-}
-
-// pixel CD with rainbow sheen
-function pixelCD(x, y, s) {
-  let out = '';
-  FACE_SPANS.forEach(([a, b], r) => {
-    out += `<rect x="${x + a * s}" y="${y + r * s}" width="${(b - a + 1) * s}" height="${s}" fill="${C.btnFace}"/>`;
-  });
-  const sheen = [
-    [C.cyan, 0, 8, true], [C.pink, 0, 8, false], [C.yellow, 8, 16, true], [C.violet, 8, 16, false],
-  ];
-  for (const [color, r0, r1, left] of sheen) {
-    for (let r = r0; r < r1; r++) {
-      const [a, b] = FACE_SPANS[r];
-      const from = left ? a : 8;
-      const to = left ? 7 : b;
-      if (to >= from) {
-        out += `<rect x="${x + from * s}" y="${y + r * s}" width="${(to - from + 1) * s}" height="${s}" opacity="0.25" fill="${color}"/>`;
-      }
-    }
-  }
-  // hub: white ring, navy hole
-  for (let r = 6; r <= 9; r++) out += `<rect x="${x + 6 * s}" y="${y + r * s}" width="${4 * s}" height="${s}" fill="${C.white}"/>`;
-  for (let r = 7; r <= 8; r++) out += `<rect x="${x + 7 * s}" y="${y + r * s}" width="${2 * s}" height="${s}" fill="${C.navy}"/>`;
-  return out;
-}
-
 // ================================================================ BACKGROUND
-// Wallpaper for the Ditto theme, built like a 2005 MySpace profile someone
-// customized at 1am: a dithered purple sky, a "thanks 4 the add" marquee
-// ribbon and a zebra ribbon crossing the page, glitter clusters, old-web
-// stickers (hit counter, 88x31 badges, pixel cursor, CD, equalizer), a giant
-// watermark smiley, the brand sparkle, and faint CRT scanlines over it all.
+// Wallpaper for the Ditto theme, in the language of an actual 2005 MySpace
+// profile: a dithered purple sky, glossy glitter clip-art (stars, hearts,
+// sparkles, music notes, a CD, a rainbow with clouds), a zebra ribbon, a
+// profile-views counter, a watermark smiley, and faint CRT scanlines.
 function background() {
   const W = 1920;
   const H = 1080;
   let s = svgOpen(W, H);
   const rnd = lcg(20040815);
   const jig = (range) => (rnd() - 0.5) * 2 * range;
-  const palette = [C.pink, C.cyan, C.yellow, C.lime, C.violet, C.orange];
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange };
+  const names = Object.keys(ids);
+  s += glossDefs(ids);
 
   // ---- dithered sky
-  s += ditherSky(W, H, 12, ['#5B2B90', '#4A1D7A', '#3E1568', '#2C0B4E']);
+  s += ditherSky(W, H, 10, ['#5B2B90', '#4A1D7A', '#3E1568', '#2C0B4E']);
 
-  // ---- giant watermark smiley, sliding off the bottom-right
-  s += `<g opacity="0.5">${smiley(1500, 600, 22, '#8A52C9', '#2C0B4E')}</g>`;
+  // smooth shapes get their own antialiasing
+  s += `<g shape-rendering="auto">`;
 
-  // ---- big pixel rainbow, top right
-  s += rainbowArch(1330, 120, 15);
+  // ---- watermark smiley, tucked behind the zebra ribbon
+  s += `<g opacity="0.4">${smoothSmiley(1680, 740, 170, '#8A52C9', '#3A1260')}</g>`;
+
+  // ---- zebra ribbon across the lower third
+  s += `<g transform="rotate(10 960 840)">${zebraBand(-200, 795, 2400, 90)}</g>`;
+
+  // ---- rainbow with cloud ends, top right
+  s += smoothRainbow(1440, 300, 210, 22);
+  s += cloud(1225, 300, 1);
+  s += cloud(1655, 300, 0.85);
 
   // ---- brand sparkle cluster, top left (the favicon mark, big)
   s += sparkle(260, 190, 290, C.navyEdge);
@@ -603,70 +598,49 @@ function background() {
   s += sparkle(420, 90, 110, C.cyan);
   s += sparkle(120, 320, 74, C.yellow);
 
-  // ---- marquee ribbon
-  s += `<g transform="rotate(-8 960 420)">${marqueeBand(-200, 381, 2400, '*.:* THANKS 4 THE ADD *.:* GET UR OWN SPACE ')}</g>`;
+  // ---- CD (Myspace Music) with notes drifting off it
+  s += smoothCD(700, 190, 82);
+  s += glossyNote(870, 300, 80, C.cyan, 14);
+  s += glossyNote(1120, 430, 92, C.violet, -10);
+  s += glossyNote(530, 690, 76, C.lime, -8);
+  s += glossyNote(1630, 560, 68, C.pink, 10);
 
-  // ---- zebra ribbon
-  s += `<g transform="rotate(10 960 840)">${zebraBand(-200, 795, 2400, 90)}</g>`;
+  // ---- glitter clusters (like tiled glitter-GIF stamps)
+  const clusters = [[620, 300], [1030, 620], [1450, 480], [170, 580], [880, 960]];
+  clusters.forEach(([cx, cy], ci) => {
+    s += glossyStar(cx, cy, 30 + rnd() * 10, names[ci % names.length], jig(20));
+    for (let i = 0; i < 3; i++) {
+      s += sparkle(cx + jig(90), cy + jig(90), 24 + rnd() * 28, ids[names[(ci + i + 1) % names.length]]);
+    }
+    for (let i = 0; i < 4; i++) {
+      s += sparkle(cx + jig(110), cy + jig(110), 10 + rnd() * 8, '#FFFFFF');
+    }
+    if (ci % 2 === 0) s += glossyHeart(cx + jig(80), cy + 70 + jig(20), 44, names[(ci + 3) % names.length], jig(16));
+  });
 
-  // ---- old-web stickers
-  s += `<g transform="rotate(2 258 631)">${webBadge(170, 600, 'GET UR OWN', 'SPACE 2DAY', C.lime, C.pink)}</g>`;
-  s += `<g transform="rotate(-4 1738 331)">${webBadge(1650, 300, 'THANKS 4', 'THE ADD ♥', C.cyan, C.pink)}</g>`;
+  // ---- standalone glossy bits
+  s += glossyHeart(1790, 110, 76, 'pink', 12);
+  s += glossyHeart(340, 470, 50, 'cyan', -10);
+  s += glossyStar(965, 130, 26, 'yellow', 12);
+  s += glossyStar(70, 800, 22, 'lime', -8);
 
-  // hit counter
+  // ---- glitter dust
+  for (let i = 0; i < 26; i++) {
+    s += `<circle cx="${Math.round(rnd() * W)}" cy="${Math.round(rnd() * H)}" r="${(2 + rnd() * 2.5).toFixed(1)}" fill="#FFFFFF" opacity="${(0.3 + rnd() * 0.4).toFixed(2)}"/>`;
+  }
+
+  s += `</g>`;
+
+  // ---- profile views counter
   s += `<g transform="rotate(-3 250 962)">`;
   s += `<rect x="136" y="926" width="228" height="72" fill="${C.btnLo}"/>`;
   s += `<rect x="140" y="930" width="220" height="64" fill="#000000"/>`;
   s += pixelText('0071337', 156, 944, 4, '#39FF14');
   s += `</g>`;
 
-  // equalizer chip
-  s += `<g transform="rotate(3 1270 985)">`;
-  s += `<rect x="1180" y="950" width="180" height="70" rx="8" fill="${C.navy}"/>`;
-  const eq = [18, 34, 50, 26, 42, 58, 30, 46];
-  eq.forEach((hh, i) => {
-    s += `<rect x="${1192 + i * 20}" y="${1010 - hh}" width="12" height="${hh}" fill="${[C.lime, C.yellow, C.pink, C.cyan][i % 4]}"/>`;
-  });
-  s += `</g>`;
-
-  // CD and a cursor pointing at things
-  s += `<g transform="rotate(8 696 196)">${pixelCD(640, 140, 7)}</g>`;
-  s += stamp(ARROW, 1054, 564, 6, C.navyEdge);
-  s += stamp(ARROW, 1050, 560, 6, C.white);
-
-  // ---- glitter clusters (glitter-GIF stamps, not uniform confetti)
-  const clusters = [[620, 280], [1000, 560], [1300, 700], [170, 560], [850, 950]];
-  clusters.forEach(([cx, cy], ci) => {
-    const color = palette[ci % palette.length];
-    const ss = 4 + Math.round(rnd() * 2);
-    s += `<g transform="rotate(${jig(12).toFixed(1)} ${cx} ${cy})">${stamp(STAR5, cx - 5.5 * ss, cy - 5 * ss, ss, color)}</g>`;
-    for (let i = 0; i < 3; i++) {
-      s += sparkle(cx + jig(85), cy + jig(85), 22 + rnd() * 30, palette[(ci + i + 1) % palette.length]);
-    }
-    for (let i = 0; i < 3; i++) {
-      const x = Math.round(cx + jig(100));
-      const y = Math.round(cy + jig(100));
-      const p = 4;
-      s += `<g fill="${C.white}" opacity="0.8"><rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/><rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/></g>`;
-    }
-    if (ci % 2 === 0) s += pixelHeart(cx + jig(90), cy + 60 + jig(20), 6, palette[(ci + 3) % palette.length]);
-  });
-
-  // loose filler plusses and text bits
-  for (let i = 0; i < 16; i++) {
-    const x = Math.round(rnd() * W);
-    const y = Math.round(rnd() * H);
-    const p = 4;
-    s += `<g fill="#9B6BD6" opacity="0.6"><rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/><rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/></g>`;
-  }
-  s += pixelText('XOXO', 1700, 80, 3, C.pink);
-  s += pixelText('*!!*', 60, 1010, 3, C.yellow);
-  s += `<g transform="rotate(-6 520 760)">${stamp(NOTE, 490, 730, 6, C.cyan)}</g>`;
-  s += `<g transform="rotate(7 1620 900)">${stamp(NOTE, 1600, 880, 5, C.lime)}</g>`;
-
   // ---- CRT scanlines
   s += `<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000000"/></pattern></defs>`;
-  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#scan)" opacity="0.07"/>`;
+  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#scan)" opacity="0.06"/>`;
 
   s += '</svg>';
   return s;
