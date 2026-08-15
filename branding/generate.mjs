@@ -464,6 +464,61 @@ function glossyHeart(cx, cy, size, id, rotDeg = 0) {
   return out;
 }
 
+// emo broken heart: the same heart split in two halves, pulled apart at the crack
+function glossyBrokenHeart(cx, cy, size, id, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  const L = 'M50 30 C50 12 32 4 22 13 C10 24 12 42 26 54 L50 78 L46 66 L56 54 L46 42 L54 34 Z';
+  const R = 'M50 30 C50 12 68 4 78 13 C90 24 88 42 74 54 L50 78 L56 66 L46 54 L56 42 L44 34 Z';
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<g transform="rotate(-7 50 50) translate(-4 0)"><path d="${L}" fill="url(#g_${id})" stroke="${C.navyEdge}" stroke-width="7" stroke-linejoin="round"/>`;
+  out += `<ellipse cx="30" cy="26" rx="9" ry="6" fill="#FFFFFF" opacity="0.55" transform="rotate(-22 30 26)"/></g>`;
+  out += `<g transform="rotate(8 50 50) translate(4 0)"><path d="${R}" fill="url(#g_${id})" stroke="${C.navyEdge}" stroke-width="7" stroke-linejoin="round"/></g>`;
+  out += `</g>`;
+  return out;
+}
+
+// scene lightning bolt
+function glossyBolt(cx, cy, size, id, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<polygon points="55,5 15,55 40,55 45,95 85,45 60,45" fill="url(#g_${id})" stroke="${C.navyEdge}" stroke-width="6" stroke-linejoin="round"/>`;
+  out += `<circle cx="45" cy="28" r="8" fill="#FFFFFF" opacity="0.6"/>`;
+  out += `</g>`;
+  return out;
+}
+
+// cute scene skull with a hair bow
+function glossySkull(cx, cy, size, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<path d="M50 8 C28 8 16 24 16 42 C16 54 22 62 30 66 L30 80 C30 85 34 88 39 88 L61 88 C66 88 70 85 70 80 L70 66 C78 62 84 54 84 42 C84 24 72 8 50 8 Z" fill="#F2F4FC" stroke="${C.navyEdge}" stroke-width="6" stroke-linejoin="round"/>`;
+  out += `<ellipse cx="36" cy="44" rx="9" ry="12" fill="${C.navy}"/>`;
+  out += `<ellipse cx="64" cy="44" rx="9" ry="12" fill="${C.navy}"/>`;
+  out += `<path d="M50 56 L45 64 L55 64 Z" fill="${C.navy}"/>`;
+  out += `<rect x="42" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  out += `<rect x="48.5" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  out += `<rect x="55" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  // bow, top right
+  out += `<g transform="translate(74 14) rotate(18)">`;
+  out += `<polygon points="0,0 -17,-10 -15,8" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  out += `<polygon points="0,0 17,-10 15,8" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  out += `<circle r="5" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4"/>`;
+  out += `</g>`;
+  out += `</g>`;
+  return out;
+}
+
+// shooting star with three tapering trails
+function shootingStar(x, y, r, id) {
+  let out = '';
+  const trails = [[0, 0, C.white], [14, 12, C.pink], [-12, 14, C.cyan]];
+  for (const [dx, dy, c] of trails) {
+    out += `<polygon points="${x - 6 + dx},${y + 2 + dy} ${x - 95 + dx * 2},${y - 62 + dy * 2} ${x + 4 + dx},${y - 4 + dy}" fill="${c}" opacity="0.55"/>`;
+  }
+  out += glossyStar(x, y, r, id, 15);
+  return out;
+}
+
 // beamed pair of eighth notes
 function glossyNote(cx, cy, size, color, rotDeg = 0) {
   const sc = (size / 100).toFixed(3);
@@ -571,7 +626,7 @@ function background() {
   let s = svgOpen(W, H);
   const rnd = lcg(20040815);
   const jig = (range) => (rnd() - 0.5) * 2 * range;
-  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange };
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
   const names = Object.keys(ids);
   s += glossDefs(ids);
 
@@ -620,7 +675,12 @@ function background() {
 
   // ---- standalone glossy bits
   s += glossyHeart(1790, 110, 76, 'pink', 12);
-  s += glossyHeart(340, 470, 50, 'cyan', -10);
+  s += glossyHeart(1690, 190, 56, 'black', -10);
+  s += glossyBrokenHeart(360, 460, 112, 'pink', -6);
+  s += glossyBolt(1240, 640, 80, 'yellow', 8);
+  s += glossyBolt(95, 655, 58, 'cyan', -12);
+  s += glossySkull(1160, 160, 100, 8);
+  s += shootingStar(615, 105, 26, 'yellow');
   s += glossyStar(965, 130, 26, 'yellow', 12);
   s += glossyStar(70, 800, 22, 'lime', -8);
 
