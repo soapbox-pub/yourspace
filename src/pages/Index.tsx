@@ -501,7 +501,7 @@ function ZebraStrip({ className, style }: { className?: string; style?: React.CS
  * detached drops mid-fall.
  */
 function SlimeDrip({ className }: { className?: string }) {
-  const { id, stops } = useGloss('#14ff89');
+  const { id, stops } = useGloss('#8fe800');
   return (
     <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className={className} aria-hidden="true">
       <Gloss id={id} stops={stops} />
@@ -549,7 +549,7 @@ const WORDMARK = [
 ];
 
 /** Demo page options. */
-const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff', '#14ff89'];
+const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
 const PATTERNS = ['plain', 'checker', 'stripes', 'zebra'] as const;
 const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
 
@@ -582,7 +582,7 @@ function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[numb
 
 const Index = () => {
   const { user } = useCurrentUser();
-  const [accent, setAccent] = useState('#14ff89');
+  const [accent, setAccent] = useState('#8fe800');
   const [pattern, setPattern] = useState<(typeof PATTERNS)[number]>('checker');
   const [sticker, setSticker] = useState<(typeof STICKERS)[number]>('heart');
   const [name, setName] = useState('ur demo page');
@@ -975,7 +975,7 @@ const Index = () => {
                   onClick={() => setGlitter((g) => !g)}
                   aria-pressed={glitter}
                   className="rounded-full border-[3px] border-ys-edge px-5 py-1.5 font-display text-sm font-extrabold italic transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ backgroundColor: glitter ? '#14ff89' : 'rgb(255 255 255 / 0.7)', color: '#131a3a' }}
+                  style={{ backgroundColor: glitter ? '#8fe800' : 'rgb(255 255 255 / 0.7)', color: '#131a3a' }}
                 >
                   {glitter ? 'on !!' : 'off'}
                 </button>
@@ -986,7 +986,7 @@ const Index = () => {
       </section>
 
       {/* Closing call to action */}
-      <section className="relative bg-[#14ff89]">
+      <section className="relative bg-[#8fe800]">
         <Bunny className="absolute top-1/2 left-[12%] w-20 -translate-y-1/2 -rotate-6 sm:w-36" />
         <DevilHeart className="absolute top-1/2 right-[12%] w-16 -translate-y-1/2 rotate-12 sm:w-32" />
 
@@ -1004,7 +1004,7 @@ const Index = () => {
               <Link
                 to="/edit"
                 className="ys-gel relative z-10 px-10 py-4 text-2xl"
-                style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)' }}
+                style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)', color: '#ffffff' }}
               >
                 start building
               </Link>
