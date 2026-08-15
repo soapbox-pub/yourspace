@@ -550,9 +550,9 @@ const WORDMARK = [
 
 /** Demo page options. */
 const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
-const PATTERNS = ['plain', 'checker', 'stripes', 'dots'] as const;
-const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2'] as const;
-const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
+const PATTERNS = ['plain', 'checker', 'stripes', 'dots', 'grid'] as const;
+const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2', '#0c1130'] as const;
+const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'broken'] as const;
 
 function bgStyle(pattern: (typeof PATTERNS)[number], color: string): React.CSSProperties {
   if (pattern === 'checker') {
@@ -570,6 +570,11 @@ function bgStyle(pattern: (typeof PATTERNS)[number], color: string): React.CSSPr
       background: `radial-gradient(rgb(12 17 48 / 0.1) 2px, transparent 2px) 0 0 / 18px 18px, ${color}`,
     };
   }
+  if (pattern === 'grid') {
+    return {
+      background: `repeating-linear-gradient(0deg, rgb(12 17 48 / 0.08) 0 1px, transparent 1px 18px), repeating-linear-gradient(90deg, rgb(12 17 48 / 0.08) 0 1px, transparent 1px 18px), ${color}`,
+    };
+  }
   return { background: color };
 }
 
@@ -578,8 +583,6 @@ function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[numb
   if (kind === 'star') return <GlossyStar color={accent} className={className} />;
   if (kind === 'cat') return <Cat color={accent} className={className} />;
   if (kind === 'devil') return <DevilHeart color={accent} className={className} />;
-  if (kind === 'bolt') return <Bolt color={accent} className={className} />;
-  if (kind === 'note') return <Note color={accent} className={className} />;
   if (kind === 'broken') return <BrokenHeart color={accent} className={className} />;
   return <Skull className={className} />;
 }
@@ -910,7 +913,7 @@ const Index = () => {
             </div>
 
             {/* The controls, on their own glossy panel so they read over the wallpaper */}
-            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5 lg:max-w-sm">
+            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5">
               <div>
                 <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">color</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Accent color">
