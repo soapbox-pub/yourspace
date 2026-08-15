@@ -731,8 +731,8 @@ function icon(bg) {
   s += glossDefs(ids);
   if (bg) s += `<rect x="0" y="0" width="${W}" height="${W}" fill="${C.purpleA}"/>`;
   s += `<g shape-rendering="auto">`;
-  s += glossyGhost(500, 500, 1150, 2);
-  s += glossyHeart(870, 840, 210, 'pink', 12);
+  s += glossyGhost(500, 500, 950, 2);
+  s += glossyHeart(839, 839, 237, 'pink', 12);
   s += `</g>`;
   s += '</svg>';
   return s;
