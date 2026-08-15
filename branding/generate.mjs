@@ -3,7 +3,7 @@
 // so the output looks like it came out of MS Paint circa 2004.
 // Run: node branding/generate.mjs   (then rsvg-convert the SVGs to PNG)
 
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -821,6 +821,144 @@ function sectionBg() {
 
   s += '</svg>';
   return s;
+}
+
+// ================================================================ CHARACTERS
+// The emoji crew: cute-punk mascots built on the ghost's face template.
+// Same recipe for every one: glossy gradient body, thick navy-edge outline,
+// shiny navy eyes, pink blush, wavy little mouth.
+
+function cuteFace({ cx = 50, eyeY = 46, eyeDx = 12, eyeRx = 8, eyeRy = 12, blushY = 58, blushDx = 22, blushRx = 7, mouthY = 60, mouth = true, fangs = false, brows = false } = {}) {
+  let out = '';
+  out += `<ellipse cx="${cx - eyeDx}" cy="${eyeY}" rx="${eyeRx}" ry="${eyeRy}" fill="${C.navy}"/>`;
+  out += `<ellipse cx="${cx + eyeDx}" cy="${eyeY}" rx="${eyeRx}" ry="${eyeRy}" fill="${C.navy}"/>`;
+  out += `<circle cx="${cx - eyeDx - 3}" cy="${eyeY - 4}" r="3" fill="#FFFFFF"/>`;
+  out += `<circle cx="${cx + eyeDx - 3}" cy="${eyeY - 4}" r="3" fill="#FFFFFF"/>`;
+  if (brows) {
+    out += `<path d="M${cx - eyeDx - 7} ${eyeY - eyeRy - 8} L${cx - eyeDx + 5} ${eyeY - eyeRy - 3}" fill="none" stroke="${C.navy}" stroke-width="3.5" stroke-linecap="round"/>`;
+    out += `<path d="M${cx + eyeDx + 7} ${eyeY - eyeRy - 8} L${cx + eyeDx - 5} ${eyeY - eyeRy - 3}" fill="none" stroke="${C.navy}" stroke-width="3.5" stroke-linecap="round"/>`;
+  }
+  out += `<ellipse cx="${cx - blushDx}" cy="${blushY}" rx="${blushRx}" ry="4" fill="${C.pink}" opacity="0.55"/>`;
+  out += `<ellipse cx="${cx + blushDx}" cy="${blushY}" rx="${blushRx}" ry="4" fill="${C.pink}" opacity="0.55"/>`;
+  if (mouth) {
+    out += `<path d="M${cx - 6} ${mouthY} Q${cx - 3} ${mouthY + 4} ${cx} ${mouthY} Q${cx + 3} ${mouthY + 4} ${cx + 6} ${mouthY}" fill="none" stroke="${C.navy}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  if (fangs) {
+    out += `<path d="M${cx - 6.5} ${mouthY + 0.5} L${cx - 4} ${mouthY + 8} L${cx - 1.5} ${mouthY + 2} Z" fill="#FFFFFF" stroke="${C.navy}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    out += `<path d="M${cx + 1.5} ${mouthY + 2} L${cx + 4} ${mouthY + 8} L${cx + 6.5} ${mouthY + 0.5} Z" fill="#FFFFFF" stroke="${C.navy}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  }
+  return out;
+}
+
+const charWrap = (cx, cy, size, rotDeg, inner) =>
+  `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${(size / 100).toFixed(3)})">${inner}</g>`;
+
+// series skull: the banner skull, but with the ghost's shiny eyes and blush
+function charSkull(cx, cy, size, rotDeg = 0) {
+  let o = `<path d="M50 8 C28 8 16 24 16 42 C16 54 22 62 30 66 L30 80 C30 85 34 88 39 88 L61 88 C66 88 70 85 70 80 L70 66 C78 62 84 54 84 42 C84 24 72 8 50 8 Z" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += cuteFace({ eyeY: 44, eyeDx: 14, eyeRx: 9, blushY: 58, blushDx: 26, blushRx: 6, mouth: false });
+  o += `<path d="M50 55 L45 63 L55 63 Z" fill="${C.navy}"/>`;
+  o += `<rect x="42" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  o += `<rect x="48.5" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  o += `<rect x="55" y="72" width="3" height="12" fill="${C.navy}"/>`;
+  o += `<g transform="translate(74 14) rotate(18)">`;
+  o += `<polygon points="0,0 -17,-10 -15,8" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  o += `<polygon points="0,0 17,-10 15,8" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  o += `<circle r="5" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="4"/>`;
+  o += `</g>`;
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+// punk kitty: violet, hoop earring, whiskers
+function charCat(cx, cy, size, rotDeg = 0) {
+  let o = `<path d="M22 38 L15 8 L40 21 C43 20 57 20 60 21 L85 8 L78 38 C83 45 86 53 86 62 C86 81 70 92 50 92 C30 92 14 81 14 62 C14 53 17 45 22 38 Z" fill="url(#g_violet)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<path d="M25 30 L21 14 L34 21 Z" fill="${C.pink}" opacity="0.8"/>`;
+  o += `<path d="M75 30 L79 14 L66 21 Z" fill="${C.pink}" opacity="0.8"/>`;
+  o += `<circle cx="81" cy="33" r="5" fill="none" stroke="${C.navyEdge}" stroke-width="5"/>`;
+  o += `<circle cx="81" cy="33" r="5" fill="none" stroke="#F2F4FC" stroke-width="2.5"/>`;
+  o += `<path d="M4 54 Q13 55 21 57 M6 64 Q14 63 21 62" fill="none" stroke="${C.navy}" stroke-width="2.5" stroke-linecap="round"/>`;
+  o += `<path d="M96 54 Q87 55 79 57 M94 64 Q86 63 79 62" fill="none" stroke="${C.navy}" stroke-width="2.5" stroke-linecap="round"/>`;
+  o += cuteFace({ eyeY: 50, blushY: 63, blushDx: 24, mouth: false });
+  o += `<path d="M46 59 L54 59 L50 64 Z" fill="${C.pink}" stroke="${C.navy}" stroke-width="2" stroke-linejoin="round"/>`;
+  o += `<path d="M44 67 Q47 71 50 67 Q53 71 56 67" fill="none" stroke="${C.navy}" stroke-width="3" stroke-linecap="round"/>`;
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+// baby bat: night-purple, scallop wings, tiny fangs
+function charBat(cx, cy, size, rotDeg = 0) {
+  const wing = 'M42 46 Q8 24 0 60 Q13 53 15 70 Q26 61 30 78 Q37 69 45 73 Z';
+  let o = `<path d="${wing}" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<g transform="scale(-1 1) translate(-100 0)"><path d="${wing}" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/></g>`;
+  o += `<path d="M32 36 L26 12 L46 24 Z" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<path d="M68 36 L74 12 L54 24 Z" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<circle cx="50" cy="54" r="31" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="5"/>`;
+  o += cuteFace({ eyeY: 50, blushY: 62, blushDx: 19, blushRx: 6, mouth: false });
+  // mouth and fangs in lavender so they read on the dark body
+  o += `<path d="M44 62 Q47 66 50 62 Q53 66 56 62" fill="none" stroke="${C.lavender}" stroke-width="3" stroke-linecap="round"/>`;
+  o += `<path d="M43.5 62.5 L46 70 L48.5 64 Z" fill="#FFFFFF" stroke="${C.lavender}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  o += `<path d="M51.5 64 L54 70 L56.5 62.5 Z" fill="#FFFFFF" stroke="${C.lavender}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+// mall-goth martian: lime, cyan antenna balls
+function charAlien(cx, cy, size, rotDeg = 0) {
+  let o = `<path d="M40 12 Q34 4 29 3" fill="none" stroke="${C.navyEdge}" stroke-width="4" stroke-linecap="round"/>`;
+  o += `<path d="M60 12 Q66 4 71 3" fill="none" stroke="${C.navyEdge}" stroke-width="4" stroke-linecap="round"/>`;
+  o += `<circle cx="27" cy="4" r="6" fill="url(#g_cyan)" stroke="${C.navyEdge}" stroke-width="4"/>`;
+  o += `<circle cx="73" cy="4" r="6" fill="url(#g_cyan)" stroke="${C.navyEdge}" stroke-width="4"/>`;
+  o += `<path d="M50 10 C72 10 86 26 86 45 C86 68 68 90 50 90 C32 90 14 68 14 45 C14 26 28 10 50 10 Z" fill="url(#g_lime)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += cuteFace({ eyeY: 46, eyeDx: 15, eyeRx: 10, eyeRy: 14, blushY: 62, blushDx: 24, mouthY: 66 });
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+// heartbreaker devil: pink heart, little horns, littler fangs
+function charDevil(cx, cy, size, rotDeg = 0) {
+  let o = `<path d="${HEART_PATH}" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<path d="M22 17 C16 7 18 -3 27 -4 C25 4 28 11 34 14 Z" fill="url(#g_yellow)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  o += `<path d="M78 17 C84 7 82 -3 73 -4 C75 4 72 11 66 14 Z" fill="url(#g_yellow)" stroke="${C.navyEdge}" stroke-width="4" stroke-linejoin="round"/>`;
+  o += `<ellipse cx="33" cy="27" rx="11" ry="7" fill="#FFFFFF" opacity="0.55" transform="rotate(-22 33 27)"/>`;
+  o += cuteFace({ eyeY: 38, eyeDx: 13, eyeRx: 7, eyeRy: 10, blushY: 49, blushDx: 24, blushRx: 6, mouthY: 52, fangs: true, brows: true });
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+// emo bunny: lavender, one flopped ear with a hoop, buck teeth
+function charBunny(cx, cy, size, rotDeg = 0) {
+  let o = `<path d="M32 44 C24 18 28 4 37 4 C45 4 47 20 45 44 Z" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<path d="M35 36 C32 20 33 12 37 11 C40 11 41 22 40 36 Z" fill="${C.pink}" opacity="0.6"/>`;
+  o += `<path d="M55 44 C55 20 60 6 70 4 C80 2 88 8 86 14 C79 10 71 14 68 24 C66 31 66 38 66 44 Z" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
+  o += `<circle cx="84" cy="16" r="5" fill="none" stroke="${C.navyEdge}" stroke-width="5"/>`;
+  o += `<circle cx="84" cy="16" r="5" fill="none" stroke="#F2F4FC" stroke-width="2.5"/>`;
+  o += `<ellipse cx="50" cy="64" rx="35" ry="29" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5"/>`;
+  o += cuteFace({ eyeY: 60, blushY: 72, blushDx: 25, mouthY: 72 });
+  o += `<rect x="45" y="74" width="10" height="8" rx="2" fill="#FFFFFF" stroke="${C.navy}" stroke-width="2"/>`;
+  o += `<path d="M50 74 L50 82" stroke="${C.navy}" stroke-width="1.5"/>`;
+  return charWrap(cx, cy, size, rotDeg, o);
+}
+
+const CHARACTERS = {
+  ghost: (x, y, s) => glossyGhost(x, y, s, 2),
+  skull: (x, y, s) => charSkull(x, y, s, -2),
+  cat: (x, y, s) => charCat(x, y, s, 2),
+  bat: (x, y, s) => charBat(x, y, s, -2),
+  alien: (x, y, s) => charAlien(x, y, s, 2),
+  devil: (x, y, s) => charDevil(x, y, s, -2),
+  bunny: (x, y, s) => charBunny(x, y, s, 2),
+};
+
+function characterCard(draw) {
+  const W = 1000;
+  let s = svgOpen(W, W);
+  s += glossDefs({ pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245', lavender: C.lavender });
+  s += `<rect x="0" y="0" width="${W}" height="${W}" fill="${C.purpleA}"/>`;
+  s += `<g shape-rendering="auto">${draw(500, 490, 620)}</g>`;
+  s += '</svg>';
+  return s;
+}
+
+const CHAR_OUT = join(OUT, 'characters');
+mkdirSync(CHAR_OUT, { recursive: true });
+for (const [name, draw] of Object.entries(CHARACTERS)) {
+  writeFileSync(join(CHAR_OUT, `${name}.svg`), characterCard(draw));
 }
 
 writeFileSync(join(OUT, 'avatar.svg'), avatar());
