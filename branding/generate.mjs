@@ -62,6 +62,7 @@ const FONT = {
   '-': ['...', '...', '...', '###', '...', '...', '...'],
   '/': ['..#', '..#', '.#.', '.#.', '.#.', '#..', '#..'],
   '*': ['..#..', '#.#.#', '.###.', '#.#.#', '..#..', '.....', '.....'],
+  X: ['#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#'],
   '\u2665': ['.#.#.', '#####', '#####', '.###.', '..#..', '.....', '.....'],
   ' ': ['...', '...', '...', '...', '...', '...', '...'],
 };
@@ -405,48 +406,134 @@ function og() {
   return s;
 }
 
+// generic bitmap stamp (merged horizontal runs)
+function stamp(rows, x, y, s, fill) {
+  let out = '';
+  rows.forEach((row, r) => {
+    let c = 0;
+    while (c < row.length) {
+      if (row[c] === '#') {
+        let run = c;
+        while (run < row.length && row[run] === '#') run++;
+        out += `<rect x="${x + c * s}" y="${y + r * s}" width="${(run - c) * s}" height="${s}" fill="${fill}"/>`;
+        c = run;
+      } else c++;
+    }
+  });
+  return out;
+}
+
+const STAR5 = [
+  '.....#.....',
+  '....###....',
+  '....###....',
+  '...#####...',
+  '###########',
+  '.#########.',
+  '..#######..',
+  '..#######..',
+  '.####.####.',
+  '##.......##',
+];
+
+const NOTE = [
+  '....##.',
+  '....###',
+  '....#.#',
+  '....#..',
+  '....#..',
+  '..###..',
+  '.####..',
+  '..##...',
+];
+
+// pixel rainbow arch: 1px bands radiating from the bottom-center
+function rainbowArch(x, y, s) {
+  const colors = [C.pink, C.orange, C.yellow, C.lime, C.cyan, C.violet];
+  let out = '';
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 16; c++) {
+      const d = Math.hypot(c + 0.5 - 8, r + 0.5 - 8);
+      if (d < 8 && d >= 2) {
+        const band = Math.floor(8 - d);
+        if (band < 6) out += `<rect x="${x + c * s}" y="${y + r * s}" width="${s}" height="${s}" fill="${colors[band]}"/>`;
+      }
+    }
+  }
+  return out;
+}
+
 // ================================================================ BACKGROUND
-// Dim tiling wallpaper for the Ditto theme: the brand checker a shade darker,
-// with faint scattered sparkles, hearts, and pixel stars. Both cell counts are
-// even (64x36 at 30px) so the checker tiles seamlessly; deco keeps a margin
-// from the edges.
+// Glitter wallpaper for the Ditto theme, in the spirit of a 2004 MySpace
+// profile: the brand checker covered in a staggered grid of full-color
+// sticker motifs — sparkles, hearts, smileys, pixel rainbows, music notes,
+// stars, starbursts, and glitter-text bits — each with jitter and a tilt.
 function background() {
   const W = 1920;
   const H = 1080;
-  const CELL = 30;
   let s = svgOpen(W, H);
-  s += checker(0, 0, W, H, CELL, '#401766', '#350F55');
+  s += checker(0, 0, W, H, 30, C.purpleA, C.purpleB);
 
   const rnd = lcg(20040815);
-  const margin = 48;
-  const px = () => margin + rnd() * (W - 2 * margin);
-  const py = () => margin + rnd() * (H - 2 * margin);
+  const jig = (range) => (rnd() - 0.5) * 2 * range;
+  const palette = [C.pink, C.cyan, C.yellow, C.lime, C.violet, C.orange, C.white];
 
-  // tiny 5-pixel plus-shaped stars in a lighter purple
-  for (let i = 0; i < 34; i++) {
-    const x = Math.round(px());
-    const y = Math.round(py());
-    const p = 4;
-    s += `<g fill="#6A35A8" opacity="0.55">`;
+  // filler layer: little plus-stars and dim big sparkles for depth
+  for (let i = 0; i < 40; i++) {
+    const x = Math.round(rnd() * W);
+    const y = Math.round(rnd() * H);
+    const p = 4 + Math.round(rnd() * 2);
+    s += `<g fill="${rnd() > 0.5 ? '#7B42BC' : C.white}" opacity="${(0.4 + rnd() * 0.3).toFixed(2)}">`;
     s += `<rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/>`;
     s += `<rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/>`;
     s += `</g>`;
   }
-
-  // faint sparkles
-  const sparkleColors = [
-    [C.white, 0.12], [C.yellow, 0.16], [C.cyan, 0.14], [C.pink, 0.16], [C.lime, 0.1],
-  ];
-  for (let i = 0; i < 20; i++) {
-    const [color, op] = sparkleColors[i % sparkleColors.length];
-    const size = 20 + rnd() * 30;
-    s += `<g opacity="${op}">${sparkle(px(), py(), size, color)}</g>`;
+  for (let i = 0; i < 10; i++) {
+    s += `<g opacity="0.25">${sparkle(rnd() * W, rnd() * H, 80 + rnd() * 60, '#7B42BC')}</g>`;
   }
 
-  // faint pixel hearts
-  for (let i = 0; i < 8; i++) {
-    const color = i % 2 === 0 ? C.pink : C.violet;
-    s += `<g opacity="0.16">${pixelHeart(px(), py(), 5 + Math.round(rnd() * 3), color)}</g>`;
+  // sticker layer: staggered grid, one motif per cell, jittered and tilted
+  const CELLW = 213;
+  const CELLH = 216;
+  const motifs = ['sparkle', 'heart', 'star', 'smiley', 'rainbow', 'note', 'burst', 'text'];
+  const texts = ['*.:*', 'XOXO', '*!!*'];
+  let n = 0;
+  for (let row = 0; row * CELLH < H + CELLH; row++) {
+    for (let col = 0; col * CELLW < W + CELLW; col++) {
+      const cx = col * CELLW + (row % 2 === 1 ? CELLW / 2 : 0) + jig(55);
+      const cy = row * CELLH + CELLH / 2 + jig(55);
+      const motif = motifs[n % motifs.length];
+      const color = palette[n % palette.length];
+      const rot = jig(14).toFixed(1);
+      const op = (0.88 + rnd() * 0.12).toFixed(2);
+      let m = '';
+      if (motif === 'sparkle') {
+        m = sparkle(cx, cy, 44 + rnd() * 30, color);
+      } else if (motif === 'heart') {
+        const hs = 6 + Math.round(rnd() * 4);
+        m = pixelHeart(cx - 3.5 * hs, cy - 3 * hs, hs, color);
+      } else if (motif === 'star') {
+        const ss = 5 + Math.round(rnd() * 3);
+        m = stamp(STAR5, cx - 5.5 * ss, cy - 5 * ss, ss, color === C.white ? C.yellow : color);
+      } else if (motif === 'smiley') {
+        const ms = rnd() > 0.5 ? 3 : 2.5;
+        m = smiley(cx - 8 * ms, cy - 8 * ms, ms, C.yellow, C.navy);
+      } else if (motif === 'rainbow') {
+        const rs = 5 + Math.round(rnd() * 2);
+        m = rainbowArch(cx - 8 * rs, cy - 4 * rs, rs);
+      } else if (motif === 'note') {
+        const ns = 5 + Math.round(rnd() * 2);
+        m = stamp(NOTE, cx - 3.5 * ns, cy - 4 * ns, ns, color === C.yellow ? C.cyan : color);
+      } else if (motif === 'burst') {
+        m = starburst(cx, cy, 34 + rnd() * 10, 19, 8, rnd() > 0.5 ? C.yellow : C.pink, C.navyEdge, 4, rnd());
+      } else {
+        const txt = texts[n % texts.length];
+        const ts = 4;
+        m = pixelText(txt, cx - (textCols(txt) * ts) / 2, cy - 3.5 * ts, ts, color);
+      }
+      s += `<g opacity="${op}" transform="rotate(${rot} ${cx.toFixed(1)} ${cy.toFixed(1)})">${m}</g>`;
+      n++;
+    }
   }
 
   s += '</svg>';
