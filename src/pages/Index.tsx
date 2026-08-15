@@ -566,7 +566,7 @@ const Index = () => {
           aria-hidden="true"
           style={{
             background:
-              'linear-gradient(90deg, transparent 40px, rgb(255 45 158 / 0.16) 40px, rgb(255 45 158 / 0.16) 42px, transparent 42px), repeating-linear-gradient(transparent 0 31px, rgb(77 124 255 / 0.14) 31px 32px)',
+              'linear-gradient(90deg, transparent 80px, rgb(255 45 158 / 0.16) 80px, rgb(255 45 158 / 0.16) 82px, transparent 82px), repeating-linear-gradient(transparent 0 31px, rgb(77 124 255 / 0.14) 31px 32px)',
           }}
         />
         {/* The border, doodled corner to corner like a bored study period */}
