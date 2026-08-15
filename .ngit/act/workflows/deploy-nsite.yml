@@ -7,11 +7,10 @@ name: Deploy nsite
 # ── Secrets (provisioned by the ngit-ci operator for this repo's alias) ──────
 # ngit-ci injects ${{ secrets.* }} ONLY on maintainer-authored triggers — a
 # push to a watched repo always qualifies — and ONLY for secrets the operator
-# has provisioned for this repo. Ask the operator to set, keyed to this repo's
-# alias, reusing the same NIP-46 bunker the Armada repo already signs with:
-#   NSITE_BUNKER_URL        bunker:// URL of the NIP-46 signer for the
-#                           Soapbox identity (the account that owns the nsite)
-# If NSITE_BUNKER_URL is empty (not provisioned, or a non-maintainer PR), the
+# has provisioned for this repo. This reuses the SAME NIP-46 bunker the Armada
+# repo already signs with, so no new secret is needed:
+#   ZAPSTORE_BUNKER_URL     bunker:// URL of the NIP-46 signer
+# If it is empty (not provisioned for this alias, or a non-maintainer PR), the
 # job builds and then skips the deploy instead of failing.
 
 on:
@@ -23,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NSITE_BUNKER_URL: ${{ secrets.NSITE_BUNKER_URL }}
+      ZAPSTORE_BUNKER_URL: ${{ secrets.ZAPSTORE_BUNKER_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,13 +37,13 @@ jobs:
 
       - name: Deploy to Blossom + relays
         env:
-          NSITE_BUNKER_URL: ${{ secrets.NSITE_BUNKER_URL }}
+          ZAPSTORE_BUNKER_URL: ${{ secrets.ZAPSTORE_BUNKER_URL }}
         run: |
           set -eu
 
           # No bunker provisioned (or non-maintainer trigger): build only.
-          if [ -z "${NSITE_BUNKER_URL:-}" ]; then
-            echo "NSITE_BUNKER_URL not set; skipping nsite deploy (build verified)."
+          if [ -z "${ZAPSTORE_BUNKER_URL:-}" ]; then
+            echo "ZAPSTORE_BUNKER_URL not set; skipping nsite deploy (build verified)."
             exit 0
           fi
 
@@ -60,7 +59,7 @@ jobs:
           # positives in our own bundle (pubkeys, bunker:// parsing code), which
           # would hang a headless run.
           nsyte deploy dist \
-            --sec "$NSITE_BUNKER_URL" \
+            --sec "$ZAPSTORE_BUNKER_URL" \
             --use-fallback-relays \
             --non-interactive \
             --skip-secrets-scan 2>&1 | tee /tmp/nsyte.log
