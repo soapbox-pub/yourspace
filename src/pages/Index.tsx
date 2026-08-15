@@ -998,7 +998,11 @@ const Index = () => {
             </h2>
 
             {user ? (
-              <Link to="/edit" className="ys-gel px-10 py-4 text-2xl">
+              <Link
+                to="/edit"
+                className="ys-gel px-10 py-4 text-2xl"
+                style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)' }}
+              >
                 start building
               </Link>
             ) : (
