@@ -782,7 +782,7 @@ function sectionBg() {
 
   // ---- the anchors: cassette and skull
   s += glossyCassette(330, 300, 210, -8);
-  s += glossySkull(1080, 330, 165, 6);
+  s += glossySkull(1330, 320, 165, 6);
 
   // ---- bolts
   s += glossyBolt(700, 190, 74, 'yellow', 8);
