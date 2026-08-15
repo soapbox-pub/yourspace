@@ -550,7 +550,7 @@ const WORDMARK = [
 
 /** Demo page options. */
 const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
-const PATTERNS = ['plain', 'checker', 'stripes', 'zebra'] as const;
+const PATTERNS = ['plain', 'checker', 'stripes'] as const;
 const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2'] as const;
 const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
 
@@ -782,8 +782,6 @@ const Index = () => {
                 </span>
               </div>
 
-              {pattern === 'zebra' && <ZebraStrip className="block h-6 w-full" />}
-
               <div className="relative flex flex-1 flex-col justify-center space-y-4 p-5 transition-colors" style={bgStyle(pattern, bgColor)}>
                 {glitter && (
                   <>
@@ -960,9 +958,7 @@ const Index = () => {
                         pattern === p ? 'ring-4 ring-white' : ''
                       }`}
                       style={bgStyle(p, bgColor)}
-                    >
-                      {p === 'zebra' && <ZebraStrip className="block h-full w-full" />}
-                    </button>
+                    />
                   ))}
                 </div>
               </div>
