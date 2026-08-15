@@ -186,7 +186,7 @@ function Skull({ className, style }: StickerProps) {
 /* Shooting star with three tapering trails. */
 function ShootingStar({ className, style }: StickerProps) {
   return (
-    <span className={`relative inline-block ${className ?? ''}`} style={style} aria-hidden="true">
+    <span className={className} style={style} aria-hidden="true">
       <svg viewBox="0 0 140 100" className="block h-auto w-full">
         <polygon points="118,52 25,18 116,44" fill="#ffffff" opacity="0.55" />
         <polygon points="120,64 33,58 118,56" fill="#ff2d9e" opacity="0.55" />
@@ -222,6 +222,50 @@ function Rainbow({ className, style }: StickerProps) {
         <rect x="336" y="216" width="80" height="24" rx="12" />
       </g>
     </svg>
+  );
+}
+
+/* Old browser window chrome: navy bar, yellow sparkle, _ □ X buttons. */
+function WinBar({ title }: { title: string }) {
+  return (
+    <div className="flex h-12 items-center gap-3 border-b-4 border-ys-edge bg-[#1b2350] px-4" aria-hidden="true">
+      <svg viewBox="0 0 100 100" className="w-5 shrink-0">
+        <path d="M50 2 Q58 42 98 50 Q58 58 50 98 Q42 58 2 50 Q42 42 50 2 Z" fill="#ffd400" />
+      </svg>
+      <span className="flex-1 truncate font-display text-sm font-bold italic tracking-wide text-ys-lavender">
+        {title}
+      </span>
+      <span className="flex gap-1.5">
+        {['_', '□', '×'].map((glyph) => (
+          <span
+            key={glyph}
+            className="flex size-5 items-center justify-center border-2 border-ys-edge bg-[#c9cfe8] text-[10px] font-black leading-none text-ys-edge"
+          >
+            {glyph}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/* Jagged starburst, like the NEW! one overlapping the banner's sticker. */
+function Starburst({ label, className, style }: { label: string; className?: string; style?: React.CSSProperties }) {
+  const pts = [];
+  for (let i = 0; i < 18; i++) {
+    const r = i % 2 === 0 ? 78 : 44;
+    const a = 0.3 + (Math.PI * i) / 9;
+    pts.push(`${(100 + r * Math.cos(a)).toFixed(1)},${(100 + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return (
+    <span className={className} style={style} aria-hidden="true">
+      <svg viewBox="0 0 200 200" className="block h-auto w-full">
+        <polygon points={pts.join(' ')} fill="#ffd400" stroke="#0c1130" strokeWidth="6" />
+      </svg>
+      <span className="absolute inset-0 flex -rotate-6 items-center justify-center font-display text-2xl font-black italic text-ys-pink">
+        {label}
+      </span>
+    </span>
   );
 }
 
@@ -351,30 +395,37 @@ const Index = () => {
 
   return (
     <div className="ys-min-below-bar overflow-x-hidden bg-ys-grape text-white">
-      {/* Hero: dithered sky, wordmark left, ghost right, the banner cast scattered */}
+      {/*
+        The hero is the banner, live: a browser window (title bar, marquee
+        strip at the foot), the wordmark huge on the left, and the ghost in
+        a tilted framed sticker with a starburst on its corner. Deco stays
+        at the corners and edges, exactly like the banner.
+      */}
       <div className="ys-sky relative overflow-hidden">
+        <WinBar title="YOURSPACE.LIVE - UR SPACE ONLINE" />
+
         {/*
           The banner cast, zoned the way the banner zones it: the text lane
           stays clear, the art clusters on the right, and small deco sits at
           the corners and edges only. Motion is a two-frame twinkle.
         */}
-        <ShootingStar className="absolute top-[4%] left-[2%] w-36 sm:w-44" />
-        <div className="absolute top-[6%] right-[4%] rotate-12" aria-hidden="true">
+        <ShootingStar className="absolute top-20 left-[2%] w-36 sm:w-44" />
+        <div className="absolute top-[10%] right-[4%] rotate-12" aria-hidden="true">
           <GlossyHeart color="#ff2d9e" className="w-9 sm:w-12" />
           <Sparkle color="#ffffff" className="ys-twinkle absolute -left-4 -top-2 w-5" style={{ animationDelay: '0.4s' }} />
         </div>
-        <div className="absolute bottom-[18%] left-[2%] hidden rotate-6 sm:block" aria-hidden="true">
+        <div className="absolute bottom-[30%] left-[2%] hidden rotate-6 sm:block" aria-hidden="true">
           <Bolt color="#ffd400" className="w-10" />
           <Sparkle color="#8fe800" className="absolute -right-4 top-8 w-5" />
         </div>
-        <div className="absolute right-[3%] bottom-[16%] hidden -rotate-12 sm:block" aria-hidden="true">
+        <div className="absolute right-[3%] bottom-[26%] hidden -rotate-12 sm:block" aria-hidden="true">
           <Note color="#b14dff" className="w-12" />
           <Sparkle color="#ff2d9e" className="ys-twinkle absolute -left-5 top-7 w-5" style={{ animationDelay: '0.7s' }} />
         </div>
-        <GlossyHeart color="#2a1245" className="absolute top-[40%] right-[2%] hidden w-9 -rotate-12 lg:block" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[10%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
+        <GlossyHeart color="#2a1245" className="absolute top-[42%] right-[2%] hidden w-9 -rotate-12 lg:block" />
+        <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[18%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-28">
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-12 pb-20 sm:pt-16 sm:pb-24">
           <div className="flex flex-col items-center gap-10 lg:flex-row lg:gap-4">
             <div className="flex-1 text-center lg:text-left">
               <h1 aria-label="YourSpace" className="-rotate-2 select-none">
@@ -382,7 +433,7 @@ const Index = () => {
                   {WORDMARK.map((letter, i) => (
                     <span
                       key={i}
-                      className={`ys-outline inline-block font-display text-5xl font-black italic sm:text-7xl lg:text-8xl xl:text-9xl ${letter.color}`}
+                      className={`ys-outline inline-block font-display text-6xl font-black italic sm:text-8xl lg:text-9xl ${letter.color}`}
                       style={{ transform: `translateY(${letter.dy})` }}
                     >
                       {letter.ch}
@@ -419,26 +470,34 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Ghost cluster: rainbow overhead, skull alongside, like the banner */}
-            <div className="relative shrink-0">
-              <Rainbow className="absolute -top-24 -right-16 hidden w-80 rotate-3 lg:block" />
-              <Skull className="absolute -left-24 top-0 hidden w-16 -rotate-6 lg:block" />
-              <img
-                src="/icon.svg"
-                alt="The YourSpace ghost, holding a heart"
-                className="relative w-52 -rotate-3 drop-shadow-[0_18px_24px_rgb(12_17_48/0.5)] sm:w-64 lg:w-80"
-              />
+            {/* The framed sticker: ghost in the tilted box, starburst on the corner */}
+            <div className="relative shrink-0 pt-10 lg:pt-0">
+              <Rainbow className="absolute -top-24 -right-16 hidden w-72 rotate-3 lg:block" />
+              <div className="relative rotate-6">
+                <div className="rounded-sm border-[3px] border-ys-edge bg-ys-pink p-2.5 shadow-[0_14px_0_rgb(12_17_48/0.4)]">
+                  <div className="bg-ys-cyan p-2">
+                    <div className="bg-ys-navy p-3">
+                      <img
+                        src="/icon.svg"
+                        alt="The YourSpace ghost, holding a heart"
+                        className="w-44 sm:w-56 lg:w-64"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <Starburst label="NEW!" className="absolute -top-12 -right-12 w-24 sm:w-28" />
+              </div>
+              <Skull className="absolute -left-20 top-2 hidden w-16 -rotate-6 lg:block" />
             </div>
           </div>
         </div>
 
-        {/* Zebra ribbon off the bottom of the hero */}
-        <div className="absolute inset-x-0 bottom-0 overflow-hidden" aria-hidden="true">
+        {/* Zebra ribbon, then the marquee — the banner's foot, attached */}
+        <div className="relative overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full -rotate-1 scale-x-110 sm:h-12" />
         </div>
+        <Marquee />
       </div>
-
-      <Marquee />
 
       {/*
         Published homepages, on the app's own surface rather than the brand
