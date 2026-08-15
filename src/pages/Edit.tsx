@@ -23,6 +23,7 @@ import { LayerTree } from '@/components/editor/LayerTree';
 import { PageSwitcher } from '@/components/editor/PageSwitcher';
 import { PublishNsiteDialog } from '@/components/editor/PublishNsiteDialog';
 import { ResetSiteDialog } from '@/components/editor/ResetSiteDialog';
+import { RotateHandle } from '@/components/editor/RotateHandle';
 import { StarterPicker } from '@/components/editor/StarterPicker';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { registerTextAlign } from '@/components/editor/richText';
@@ -894,6 +895,9 @@ export function Edit() {
           */}
           <main className="nsite-studio relative min-h-0 flex-1 bg-muted/40 p-4">
             <div ref={containerRef} className="h-full w-full" />
+
+            {/* Positions itself over the frame in viewport coordinates. */}
+            <RotateHandle editor={editor} />
 
             {loadingOwnSite && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-sm">

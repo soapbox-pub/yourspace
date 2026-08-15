@@ -11,8 +11,8 @@ import { toCssUrl } from '@/lib/nsite/siteHtml';
  * breakpoint is selected lands in that media query — the same behaviour the
  * stock Style Manager has.
  *
- * Shared by the inspector and the page background picker, which both write the
- * same properties to the same targets.
+ * Shared by the inspector, the canvas rotate handle and the page background
+ * picker, which all write the same properties to the same targets.
  * ------------------------------------------------------------------------ */
 
 /**
@@ -188,4 +188,38 @@ export function toBackgroundImage(input: string): string {
   const value = input.trim();
   if (!value) return '';
   return IMAGE_VALUE.test(value) ? value : toCssUrl(value);
+}
+
+/* --------------------------------------------------------------------------
+ * Rotation
+ * ------------------------------------------------------------------------ */
+
+/**
+ * How far the element is turned, in degrees.
+ *
+ * Reads the standalone `rotate` property rather than anything inside
+ * `transform`, because the two compose instead of competing: word art's Tilt
+ * and Wave presets own `transform` and rewrite it on every preset switch, so
+ * a rotation folded into it would be silently dropped there — and setting one
+ * would wipe the preset's skew. `rotate` answers to the rotation controls
+ * alone, which is also why only `deg` is read back: degrees are all they write.
+ */
+export function rotateDegrees(target: StyleTarget): number {
+  const match = /^(-?\d+(?:\.\d+)?)deg$/.exec(styleValue(target, 'rotate').trim());
+  return match ? Number(match[1]) : 0;
+}
+
+/**
+ * Writes a turn, rounding to tenths and wrapping into (-180, 180] — 190° and
+ * -170° are the same angle on screen, and only one of them is inside the
+ * slider's range.
+ *
+ * Landing back on 0 clears the declaration rather than writing `rotate: 0deg`:
+ * no rotation is the CSS default, and a declaration that changes nothing is
+ * noise in the published stylesheet.
+ */
+export function setRotation(target: StyleTarget, degrees: number) {
+  const rounded = Math.round(degrees * 10) / 10;
+  const wrapped = 180 - ((((180 - rounded) % 360) + 360) % 360);
+  setStyle(target, { rotate: wrapped ? `${wrapped}deg` : '' });
 }

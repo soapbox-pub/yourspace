@@ -5,7 +5,11 @@ import {
   AlignLeft,
   AlignRight,
   Copy,
+  FlipHorizontal2,
+  FlipVertical2,
   MousePointerSquareDashed,
+  RotateCcw,
+  RotateCw,
   Trash2,
 } from 'lucide-react';
 
@@ -40,7 +44,9 @@ import {
   cursorTarget,
   fitPatches,
   pageTarget,
+  rotateDegrees,
   setBackground,
+  setRotation,
   setStyle,
   styleValue,
   toBackgroundImage,
@@ -168,31 +174,28 @@ function setInsetSide(target: StyleTarget, side: number, value: string) {
 }
 
 /* --------------------------------------------------------------------------
- * Rotation
+ * Flip
  * ------------------------------------------------------------------------ */
 
 /**
- * How far the element is turned, in degrees.
- *
- * Reads the standalone `rotate` property rather than anything inside
- * `transform`, because the two compose instead of competing: word art's Tilt
- * and Wave presets own `transform` and rewrite it on every preset switch, so
- * a rotation folded into it would be silently dropped there — and setting one
- * would wipe the preset's skew. `rotate` answers to this control alone, which
- * is also why only `deg` is read back: degrees are all this panel ever writes.
+ * The mirror state of each axis, read from the standalone `scale` property.
+ * One token means both axes, per CSS; anything unreadable means unflipped.
  */
-function rotateDegrees(target: StyleTarget): number {
-  const match = /^(-?\d+(?:\.\d+)?)deg$/.exec(styleValue(target, 'rotate').trim());
-  return match ? Number(match[1]) : 0;
+function flipAxes(target: StyleTarget): { x: number; y: number } {
+  const [first, second] = styleValue(target, 'scale').split(/\s+/).filter(Boolean).map(Number);
+  const x = Number.isFinite(first) ? first : 1;
+  const y = Number.isFinite(second) ? second : x;
+  return { x, y };
 }
 
 /**
- * Straightening back to 0 clears the declaration rather than writing
- * `rotate: 0deg` — no rotation is the CSS default, and a declaration that
- * changes nothing is noise in the published stylesheet.
+ * Mirrors one axis. Both axes back at 1 is no flip — the CSS default — so the
+ * declaration is dropped rather than written as `scale: 1 1`.
  */
-function setRotation(target: StyleTarget, degrees: number) {
-  setStyle(target, { rotate: degrees ? `${degrees}deg` : '' });
+function toggleFlip(target: StyleTarget, axis: 'x' | 'y') {
+  const { x, y } = flipAxes(target);
+  const next = axis === 'x' ? { x: -x, y } : { x, y: -y };
+  setStyle(target, { scale: next.x === 1 && next.y === 1 ? '' : `${next.x} ${next.y}` });
 }
 
 interface BackgroundFieldsProps {
@@ -501,6 +504,82 @@ const backgroundPositionOptions: Option[] = [
 /* --------------------------------------------------------------------------
  * Panel
  * ------------------------------------------------------------------------ */
+
+/**
+ * Flip and quarter-turn shortcuts, sitting next to the rotation slider.
+ *
+ * Flips ride on the standalone `scale` property for the same reason turns ride
+ * on `rotate` (see `setRotation`): both compose with `transform` rather than
+ * competing for it, so word art's presets survive them and vice versa. The
+ * buttons are momentary or toggle as they read — flips stay pressed while the
+ * element is mirrored, turns step the angle no matter where the slider sits.
+ */
+function FlipTurnControl({ target }: { target: StyleTarget }) {
+  const { x, y } = flipAxes(target);
+
+  const buttonClass = (active = false) =>
+    cn(
+      'flex h-6 flex-1 items-center justify-center rounded px-1 text-xs font-medium transition-colors',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      active
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground',
+    );
+
+  return (
+    <Field label="Flip &amp; turn">
+      <div role="group" aria-label="Flip and turn" className="flex gap-1 rounded-md bg-muted p-1">
+        <button
+          type="button"
+          aria-pressed={x === -1}
+          title="Flip horizontally"
+          onClick={() => toggleFlip(target, 'x')}
+          className={buttonClass(x === -1)}
+        >
+          <FlipHorizontal2 className="size-3.5" aria-hidden="true" />
+          <span className="sr-only">Flip horizontally</span>
+        </button>
+        <button
+          type="button"
+          aria-pressed={y === -1}
+          title="Flip vertically"
+          onClick={() => toggleFlip(target, 'y')}
+          className={buttonClass(y === -1)}
+        >
+          <FlipVertical2 className="size-3.5" aria-hidden="true" />
+          <span className="sr-only">Flip vertically</span>
+        </button>
+        <button
+          type="button"
+          title="Rotate 90° left"
+          onClick={() => setRotation(target, rotateDegrees(target) - 90)}
+          className={buttonClass()}
+        >
+          <RotateCcw className="size-3.5" aria-hidden="true" />
+          <span className="sr-only">Rotate 90° left</span>
+        </button>
+        <button
+          type="button"
+          title="Rotate 90° right"
+          onClick={() => setRotation(target, rotateDegrees(target) + 90)}
+          className={buttonClass()}
+        >
+          <RotateCw className="size-3.5" aria-hidden="true" />
+          <span className="sr-only">Rotate 90° right</span>
+        </button>
+        <button
+          type="button"
+          title="Turn upside down"
+          onClick={() => setRotation(target, rotateDegrees(target) + 180)}
+          className={buttonClass()}
+        >
+          <span aria-hidden="true">180°</span>
+          <span className="sr-only">Turn upside down</span>
+        </button>
+      </div>
+    </Field>
+  );
+}
 
 function EmptyState() {
   return (
@@ -1064,6 +1143,8 @@ export function Inspector({
           placeholder="1px solid #e2e8f0"
           onChange={(value) => setStyle(selected, { border: value })}
         />
+
+        <FlipTurnControl target={selected} />
 
         {/*
           A slider rather than a text field for the reason `RangeControl`
