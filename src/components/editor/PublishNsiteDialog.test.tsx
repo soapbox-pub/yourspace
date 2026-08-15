@@ -33,6 +33,11 @@ vi.mock('@/hooks/useNip05', () => ({
   useNip05Verified: () => true,
 }));
 
+// No Nostr provider here: the published manifest is only a prefill source.
+vi.mock('@/hooks/useNsite', () => ({
+  useNsite: () => ({ data: null }),
+}));
+
 vi.mock('@/hooks/useNostrPublish', () => ({
   useNostrPublish: () => ({
     mutateAsync: async (template: { kind: number; content: string; tags: string[][] }) => ({

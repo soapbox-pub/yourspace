@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { AlertCircle, ArrowUpRight, CheckCircle2, Loader2, Upload } from 'lucide
 import { LoginArea } from '@/components/auth/LoginArea';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useNip05Verified } from '@/hooks/useNip05';
+import { useNsite } from '@/hooks/useNsite';
 import { getProfileUrl } from '@/lib/userParam';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +44,11 @@ interface PublishNsiteDialogProps {
   disabled?: boolean;
 }
 
+/** A tag's value from the published manifest, empty when it isn't there. */
+function manifestTag(event: NostrEvent | null | undefined, name: string): string {
+  return event?.tags.find(([tag]) => tag === name)?.[1] ?? '';
+}
+
 /**
  * Deploys the site on the canvas as the signed-in key's root nsite.
  *
@@ -52,7 +58,9 @@ interface PublishNsiteDialogProps {
  * usable a second time.
  *
  * The files are snapshotted when the dialog opens rather than read at submit,
- * so what the summary counts is what gets uploaded.
+ * so what the summary counts is what gets uploaded. The form opens on the
+ * title and description the published manifest already carries, so a
+ * republish doesn't start from a blank form.
  */
 export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogProps) {
   const { user } = useCurrentUser();
@@ -66,6 +74,16 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
   const [description, setDescription] = useState('');
   const [progress, setProgress] = useState<PublishProgress | null>(null);
   const abortRef = useRef<AbortController>(null);
+
+  /* The manifest already out there, for prefilling the form it describes. */
+  const published = useNsite(user ? { kind: ROOT_SITE_KIND, pubkey: user.pubkey } : undefined);
+
+  /*
+   * Whether each field has been typed into. An incoming default — the
+   * suggested title on open, the published manifest when it lands — fills a
+   * field only while this is false, so one can never overwrite an edit.
+   */
+  const touched = useRef({ title: false, description: false });
 
   const publish = useMutation({
     mutationFn: async () => {
@@ -121,13 +139,32 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
     if (next) {
       const snapshot = getFiles();
       setFiles(snapshot);
-      setTitle((current) => current || suggestedTitle(snapshot));
+      setTitle(
+        (current) => current || manifestTag(published.data, 'title') || suggestedTitle(snapshot),
+      );
+      setDescription((current) => current || manifestTag(published.data, 'description'));
     } else {
       abortRef.current?.abort();
       publish.reset();
       setProgress(null);
     }
   };
+
+  /*
+   * The manifest usually lands after the dialog has already opened on the
+   * suggested title, so its title and description fill in here. Untouched
+   * fields only — once a field has been typed in, it belongs to the typist.
+   */
+  useEffect(() => {
+    if (!open || !published.data) return;
+
+    if (!touched.current.title && manifestTag(published.data, 'title')) {
+      setTitle(manifestTag(published.data, 'title'));
+    }
+    if (!touched.current.description && manifestTag(published.data, 'description')) {
+      setDescription(manifestTag(published.data, 'description'));
+    }
+  }, [open, published.data]);
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -185,7 +222,10 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
                   autoFocus
                   maxLength={120}
                   placeholder="My corner of the internet"
-                  onChange={(event) => setTitle(event.target.value)}
+                  onChange={(event) => {
+                    touched.current.title = true;
+                    setTitle(event.target.value);
+                  }}
                 />
               </div>
 
@@ -198,7 +238,10 @@ export function PublishNsiteDialog({ getFiles, disabled }: PublishNsiteDialogPro
                   value={description}
                   maxLength={280}
                   placeholder="What people will find here"
-                  onChange={(event) => setDescription(event.target.value)}
+                  onChange={(event) => {
+                    touched.current.description = true;
+                    setDescription(event.target.value);
+                  }}
                 />
               </div>
 
