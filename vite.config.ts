@@ -12,6 +12,14 @@ export default defineConfig(() => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    // Emit a single stylesheet so there is no runtime <link> injection for
+    // lazy chunks; the post-build inline step then folds it into index.html.
+    // nsite gateways serve a blob with whatever Content-Type the Blossom
+    // server reports, and CSS is not content-sniffable, so an external
+    // stylesheet arrives as text/plain and the browser refuses to apply it.
+    cssCodeSplit: false,
+  },
   plugins: [
     react(),
     tailwindcss(),
