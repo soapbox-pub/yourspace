@@ -1,6 +1,7 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
+import { GripVertical } from 'lucide-react';
 
 import { LoginArea } from '@/components/auth/LoginArea';
 import { Logo } from '@/components/Logo';
@@ -349,17 +350,28 @@ const Index = () => {
   const [links, setLinks] = useState(['my blog', 'my pics', 'zap me !!']);
   const [blocks, setBlocks] = useState(['header', 'about', 'links', 'music']);
   const [glitter, setGlitter] = useState(true);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const dragBlock = useRef<string | null>(null);
 
-  /* Click a block: it swaps with the one above. At the top, it wraps to the bottom. */
-  const moveUp = (block: string) => {
-    setBlocks((current) => {
-      const i = current.indexOf(block);
-      const next = [...current];
-      next.splice(i, 1);
-      next.splice(i === 0 ? next.length : i - 1, 0, block);
-      return next;
-    });
-  };
+  /* Drag a block by its grip onto another block: it lands before it. */
+  const dropProps = (target: string) => ({
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDropTarget(target);
+    },
+    onDragLeave: () => setDropTarget((t) => (t === target ? null : t)),
+    onDrop: () => {
+      const dragged = dragBlock.current;
+      dragBlock.current = null;
+      setDropTarget(null);
+      if (!dragged || dragged === target) return;
+      setBlocks((cur) => {
+        const next = cur.filter((b) => b !== dragged);
+        next.splice(next.indexOf(target), 0, dragged);
+        return next;
+      });
+    },
+  });
 
   useSeoMeta({
     title: 'YourSpace: Build a homepage that is actually yours',
@@ -482,36 +494,19 @@ const Index = () => {
 
       {/*
         The demo. No feature lists: a little page built from blocks, and the
-        visitor works it directly: click blocks to rearrange them, type in
-        its text boxes, restyle it from the sidebar. Behind it, the glossy
-        purple night of the brand graphics: rainbow, CD, glitter clusters.
+        visitor works it directly: drag blocks by their grips, type in the
+        boxes, restyle it from the sidebar. The wallpaper is the punk
+        retro-internet image from branding/.
       */}
-      <section className="ys-gloss relative overflow-hidden px-6 py-24">
-        {/* The clip-art cast, mint accents woven in */}
-        <Rainbow className="absolute top-6 right-[3%] w-48 rotate-3 opacity-95 sm:w-56" />
-        <CD className="absolute top-10 left-[3%] w-14 -rotate-12 sm:w-16" />
-        <div className="absolute top-[32%] left-[2%] -rotate-6" aria-hidden="true">
-          <GlossyStar color="#14ff89" className="w-10" />
-          <Sparkle color="#ffffff" className="ys-twinkle absolute -right-4 top-7 w-5" />
-          <Sparkle color="#ff2d9e" className="absolute -left-3 top-9 w-4" />
-        </div>
-        <GlossyHeart color="#ff2d9e" className="absolute bottom-[10%] left-[6%] w-9 rotate-12" />
-        <div className="absolute right-[3%] bottom-[14%] hidden -rotate-12 sm:block" aria-hidden="true">
-          <Note color="#b14dff" className="w-11" />
-          <Sparkle color="#14ff89" className="ys-twinkle absolute -left-5 top-7 w-5" style={{ animationDelay: '0.5s' }} />
-        </div>
-        <Bolt color="#ffd400" className="absolute top-[56%] right-[2%] hidden w-9 rotate-6 sm:block" />
-        <Skull className="absolute bottom-[6%] right-[28%] hidden w-12 rotate-6 lg:block" />
-        <Sparkle color="#14ff89" className="ys-twinkle absolute left-[40%] top-[8%] hidden w-6 lg:block" style={{ animationDelay: '0.8s' }} />
-
+      <section className="ys-section-img relative overflow-hidden px-6 py-24">
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">
               go ahead, touch it
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-ys-lavender">
-              This page is built from blocks, the way yours will be. Click a block to move
-              it, type in its boxes, restyle it:
+              This page is built from blocks, the way yours will be. Drag a block by its
+              grip to move it, type in its boxes, restyle it:
             </p>
           </div>
 
@@ -538,18 +533,29 @@ const Index = () => {
                 )}
 
                 {blocks.map((block) => {
-                  const shared = `w-full cursor-pointer rounded-lg border-2 border-dashed p-3 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white`;
+                  const shared = `relative w-full rounded-lg border-2 border-dashed p-3 transition-colors ${
+                    dropTarget === block ? 'ring-2 ring-white/80' : ''
+                  }`;
+                  const grip = (
+                    <span
+                      draggable
+                      onDragStart={() => (dragBlock.current = block)}
+                      onDragEnd={() => {
+                        dragBlock.current = null;
+                        setDropTarget(null);
+                      }}
+                      title="Drag to rearrange"
+                      aria-label={`Drag the ${block} block to rearrange`}
+                      className="absolute right-1.5 top-1.5 z-10 cursor-grab rounded p-0.5 text-ys-lavender/60 hover:text-white active:cursor-grabbing"
+                    >
+                      <GripVertical className="size-4" aria-hidden="true" />
+                    </span>
+                  );
                   if (block === 'header') {
                     return (
-                      <button
-                        key="header"
-                        type="button"
-                        onClick={() => moveUp('header')}
-                        title="Click to move this block up"
-                        className={shared}
-                        style={{ borderColor: accent }}
-                      >
-                        <span className="flex items-center gap-3">
+                      <div key="header" {...dropProps('header')} className={shared} style={{ borderColor: accent }}>
+                        {grip}
+                        <span className="flex items-center gap-3 pr-5">
                           <img
                             src="/icon.svg"
                             alt=""
@@ -562,7 +568,6 @@ const Index = () => {
                               value={name}
                               maxLength={24}
                               onChange={(e) => setName(e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
                               aria-label="Page name"
                               placeholder="ur demo page"
                               className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:bg-ys-edge focus:outline-none"
@@ -575,67 +580,57 @@ const Index = () => {
                           </span>
                           <DemoSticker kind={sticker} accent={accent} className="w-10 shrink-0 rotate-6" />
                         </span>
-                      </button>
+                      </div>
                   );
                 }
                 if (block === 'about') {
                   return (
-                    <button
-                      key="about"
-                      type="button"
-                      onClick={() => moveUp('about')}
-                      title="Click to move this block up"
-                      className={shared}
-                      style={{ borderColor: accent }}
-                    >
+                    <div key="about" {...dropProps('about')} className={shared} style={{ borderColor: accent }}>
+                      {grip}
                       <textarea
                         value={about}
                         rows={3}
                         onChange={(e) => setAbout(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
                         aria-label="About me text"
-                        className="w-full resize-none rounded bg-transparent text-sm leading-relaxed text-ys-lavender focus:bg-ys-edge focus:outline-none"
+                        className="w-full resize-none rounded bg-transparent pr-5 text-sm leading-relaxed text-ys-lavender focus:bg-ys-edge focus:outline-none"
                       />
-                    </button>
+                    </div>
                   );
                 }
                 if (block === 'links') {
                   return (
-                    <button
+                    <div
                       key="links"
-                      type="button"
-                      onClick={() => moveUp('links')}
-                      title="Click to move this block up"
-                      className={`${shared} flex flex-wrap gap-2`}
+                      {...dropProps('links')}
+                      className={`${shared} flex flex-wrap gap-2 pr-5`}
                       style={{ borderColor: accent }}
                     >
+                      {grip}
                       {links.map((label, i) => (
                         <input
                           key={i}
                           value={label}
                           maxLength={14}
                           onChange={(e) => setLinks(links.map((l, j) => (j === i ? e.target.value : l)))}
-                          onClick={(e) => e.stopPropagation()}
                           aria-label={`Link ${i + 1} label`}
                           className="rounded-full px-3 py-1.5 text-center font-display text-sm font-extrabold italic text-ys-navy transition-colors focus:outline-none focus:ring-2 focus:ring-ys-navy"
                           style={{ backgroundColor: accent, width: `${Math.max(label.length + 2, 6)}ch` }}
                         />
                       ))}
-                    </button>
+                    </div>
                   );
                 }
                 return (
-                  <button
+                  <div
                     key="music"
-                    type="button"
-                    onClick={() => moveUp('music')}
-                    title="Click to move this block up"
-                    className={`${shared} flex items-center gap-2 text-sm text-ys-lavender`}
+                    {...dropProps('music')}
+                    className={`${shared} flex items-center gap-2 pr-5 text-sm text-ys-lavender`}
                     style={{ borderColor: accent }}
                   >
+                    {grip}
                     <Note color={accent} className="w-6 shrink-0 transition-colors" />
                     now playing: something emo
-                  </button>
+                  </div>
                 );
               })}
               </div>

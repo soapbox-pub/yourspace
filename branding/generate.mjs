@@ -738,10 +738,116 @@ function icon(bg) {
   return s;
 }
 
+// glossy punk cassette (mixtape!)
+function glossyCassette(cx, cy, size, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<rect x="8" y="22" width="84" height="56" rx="8" fill="url(#g_black)" stroke="${C.navyEdge}" stroke-width="4"/>`;
+  out += `<rect x="14" y="28" width="72" height="18" fill="url(#g_pink)" stroke="${C.navyEdge}" stroke-width="3"/>`;
+  out += `<rect x="16" y="48" width="68" height="20" rx="4" fill="#C9CFE8" stroke="${C.navyEdge}" stroke-width="3"/>`;
+  for (const rx of [32, 68]) {
+    out += `<circle cx="${rx}" cy="58" r="7" fill="#FFFFFF" stroke="${C.navyEdge}" stroke-width="3"/>`;
+    out += `<circle cx="${rx}" cy="58" r="2.5" fill="${C.navy}"/>`;
+  }
+  out += `<rect x="32" y="63" width="36" height="2" fill="${C.navy}"/>`;
+  for (const [sx, sy] of [[14, 28], [86, 28], [14, 72], [86, 72]]) {
+    out += `<circle cx="${sx}" cy="${sy}" r="1.5" fill="#8890B0"/>`;
+  }
+  out += `<ellipse cx="30" cy="30" rx="10" ry="5" fill="#FFFFFF" opacity="0.5" transform="rotate(-20 30 30)"/>`;
+  out += `</g>`;
+  return out;
+}
+
+// glossy silver safety pin, the punk staple
+function glossySafetyPin(cx, cy, size, rotDeg = 0) {
+  const sc = (size / 100).toFixed(3);
+  let out = `<g transform="rotate(${rotDeg} ${cx} ${cy}) translate(${cx - size / 2} ${cy - size / 2}) scale(${sc})">`;
+  out += `<ellipse cx="50" cy="50" rx="38" ry="16" fill="none" stroke="url(#g_silver)" stroke-width="7"/>`;
+  out += `<rect x="14" y="47" width="72" height="5" fill="url(#g_silver)"/>`;
+  out += `<circle cx="16" cy="50" r="8" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="3"/>`;
+  out += `<circle cx="16" cy="50" r="3" fill="${C.navy}"/>`;
+  out += `<rect x="78" y="40" width="14" height="20" rx="4" fill="url(#g_silver)" stroke="${C.navyEdge}" stroke-width="3"/>`;
+  out += `<ellipse cx="50" cy="40" rx="16" ry="4" fill="#FFFFFF" opacity="0.45"/>`;
+  out += `</g>`;
+  return out;
+}
+
+// ================================================================ SECTION BG
+// Wallpaper for the homepage demo section: a little punk, cool, retro
+// internet. Dark dithered sky, glossy cassette, safety pin, ska checker
+// band, skull, bolts, a broken heart, glitter dust, scanlines.
+function sectionBg() {
+  const W = 1600;
+  const H = 900;
+  let s = svgOpen(W, H);
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
+  const names = Object.keys(ids);
+  s += glossDefs(ids);
+  const rnd = lcg(20051007);
+  const jig = (range) => (rnd() - 0.5) * 2 * range;
+
+  // ---- dark dithered sky
+  s += ditherSky(W, H, 10, ['#3E1568', '#2C0B4E', '#1E0A3A', '#12062A']);
+
+  s += `<g shape-rendering="auto">`;
+
+  // ---- ska checker band, bottom-left diagonal
+  s += `<g transform="rotate(-12 300 860)">${checker(-200, 820, 1100, 64, 32, '#FFFFFF', C.navyEdge)}</g>`;
+
+  // ---- the anchors: cassette and skull
+  s += glossyCassette(330, 300, 210, -8);
+  s += glossySkull(1080, 330, 165, 6);
+
+  // ---- safety pin and bolts
+  s += glossySafetyPin(1180, 620, 150, 30);
+  s += glossyBolt(700, 190, 74, 'yellow', 8);
+  s += glossyBolt(1470, 700, 62, 'pink', -12);
+
+  // ---- hearts, including the emo ones
+  s += glossyBrokenHeart(880, 720, 96, 'pink', -6);
+  s += glossyHeart(1450, 140, 64, 'pink', 12);
+  s += glossyHeart(1360, 200, 48, 'black', -10);
+
+  // ---- shooting star over the cassette
+  s += `<g>`;
+  s += `<polygon points="238,152 65,98 232,138" fill="#FFFFFF" opacity="0.55"/>`;
+  s += `<polygon points="240,168 88,158 236,152" fill="#FF2D9E" opacity="0.55"/>`;
+  s += `<polygon points="230,132 120,66 224,118" fill="#00D9FF" opacity="0.55"/>`;
+  s += glossyStar(258, 148, 34, 'yellow', 15);
+  s += `</g>`;
+
+  // ---- glitter clusters
+  const clusters = [[520, 560], [1330, 480], [220, 700], [760, 380]];
+  clusters.forEach(([cx, cy], ci) => {
+    s += glossyStar(cx, cy, 26 + rnd() * 10, names[ci % names.length], jig(24));
+    for (let i = 0; i < 3; i++) {
+      s += sparkle(cx + jig(90), cy + jig(90), 20 + rnd() * 24, ids[names[(ci + i + 1) % names.length]]);
+    }
+    for (let i = 0; i < 3; i++) {
+      s += sparkle(cx + jig(110), cy + jig(110), 9 + rnd() * 7, '#FFFFFF');
+    }
+  });
+
+  // ---- glitter dust
+  for (let i = 0; i < 24; i++) {
+    s += `<circle cx="${Math.round(rnd() * W)}" cy="${Math.round(rnd() * H)}" r="${(2 + rnd() * 2.5).toFixed(1)}" fill="#FFFFFF" opacity="${(0.3 + rnd() * 0.4).toFixed(2)}"/>`;
+  }
+
+  s += `</g>`;
+
+  // ---- CRT scanlines
+  s += `<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000000"/></pattern></defs>`;
+  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#scan)" opacity="0.06"/>`;
+
+  s += '</svg>';
+  return s;
+}
+
 writeFileSync(join(OUT, 'avatar.svg'), avatar());
 writeFileSync(join(OUT, 'banner.svg'), banner());
 writeFileSync(join(OUT, 'og-image.svg'), og());
 writeFileSync(join(OUT, 'background.svg'), background());
 writeFileSync(join(OUT, 'icon.svg'), icon(false));
 writeFileSync(join(OUT, 'icon-square.svg'), icon(true));
-console.log('wrote avatar.svg + banner.svg + og-image.svg + background.svg + icon.svg + icon-square.svg');
+writeFileSync(join(OUT, 'section-bg.svg'), sectionBg());
+console.log('wrote avatar.svg + banner.svg + og-image.svg + background.svg + icon.svg + icon-square.svg + section-bg.svg');

@@ -322,14 +322,14 @@
 }
 
 /*
- * The glossy purple night from the brand graphics, for the demo section:
- * a smooth violet-to-grape gradient with faint scanlines. The clip-art
- * scatter (rainbow, CD, glitter clusters) lives in the component.
+ * The demo section's wallpaper: the punk retro-internet image from
+ * branding/ (cassette, safety pin, ska checker, skull), with a light navy
+ * wash so text over it keeps its contrast.
  */
-.ys-gloss {
+.ys-section-img {
   background:
-    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.05) 0 1px, transparent 1px 4px),
-    linear-gradient(160deg, #5b2b90 0%, #4a1d7a 45%, #2c0b4e 100%);
+    linear-gradient(rgb(12 17 48 / 0.15), rgb(12 17 48 / 0.3)),
+    url('/section-bg.png') center / cover no-repeat;
 }
 
 /* Glossy navy sticker card. */
