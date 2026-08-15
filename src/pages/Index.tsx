@@ -524,7 +524,7 @@ function SlimeDrip({ className }: { className?: string }) {
 
 /* The scrolling strip from the OG image and banner, verbatim. */
 function Marquee() {
-  const text = '*.:* WELCOME 2 YOURSPACE *:. UR OWN HOME PAGE ON NOSTR .:* ';
+  const text = '*.:* WELCOME 2 YOURSPACE *:. UR OWN HOME PAGE ON NOSTR .:* *.:* BUILD IT UR WAY *:. NO CODE NEEDED .:* ';
   return (
     <div className="ys-marquee border-y-4 border-ys-edge bg-ys-navy py-3" aria-hidden="true">
       <div className="ys-marquee-inner font-display text-xl font-extrabold italic text-ys-lime">
