@@ -42,6 +42,7 @@ const FONT = {
   G: ['.###.', '#...#', '#....', '#.###', '#...#', '#...#', '.###.'],
   H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
   I: ['###', '.#.', '.#.', '.#.', '.#.', '.#.', '###'],
+  K: ['#...#', '#..#.', '#.#..', '##...', '#.#..', '#..#.', '#...#'],
   L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
   M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'],
   N: ['#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#', '#...#'],
@@ -468,78 +469,204 @@ function rainbowArch(x, y, s) {
   return out;
 }
 
+// classic pointer arrow, 8x12
+const ARROW = [
+  '#.......',
+  '##......',
+  '###.....',
+  '####....',
+  '#####...',
+  '######..',
+  '#######.',
+  '########',
+  '###.....',
+  '#.##....',
+  '..##....',
+  '...#....',
+];
+
+// ordered-dither vertical gradient (Bayer 4x4), the 256-color-GIF way
+function ditherSky(W, H, cell, ramp) {
+  const bayer = [
+    [0, 8, 2, 10],
+    [12, 4, 14, 6],
+    [3, 11, 1, 9],
+    [15, 7, 13, 5],
+  ];
+  const rows = Math.ceil(H / cell);
+  const cols = Math.ceil(W / cell);
+  let out = '';
+  for (let r = 0; r < rows; r++) {
+    const t = (r / rows) * (ramp.length - 1);
+    const i = Math.floor(t);
+    const f = t - i;
+    let c = 0;
+    while (c < cols) {
+      const pick = (cc) => (f > bayer[r % 4][cc % 4] / 16 ? ramp[Math.min(i + 1, ramp.length - 1)] : ramp[i]);
+      const color = pick(c);
+      let run = c;
+      while (run < cols && pick(run) === color) run++;
+      out += `<rect x="${c * cell}" y="${r * cell}" width="${(run - c) * cell}" height="${cell}" fill="${color}"/>`;
+      c = run;
+    }
+  }
+  return out;
+}
+
+// hot-pink zebra ribbon (drawn horizontally, rotated by the caller)
+function zebraBand(bx, by, len, h) {
+  let out = `<rect x="${bx}" y="${by}" width="${len}" height="${h}" fill="${C.pink}"/>`;
+  for (let x = bx; x < bx + len; x += 44) {
+    out += `<polygon points="${x},${by} ${x + 26},${by} ${x + 10},${by + h * 0.62}" fill="${C.navy}"/>`;
+    out += `<polygon points="${x + 22},${by + h} ${x + 48},${by + h} ${x + 34},${by + h * 0.38}" fill="${C.navy}"/>`;
+  }
+  out += `<rect x="${bx}" y="${by}" width="${len}" height="5" fill="${C.navyEdge}"/>`;
+  out += `<rect x="${bx}" y="${by + h - 5}" width="${len}" height="5" fill="${C.navyEdge}"/>`;
+  return out;
+}
+
+// marquee ribbon: navy band, checker trim, repeating pixel text
+function marqueeBand(bx, by, len, text) {
+  const h = 78;
+  let out = `<rect x="${bx}" y="${by}" width="${len}" height="${h}" fill="${C.navy}"/>`;
+  out += checker(bx, by, len, 10, 10, C.pink, C.white);
+  out += checker(bx, by + h - 10, len, 10, 10, C.white, C.pink);
+  let repeated = text;
+  while (textCols(repeated) * 4 < len + 400) repeated += text;
+  out += pixelText(repeated, bx + 10, by + 25, 4, C.lime);
+  return out;
+}
+
+// 88x31-style web button, scaled 2x
+function webBadge(x, y, line1, line2, c1, c2) {
+  const w = 176;
+  const h = 62;
+  let out = `<rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" fill="${C.btnHi}"/>`;
+  out += `<rect x="${x + 2}" y="${y + 2}" width="${w + 2}" height="${h + 2}" fill="${C.btnLo}"/>`;
+  out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${C.navy}"/>`;
+  out += pixelText(line1, x + (w - textCols(line1) * 2) / 2, y + 12, 2, c1);
+  out += pixelText(line2, x + (w - textCols(line2) * 2) / 2, y + 34, 2, c2);
+  return out;
+}
+
+// pixel CD with rainbow sheen
+function pixelCD(x, y, s) {
+  let out = '';
+  FACE_SPANS.forEach(([a, b], r) => {
+    out += `<rect x="${x + a * s}" y="${y + r * s}" width="${(b - a + 1) * s}" height="${s}" fill="${C.btnFace}"/>`;
+  });
+  const sheen = [
+    [C.cyan, 0, 8, true], [C.pink, 0, 8, false], [C.yellow, 8, 16, true], [C.violet, 8, 16, false],
+  ];
+  for (const [color, r0, r1, left] of sheen) {
+    for (let r = r0; r < r1; r++) {
+      const [a, b] = FACE_SPANS[r];
+      const from = left ? a : 8;
+      const to = left ? 7 : b;
+      if (to >= from) {
+        out += `<rect x="${x + from * s}" y="${y + r * s}" width="${(to - from + 1) * s}" height="${s}" opacity="0.25" fill="${color}"/>`;
+      }
+    }
+  }
+  // hub: white ring, navy hole
+  for (let r = 6; r <= 9; r++) out += `<rect x="${x + 6 * s}" y="${y + r * s}" width="${4 * s}" height="${s}" fill="${C.white}"/>`;
+  for (let r = 7; r <= 8; r++) out += `<rect x="${x + 7 * s}" y="${y + r * s}" width="${2 * s}" height="${s}" fill="${C.navy}"/>`;
+  return out;
+}
+
 // ================================================================ BACKGROUND
-// Glitter wallpaper for the Ditto theme, in the spirit of a 2004 MySpace
-// profile: the brand checker covered in a staggered grid of full-color
-// sticker motifs — sparkles, hearts, smileys, pixel rainbows, music notes,
-// stars, starbursts, and glitter-text bits — each with jitter and a tilt.
+// Wallpaper for the Ditto theme, built like a 2005 MySpace profile someone
+// customized at 1am: a dithered purple sky, a "thanks 4 the add" marquee
+// ribbon and a zebra ribbon crossing the page, glitter clusters, old-web
+// stickers (hit counter, 88x31 badges, pixel cursor, CD, equalizer), a giant
+// watermark smiley, the brand sparkle, and faint CRT scanlines over it all.
 function background() {
   const W = 1920;
   const H = 1080;
   let s = svgOpen(W, H);
-  s += checker(0, 0, W, H, 30, C.purpleA, C.purpleB);
-
   const rnd = lcg(20040815);
   const jig = (range) => (rnd() - 0.5) * 2 * range;
-  const palette = [C.pink, C.cyan, C.yellow, C.lime, C.violet, C.orange, C.white];
+  const palette = [C.pink, C.cyan, C.yellow, C.lime, C.violet, C.orange];
 
-  // filler layer: little plus-stars and dim big sparkles for depth
-  for (let i = 0; i < 40; i++) {
+  // ---- dithered sky
+  s += ditherSky(W, H, 12, ['#5B2B90', '#4A1D7A', '#3E1568', '#2C0B4E']);
+
+  // ---- giant watermark smiley, sliding off the bottom-right
+  s += `<g opacity="0.5">${smiley(1500, 600, 22, '#8A52C9', '#2C0B4E')}</g>`;
+
+  // ---- big pixel rainbow, top right
+  s += rainbowArch(1330, 120, 15);
+
+  // ---- brand sparkle cluster, top left (the favicon mark, big)
+  s += sparkle(260, 190, 290, C.navyEdge);
+  s += sparkle(260, 190, 260, C.pink);
+  s += sparkle(420, 90, 110, C.cyan);
+  s += sparkle(120, 320, 74, C.yellow);
+
+  // ---- marquee ribbon
+  s += `<g transform="rotate(-8 960 420)">${marqueeBand(-200, 381, 2400, '*.:* THANKS 4 THE ADD *.:* GET UR OWN SPACE ')}</g>`;
+
+  // ---- zebra ribbon
+  s += `<g transform="rotate(10 960 840)">${zebraBand(-200, 795, 2400, 90)}</g>`;
+
+  // ---- old-web stickers
+  s += `<g transform="rotate(2 258 631)">${webBadge(170, 600, 'GET UR OWN', 'SPACE 2DAY', C.lime, C.pink)}</g>`;
+  s += `<g transform="rotate(-4 1738 331)">${webBadge(1650, 300, 'THANKS 4', 'THE ADD ♥', C.cyan, C.pink)}</g>`;
+
+  // hit counter
+  s += `<g transform="rotate(-3 250 962)">`;
+  s += `<rect x="136" y="926" width="228" height="72" fill="${C.btnLo}"/>`;
+  s += `<rect x="140" y="930" width="220" height="64" fill="#000000"/>`;
+  s += pixelText('0071337', 156, 944, 4, '#39FF14');
+  s += `</g>`;
+
+  // equalizer chip
+  s += `<g transform="rotate(3 1270 985)">`;
+  s += `<rect x="1180" y="950" width="180" height="70" rx="8" fill="${C.navy}"/>`;
+  const eq = [18, 34, 50, 26, 42, 58, 30, 46];
+  eq.forEach((hh, i) => {
+    s += `<rect x="${1192 + i * 20}" y="${1010 - hh}" width="12" height="${hh}" fill="${[C.lime, C.yellow, C.pink, C.cyan][i % 4]}"/>`;
+  });
+  s += `</g>`;
+
+  // CD and a cursor pointing at things
+  s += `<g transform="rotate(8 696 196)">${pixelCD(640, 140, 7)}</g>`;
+  s += stamp(ARROW, 1054, 564, 6, C.navyEdge);
+  s += stamp(ARROW, 1050, 560, 6, C.white);
+
+  // ---- glitter clusters (glitter-GIF stamps, not uniform confetti)
+  const clusters = [[620, 280], [1000, 560], [1300, 700], [170, 560], [850, 950]];
+  clusters.forEach(([cx, cy], ci) => {
+    const color = palette[ci % palette.length];
+    const ss = 4 + Math.round(rnd() * 2);
+    s += `<g transform="rotate(${jig(12).toFixed(1)} ${cx} ${cy})">${stamp(STAR5, cx - 5.5 * ss, cy - 5 * ss, ss, color)}</g>`;
+    for (let i = 0; i < 3; i++) {
+      s += sparkle(cx + jig(85), cy + jig(85), 22 + rnd() * 30, palette[(ci + i + 1) % palette.length]);
+    }
+    for (let i = 0; i < 3; i++) {
+      const x = Math.round(cx + jig(100));
+      const y = Math.round(cy + jig(100));
+      const p = 4;
+      s += `<g fill="${C.white}" opacity="0.8"><rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/><rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/></g>`;
+    }
+    if (ci % 2 === 0) s += pixelHeart(cx + jig(90), cy + 60 + jig(20), 6, palette[(ci + 3) % palette.length]);
+  });
+
+  // loose filler plusses and text bits
+  for (let i = 0; i < 16; i++) {
     const x = Math.round(rnd() * W);
     const y = Math.round(rnd() * H);
-    const p = 4 + Math.round(rnd() * 2);
-    s += `<g fill="${rnd() > 0.5 ? '#7B42BC' : C.white}" opacity="${(0.4 + rnd() * 0.3).toFixed(2)}">`;
-    s += `<rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/>`;
-    s += `<rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/>`;
-    s += `</g>`;
+    const p = 4;
+    s += `<g fill="#9B6BD6" opacity="0.6"><rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/><rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/></g>`;
   }
-  for (let i = 0; i < 10; i++) {
-    s += `<g opacity="0.25">${sparkle(rnd() * W, rnd() * H, 80 + rnd() * 60, '#7B42BC')}</g>`;
-  }
+  s += pixelText('XOXO', 1700, 80, 3, C.pink);
+  s += pixelText('*!!*', 60, 1010, 3, C.yellow);
+  s += `<g transform="rotate(-6 520 760)">${stamp(NOTE, 490, 730, 6, C.cyan)}</g>`;
+  s += `<g transform="rotate(7 1620 900)">${stamp(NOTE, 1600, 880, 5, C.lime)}</g>`;
 
-  // sticker layer: staggered grid, one motif per cell, jittered and tilted
-  const CELLW = 213;
-  const CELLH = 216;
-  const motifs = ['sparkle', 'heart', 'star', 'smiley', 'rainbow', 'note', 'burst', 'text'];
-  const texts = ['*.:*', 'XOXO', '*!!*'];
-  let n = 0;
-  for (let row = 0; row * CELLH < H + CELLH; row++) {
-    for (let col = 0; col * CELLW < W + CELLW; col++) {
-      const cx = col * CELLW + (row % 2 === 1 ? CELLW / 2 : 0) + jig(55);
-      const cy = row * CELLH + CELLH / 2 + jig(55);
-      const motif = motifs[n % motifs.length];
-      const color = palette[n % palette.length];
-      const rot = jig(14).toFixed(1);
-      const op = (0.88 + rnd() * 0.12).toFixed(2);
-      let m = '';
-      if (motif === 'sparkle') {
-        m = sparkle(cx, cy, 44 + rnd() * 30, color);
-      } else if (motif === 'heart') {
-        const hs = 6 + Math.round(rnd() * 4);
-        m = pixelHeart(cx - 3.5 * hs, cy - 3 * hs, hs, color);
-      } else if (motif === 'star') {
-        const ss = 5 + Math.round(rnd() * 3);
-        m = stamp(STAR5, cx - 5.5 * ss, cy - 5 * ss, ss, color === C.white ? C.yellow : color);
-      } else if (motif === 'smiley') {
-        const ms = rnd() > 0.5 ? 3 : 2.5;
-        m = smiley(cx - 8 * ms, cy - 8 * ms, ms, C.yellow, C.navy);
-      } else if (motif === 'rainbow') {
-        const rs = 5 + Math.round(rnd() * 2);
-        m = rainbowArch(cx - 8 * rs, cy - 4 * rs, rs);
-      } else if (motif === 'note') {
-        const ns = 5 + Math.round(rnd() * 2);
-        m = stamp(NOTE, cx - 3.5 * ns, cy - 4 * ns, ns, color === C.yellow ? C.cyan : color);
-      } else if (motif === 'burst') {
-        m = starburst(cx, cy, 34 + rnd() * 10, 19, 8, rnd() > 0.5 ? C.yellow : C.pink, C.navyEdge, 4, rnd());
-      } else {
-        const txt = texts[n % texts.length];
-        const ts = 4;
-        m = pixelText(txt, cx - (textCols(txt) * ts) / 2, cy - 3.5 * ts, ts, color);
-      }
-      s += `<g opacity="${op}" transform="rotate(${rot} ${cx.toFixed(1)} ${cy.toFixed(1)})">${m}</g>`;
-      n++;
-    }
-  }
+  // ---- CRT scanlines
+  s += `<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000000"/></pattern></defs>`;
+  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#scan)" opacity="0.07"/>`;
 
   s += '</svg>';
   return s;
