@@ -7,7 +7,7 @@
   ],
   "servers": [
     "https://blossom.primal.net",
-    "https://blossom.band"
+    "https://cdn.hzrd149.com"
   ],
   "fallback": "/index.html",
   "title": "YourSpace",
