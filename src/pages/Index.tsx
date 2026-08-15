@@ -262,6 +262,150 @@ function DoodleSpiral({ className, style }: StickerProps) {
   );
 }
 
+function DoodleSmiley({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M50 14 Q82 14 84 46 Q86 80 50 82 Q16 82 16 48 Q16 16 50 14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path d="M38 38 L38 46 M62 38 L62 46" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M32 56 Q50 74 68 56" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DoodleBolt({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M58 6 L34 51 L47 49 L38 92 L69 43 L54 46 L66 8 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DoodleCube({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M22 36 L21 76 L61 77 L61 37 Z M22 36 L38 23 L78 23 L61 37 M78 23 L78 63 L61 77"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DoodleFlower({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      {[0, 60, 120, 180, 240, 300].map((r) => (
+        <path
+          key={r}
+          d="M50 42 Q41 18 50 10 Q59 18 50 42"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          transform={`rotate(${r} 50 50)`}
+        />
+      ))}
+      <circle cx="50" cy="50" r="9" fill="none" stroke="currentColor" strokeWidth="4" />
+    </svg>
+  );
+}
+
+function DoodleNote({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M46 70 Q46 79 37 79 Q28 79 28 71 Q28 63 37 63 Q46 63 46 70 L45 18 Q60 22 66 36"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DoodleGhost({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M22 84 L22 42 Q24 14 50 14 Q76 14 78 42 L78 84 Q71 76 64 84 Q57 76 50 84 Q43 76 36 84 Q29 76 22 84 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M41 42 L41 51 M59 42 L59 51" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" />
+      <path d="M44 62 Q50 67 56 62" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DoodleUfo({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path d="M36 36 Q37 20 50 20 Q63 20 64 36" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <path
+        d="M20 46 Q21 34 50 34 Q79 34 80 46 Q79 57 50 57 Q21 57 20 46 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M39 65 L35 77 M50 67 L50 79 M61 65 L65 77" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DoodleZigzag({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M6 68 L22 34 L38 64 L54 32 L70 62 L86 30"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DoodleArrow({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M12 24 Q46 22 62 40 Q76 56 64 78"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path d="M64 78 L54 64 M64 78 L78 70" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /* Rainbow with cloud ends, like the one on the banner and background. */
 function Rainbow({ className, style }: StickerProps) {
   const bands = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
@@ -537,9 +681,24 @@ const Index = () => {
               'linear-gradient(90deg, transparent 40px, rgb(255 45 158 / 0.16) 40px, rgb(255 45 158 / 0.16) 42px, transparent 42px), repeating-linear-gradient(transparent 0 31px, rgb(77 124 255 / 0.14) 31px 32px)',
           }}
         />
-        <DoodleStar className="pointer-events-none absolute top-8 right-[3%] w-14 rotate-6 text-[#3f63d2] opacity-40" />
-        <DoodleHeart className="pointer-events-none absolute bottom-10 left-[2%] hidden w-14 -rotate-12 text-[#3f63d2] opacity-40 sm:block" />
-        <DoodleSpiral className="pointer-events-none absolute top-[52%] right-[1.5%] hidden w-12 rotate-12 text-[#3f63d2] opacity-35 lg:block" />
+        {/* The margins, doodled all over like a real notebook */}
+        <div className="pointer-events-none absolute inset-0 text-[#3f63d2]" aria-hidden="true">
+          {/* left margin, top to bottom */}
+          <DoodleSmiley className="absolute top-[5%] left-[0.5%] w-10 -rotate-6 opacity-40" />
+          <DoodleZigzag className="absolute top-[20%] left-[0.3%] hidden w-12 rotate-3 opacity-35 sm:block" />
+          <DoodleBolt className="absolute top-[36%] left-[1%] w-9 rotate-6 opacity-40" />
+          <DoodleCube className="absolute top-[52%] left-[0.5%] hidden w-11 -rotate-3 opacity-35 md:block" />
+          <DoodleFlower className="absolute top-[68%] left-[0.8%] hidden w-11 rotate-12 opacity-40 sm:block" />
+          <DoodleHeart className="absolute bottom-[4%] left-[0.8%] w-12 -rotate-12 opacity-40" />
+          {/* right margin, top to bottom */}
+          <DoodleStar className="absolute top-8 right-[1.5%] w-14 rotate-6 opacity-40" />
+          <DoodleUfo className="absolute top-[24%] right-[0.8%] hidden w-14 -rotate-6 opacity-40 sm:block" />
+          <DoodleSpiral className="absolute top-[46%] right-[1%] hidden w-11 rotate-12 opacity-35 md:block" />
+          <DoodleNote className="absolute top-[63%] right-[1.2%] hidden w-10 rotate-6 opacity-40 sm:block" />
+          <DoodleGhost className="absolute bottom-[5%] right-[1%] w-12 -rotate-6 opacity-40" />
+          {/* one arrow curling from the heading toward the pages */}
+          <DoodleArrow className="absolute top-[9%] right-[22%] hidden w-16 rotate-[24deg] opacity-35 lg:block" />
+        </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
             <h2 className="mb-3 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
