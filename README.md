@@ -71,6 +71,20 @@ subdomain is an HMAC of a device-local secret, so each site gets an origin of it
 other page can guess — this app's `localStorage` holds nsec, and untrusted scripts must never
 share an origin with it.
 
+## Repository and hosting
+
+The canonical repository lives on Nostr, published with ngit under the Team Soapbox key and mirrored
+to [GitLab](https://gitlab.com/soapbox-pub/yourspace):
+
+```
+nostr://npub10qdp2fc9ta6vraczxrcs8prqnv69fru2k6s2dj48gqjcylulmtjsg9arpj/yourspace
+```
+
+The app itself ships as an nsite. `npm run deploy:nsite` builds `dist/` and publishes it with
+[nsyte](https://nsyte.run) using `.nsite/config.json`, prompting for the signing key rather than
+storing one. Published under the Soapbox key, it resolves at
+`https://npub10qdp2fc9ta6vraczxrcs8prqnv69fru2k6s2dj48gqjcylulmtjsg9arpj.nsite.lol`.
+
 ## Stack
 
 React 19, TailwindCSS 4, Vite, shadcn/ui, [Nostrify](https://nostrify.dev), TanStack Query, and

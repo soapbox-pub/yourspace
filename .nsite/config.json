@@ -1,0 +1,16 @@
+{
+  "$schema": "https://nsyte.run/schemas/config.schema.json",
+  "relays": [
+    "wss://relay.ditto.pub",
+    "wss://relay.primal.net",
+    "wss://relay.damus.io"
+  ],
+  "servers": [
+    "https://blossom.primal.net",
+    "https://blossom.band"
+  ],
+  "fallback": "/index.html",
+  "title": "YourSpace",
+  "description": "Where nostalgia meets innovation. Build your homepage block by block and publish it to Nostr as an nsite.",
+  "source": "https://gitlab.com/soapbox-pub/yourspace"
+}
