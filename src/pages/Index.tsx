@@ -225,6 +225,26 @@ function Rainbow({ className, style }: StickerProps) {
   );
 }
 
+/* Crescent moon, for the starfield. */
+function Moon({ className, style }: StickerProps) {
+  const { id, stops } = useGloss('#ffd400');
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <Gloss id={id} stops={stops} />
+      <path
+        d="M58 6 A44 44 0 1 0 58 94 A36 36 0 1 1 58 6 Z"
+        fill={`url(#${id})`}
+        stroke="#0c1130"
+        strokeWidth="5"
+        strokeLinejoin="round"
+      />
+      <circle cx="34" cy="38" r="6" fill="#0c1130" opacity="0.15" />
+      <circle cx="28" cy="58" r="4" fill="#0c1130" opacity="0.15" />
+      <ellipse cx="38" cy="22" rx="9" ry="5" fill="#ffffff" opacity="0.5" transform="rotate(-30 38 22)" />
+    </svg>
+  );
+}
+
 /*
  * The zebra ribbon, as actual SVG: a pink band with navy teeth and navy
  * edges, identical to the one in the graphics.
@@ -307,7 +327,21 @@ const Index = () => {
   const [pattern, setPattern] = useState<(typeof PATTERNS)[number]>('checker');
   const [sticker, setSticker] = useState<(typeof STICKERS)[number]>('heart');
   const [name, setName] = useState('ur demo page');
+  const [about, setAbout] = useState('hi !! this is ur demo page. every block on it can be moved, restyled, or deleted — that’s the whole editor.');
+  const [links, setLinks] = useState(['my blog', 'my pics', 'zap me !!']);
+  const [blocks, setBlocks] = useState(['header', 'about', 'links', 'music']);
   const [glitter, setGlitter] = useState(true);
+
+  /* Click a block: it swaps with the one above. At the top, it wraps to the bottom. */
+  const moveUp = (block: string) => {
+    setBlocks((current) => {
+      const i = current.indexOf(block);
+      const next = [...current];
+      next.splice(i, 1);
+      next.splice(i === 0 ? next.length : i - 1, 0, block);
+      return next;
+    });
+  };
 
   useSeoMeta({
     title: 'YourSpace: Build a homepage that is actually yours',
@@ -319,28 +353,26 @@ const Index = () => {
     <div className="ys-min-below-bar overflow-x-hidden bg-ys-grape text-white">
       {/* Hero: dithered sky, wordmark left, ghost right, the banner cast scattered */}
       <div className="ys-sky relative overflow-hidden">
-        {/* The banner cast, as glitter clusters with a two-frame twinkle */}
+        {/*
+          The banner cast, zoned the way the banner zones it: the text lane
+          stays clear, the art clusters on the right, and small deco sits at
+          the corners and edges only. Motion is a two-frame twinkle.
+        */}
         <ShootingStar className="absolute top-[4%] left-[2%] w-36 sm:w-44" />
-        <div className="absolute top-[16%] left-[5%] -rotate-6" aria-hidden="true">
-          <GlossyStar color="#ffd400" className="w-10 sm:w-14" />
-          <Sparkle color="#00d9ff" className="ys-twinkle absolute -right-4 top-7 w-5 sm:w-7" />
-        </div>
         <div className="absolute top-[6%] right-[4%] rotate-12" aria-hidden="true">
           <GlossyHeart color="#ff2d9e" className="w-9 sm:w-12" />
           <Sparkle color="#ffffff" className="ys-twinkle absolute -left-4 -top-2 w-5" style={{ animationDelay: '0.4s' }} />
         </div>
-        <Skull className="absolute top-[10%] right-[22%] hidden w-16 rotate-6 lg:block" />
-        <div className="absolute bottom-[24%] left-[2%] hidden rotate-6 sm:block" aria-hidden="true">
+        <div className="absolute bottom-[18%] left-[2%] hidden rotate-6 sm:block" aria-hidden="true">
           <Bolt color="#ffd400" className="w-10" />
           <Sparkle color="#8fe800" className="absolute -right-4 top-8 w-5" />
         </div>
-        <div className="absolute right-[10%] bottom-[14%] hidden -rotate-12 sm:block" aria-hidden="true">
+        <div className="absolute right-[3%] bottom-[16%] hidden -rotate-12 sm:block" aria-hidden="true">
           <Note color="#b14dff" className="w-12" />
           <Sparkle color="#ff2d9e" className="ys-twinkle absolute -left-5 top-7 w-5" style={{ animationDelay: '0.7s' }} />
         </div>
-        <BrokenHeart color="#ff2d9e" className="absolute bottom-[8%] left-[30%] hidden w-12 -rotate-6 lg:block" />
-        <GlossyHeart color="#2a1245" className="absolute top-[38%] right-[2%] hidden w-9 -rotate-12 lg:block" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[34%] left-[38%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
+        <GlossyHeart color="#2a1245" className="absolute top-[40%] right-[2%] hidden w-9 -rotate-12 lg:block" />
+        <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[10%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
 
         <div className="relative z-10 mx-auto max-w-6xl px-6 pt-14 pb-24 sm:pt-20 sm:pb-28">
           <div className="flex flex-col items-center gap-10 lg:flex-row lg:gap-4">
@@ -387,9 +419,10 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Ghost with the rainbow arcing over it, like the banner */}
+            {/* Ghost cluster: rainbow overhead, skull alongside, like the banner */}
             <div className="relative shrink-0">
               <Rainbow className="absolute -top-24 -right-16 hidden w-80 rotate-3 lg:block" />
+              <Skull className="absolute -left-24 top-0 hidden w-16 -rotate-6 lg:block" />
               <img
                 src="/icon.svg"
                 alt="The YourSpace ghost, holding a heart"
@@ -430,18 +463,20 @@ const Index = () => {
 
       {/*
         The demo. No feature lists: a little page built from blocks, and the
-        visitor restyles it themselves — color, background, sticker, name,
-        glitter. Scene wallpaper behind it, pinstripes instead of checker.
+        visitor works it directly — click blocks to rearrange them, type in
+        its text boxes, restyle it from the sidebar. Old-web starfield
+        behind it, the GeoCities night sky.
       */}
-      <section className="ys-scene relative overflow-hidden px-6 py-24">
+      <section className="ys-starfield relative overflow-hidden px-6 py-24">
         {/* Wallpaper scatter */}
-        <GlossyStar color="#14ff89" className="absolute top-[8%] left-[4%] w-10 -rotate-6" />
-        <Sparkle color="#ffffff" className="ys-twinkle absolute top-[14%] left-[10%] w-5" />
-        <GlossyHeart color="#ff2d9e" className="absolute top-[10%] right-[5%] w-9 rotate-12" />
-        <Bolt color="#ffd400" className="absolute bottom-[12%] left-[3%] hidden w-9 rotate-6 sm:block" />
-        <Note color="#00d9ff" className="absolute right-[4%] bottom-[16%] hidden w-10 -rotate-12 sm:block" />
-        <Sparkle color="#14ff89" className="ys-twinkle absolute right-[12%] top-[40%] hidden w-6 lg:block" style={{ animationDelay: '0.5s' }} />
-        <Skull className="absolute bottom-[6%] right-[30%] hidden w-12 rotate-6 lg:block" />
+        <Moon className="absolute top-[6%] right-[6%] w-16 rotate-12 sm:w-20" />
+        <GlossyStar color="#14ff89" className="absolute top-[10%] left-[4%] w-10 -rotate-6" />
+        <Sparkle color="#ffffff" className="ys-twinkle absolute top-[18%] left-[10%] w-5" />
+        <GlossyHeart color="#ff2d9e" className="absolute bottom-[10%] right-[4%] w-9 rotate-12" />
+        <Bolt color="#ffd400" className="absolute bottom-[14%] left-[3%] hidden w-9 rotate-6 sm:block" />
+        <Note color="#00d9ff" className="absolute right-[10%] top-[42%] hidden w-10 -rotate-12 lg:block" />
+        <Sparkle color="#14ff89" className="ys-twinkle absolute left-[42%] top-[6%] hidden w-6 lg:block" style={{ animationDelay: '0.5s' }} />
+        <Skull className="absolute bottom-[6%] left-[30%] hidden w-12 rotate-6 lg:block" />
 
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
@@ -449,13 +484,14 @@ const Index = () => {
               go ahead, touch it
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-[#c8f5dd]">
-              This page is built from blocks, the way yours will be. Make it yours:
+              This page is built from blocks, the way yours will be. Click a block to move
+              it, type in its boxes, restyle it:
             </p>
           </div>
 
-          <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center">
+          <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-stretch lg:justify-center">
             {/* The demo page itself */}
-            <div className="ys-card-gloss w-full max-w-md overflow-hidden">
+            <div className="ys-card-gloss flex w-full max-w-md flex-col overflow-hidden">
               <div className="flex items-center justify-between border-b-[3px] border-ys-edge bg-[#1b2350] px-4 py-2.5">
                 <span className="font-display text-sm font-bold italic text-ys-lavender">demo-page.html</span>
                 <span className="flex gap-1.5" aria-hidden="true">
@@ -467,67 +503,115 @@ const Index = () => {
 
               {pattern === 'zebra' && <ZebraStrip className="block h-6 w-full" />}
 
-              <div className="relative space-y-4 p-5 transition-colors" style={patternStyle(pattern)}>
+              <div className="relative flex-1 space-y-4 p-5 transition-colors" style={patternStyle(pattern)}>
                 {glitter && (
                   <>
-                    <Sparkle color="#ffffff" className="ys-twinkle absolute top-2 right-3 w-4" />
-                    <Sparkle color={accent} className="ys-twinkle absolute bottom-3 right-6 w-5" style={{ animationDelay: '0.5s' }} />
+                    <Sparkle color="#ffffff" className="ys-twinkle absolute top-2 right-3 z-10 w-4" />
+                    <Sparkle color={accent} className="ys-twinkle absolute bottom-3 right-6 z-10 w-5" style={{ animationDelay: '0.5s' }} />
                   </>
                 )}
 
-                <div
-                  className="relative flex items-center gap-3 rounded-lg border-2 border-dashed p-3 transition-colors"
-                  style={{ borderColor: accent }}
-                >
-                  <img
-                    src="/icon.svg"
-                    alt=""
-                    aria-hidden="true"
-                    className="w-14 rounded-lg border-2 bg-ys-purple transition-colors"
-                    style={{ borderColor: accent }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-xl font-black italic transition-colors" style={{ color: accent }}>
-                      {name || 'ur demo page'}
-                    </p>
-                    <p className="flex items-center gap-1.5 text-xs text-ys-lavender">
-                      <span className="inline-block size-2 rounded-full bg-[#2ee86c]" aria-hidden="true" />
-                      online now!
-                    </p>
-                  </div>
-                  <DemoSticker kind={sticker} accent={accent} className="w-10 shrink-0 rotate-6" />
-                </div>
-
-                <div
-                  className="rounded-lg border-2 border-dashed p-3 text-sm leading-relaxed text-ys-lavender transition-colors"
-                  style={{ borderColor: accent }}
-                >
-                  hi !! this is ur demo page. every block on it can be moved, restyled, or
-                  deleted — that’s the whole editor.
-                </div>
-
-                <div
-                  className="flex flex-wrap gap-2 rounded-lg border-2 border-dashed p-3 transition-colors"
-                  style={{ borderColor: accent }}
-                >
-                  {['my blog', 'my pics', 'zap me !!'].map((label) => (
-                    <span
-                      key={label}
-                      className="rounded-full px-4 py-1.5 font-display text-sm font-extrabold italic text-ys-navy transition-colors"
-                      style={{ backgroundColor: accent }}
+                {blocks.map((block) => {
+                  const shared = `w-full cursor-pointer rounded-lg border-2 border-dashed p-3 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white`;
+                  if (block === 'header') {
+                    return (
+                      <button
+                        key="header"
+                        type="button"
+                        onClick={() => moveUp('header')}
+                        title="Click to move this block up"
+                        className={shared}
+                        style={{ borderColor: accent }}
+                      >
+                        <span className="flex items-center gap-3">
+                          <img
+                            src="/icon.svg"
+                            alt=""
+                            aria-hidden="true"
+                            className="w-14 rounded-lg border-2 bg-ys-purple transition-colors"
+                            style={{ borderColor: accent }}
+                          />
+                          <span className="min-w-0 flex-1">
+                            <input
+                              value={name}
+                              maxLength={24}
+                              onChange={(e) => setName(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label="Page name"
+                              placeholder="ur demo page"
+                              className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:bg-ys-edge focus:outline-none"
+                              style={{ color: accent }}
+                            />
+                            <span className="flex items-center gap-1.5 text-xs text-ys-lavender">
+                              <span className="inline-block size-2 rounded-full bg-[#2ee86c]" aria-hidden="true" />
+                              online now!
+                            </span>
+                          </span>
+                          <DemoSticker kind={sticker} accent={accent} className="w-10 shrink-0 rotate-6" />
+                        </span>
+                      </button>
+                  );
+                }
+                if (block === 'about') {
+                  return (
+                    <button
+                      key="about"
+                      type="button"
+                      onClick={() => moveUp('about')}
+                      title="Click to move this block up"
+                      className={shared}
+                      style={{ borderColor: accent }}
                     >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-
-                <div
-                  className="flex items-center gap-2 rounded-lg border-2 border-dashed p-3 text-sm text-ys-lavender transition-colors"
-                  style={{ borderColor: accent }}
-                >
-                  <Note color={accent} className="w-6 shrink-0 transition-colors" />
-                  now playing: something emo
-                </div>
+                      <textarea
+                        value={about}
+                        rows={3}
+                        onChange={(e) => setAbout(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="About me text"
+                        className="w-full resize-none rounded bg-transparent text-sm leading-relaxed text-ys-lavender focus:bg-ys-edge focus:outline-none"
+                      />
+                    </button>
+                  );
+                }
+                if (block === 'links') {
+                  return (
+                    <button
+                      key="links"
+                      type="button"
+                      onClick={() => moveUp('links')}
+                      title="Click to move this block up"
+                      className={`${shared} flex flex-wrap gap-2`}
+                      style={{ borderColor: accent }}
+                    >
+                      {links.map((label, i) => (
+                        <input
+                          key={i}
+                          value={label}
+                          maxLength={14}
+                          onChange={(e) => setLinks(links.map((l, j) => (j === i ? e.target.value : l)))}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Link ${i + 1} label`}
+                          className="rounded-full px-3 py-1.5 text-center font-display text-sm font-extrabold italic text-ys-navy transition-colors focus:outline-none focus:ring-2 focus:ring-ys-navy"
+                          style={{ backgroundColor: accent, width: `${Math.max(label.length + 2, 6)}ch` }}
+                        />
+                      ))}
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    key="music"
+                    type="button"
+                    onClick={() => moveUp('music')}
+                    title="Click to move this block up"
+                    className={`${shared} flex items-center gap-2 text-sm text-ys-lavender`}
+                    style={{ borderColor: accent }}
+                  >
+                    <Note color={accent} className="w-6 shrink-0 transition-colors" />
+                    now playing: something emo
+                  </button>
+                );
+              })}
               </div>
             </div>
 
@@ -591,21 +675,6 @@ const Index = () => {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="demo-name" className="mb-2 block font-display text-lg font-extrabold italic text-white">
-                  page name
-                </label>
-                <input
-                  id="demo-name"
-                  type="text"
-                  value={name}
-                  maxLength={24}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border-[3px] border-ys-edge bg-[#1b2350] px-3 py-2 text-white placeholder:text-ys-lavender/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  placeholder="ur demo page"
-                />
               </div>
 
               <div>
