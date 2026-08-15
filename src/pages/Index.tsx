@@ -550,7 +550,7 @@ const WORDMARK = [
 
 /** Demo page options. */
 const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
-const PATTERNS = ['plain', 'checker', 'stripes'] as const;
+const PATTERNS = ['plain', 'checker', 'stripes', 'dots'] as const;
 const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2'] as const;
 const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
 
@@ -563,6 +563,11 @@ function bgStyle(pattern: (typeof PATTERNS)[number], color: string): React.CSSPr
   if (pattern === 'stripes') {
     return {
       background: `repeating-linear-gradient(45deg, rgb(12 17 48 / 0.07) 0 8px, transparent 8px 22px), ${color}`,
+    };
+  }
+  if (pattern === 'dots') {
+    return {
+      background: `radial-gradient(rgb(12 17 48 / 0.1) 2px, transparent 2px) 0 0 / 18px 18px, ${color}`,
     };
   }
   return { background: color };
@@ -905,7 +910,7 @@ const Index = () => {
             </div>
 
             {/* The controls, on their own glossy panel so they read over the wallpaper */}
-            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5 lg:max-w-xs">
+            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5 lg:max-w-sm">
               <div>
                 <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">color</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Accent color">
