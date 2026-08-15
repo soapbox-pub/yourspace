@@ -1035,6 +1035,35 @@ const Index = () => {
             and nsites (NIP-5A).
           </p>
         </div>
+        <div className="mx-auto mt-6 flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-center text-sm text-ys-lavender/70">
+          <a
+            href="https://gitworkshop.dev/npub10qdp2fc9ta6vraczxrcs8prqnv69fru2k6s2dj48gqjcylulmtjsg9arpj/yourspace"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline underline-offset-4 hover:text-ys-pink"
+          >
+            source code
+          </a>
+          <span>
+            built by{' '}
+            <a
+              href="https://soapbox.pub"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-4 hover:text-ys-pink"
+            >
+              team soapbox
+            </a>
+          </span>
+          <a
+            href="https://ditto.pub/npub1mjh8kk24x8lqufaeag7f83xsu0ykn2r7fk7z60t4x45g35nyer0qkw6jxt"
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline underline-offset-4 hover:text-ys-pink"
+          >
+            follow on nostr
+          </a>
+        </div>
       </footer>
     </div>
   );
