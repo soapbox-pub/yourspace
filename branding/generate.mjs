@@ -331,82 +331,87 @@ function banner() {
 }
 
 // ================================================================ OG IMAGE
-// Same look as the banner, re-laid out for the taller 1200x630 card.
+// The glossy glitter clip-art look of the Ditto background, laid out as a
+// 1200x630 social card. Smooth chunky type (Fira Sans), no pixel text.
 function og() {
   const W = 1200;
   const H = 630;
-  const BAR = 48;
-  const MARQ = 48;
   let s = svgOpen(W, H);
+  const ids = { pink: C.pink, cyan: C.cyan, yellow: C.yellow, lime: C.lime, violet: C.violet, orange: C.orange, black: '#2A1245' };
+  s += glossDefs(ids);
+  s += `<defs><linearGradient id="g_shine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.75"/><stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>`;
 
-  // ---- title bar
-  s += `<rect x="0" y="0" width="${W}" height="${BAR}" fill="${C.navyBar}"/>`;
-  s += `<rect x="0" y="0" width="${W}" height="4" fill="${C.barHi}"/>`;
-  s += `<rect x="0" y="${BAR - 4}" width="${W}" height="4" fill="${C.navyEdge}"/>`;
-  s += sparkle(34, BAR / 2, 26, C.yellow);
-  s += pixelText('YOURSPACE.LIVE - UR SPACE ONLINE', 62, 10, 4, C.lavender);
-  s += winButton(1054, 10, 28, '_');
-  s += winButton(1090, 10, 28, 'o');
-  s += winButton(1126, 10, 28, 'x');
+  // ---- dithered sky
+  s += ditherSky(W, H, 10, ['#5B2B90', '#4A1D7A', '#3E1568', '#2C0B4E']);
 
-  // ---- content: purple checker
-  s += checker(0, BAR, W, H - BAR - MARQ, 28, C.purpleA, C.purpleB);
+  s += `<g shape-rendering="auto">`;
 
-  // scattered deco (kept off the text)
-  s += sparkle(48, 100, 40, C.white);
-  s += sparkle(200, 440, 36, C.yellow);
-  s += sparkle(700, 410, 30, C.white);
-  s += sparkle(640, 470, 24, C.cyan);
-  s += pixelHeart(420, 420, 8, C.violet);
-  s += pixelHeart(30, 340, 7, C.pink);
+  // ---- zebra ribbon across the bottom
+  s += `<g transform="rotate(8 600 540)">${zebraBand(-200, 495, 1600, 90)}</g>`;
 
-  // ---- headline
+  // ---- glossy art, right side
+  s += smoothRainbow(930, 170, 130, 18);
+  s += cloud(795, 170, 0.8);
+  s += cloud(1065, 170, 0.7);
+  s += glossySkull(745, 100, 80, 8);
+  s += glossyGhost(1085, 430, 200, 4);
+  s += glossyHeart(1170, 505, 48, 'pink', 12);
+  s += glossyNote(700, 420, 70, C.cyan, 12);
+  s += glossyNote(950, 330, 60, C.pink, -10);
+  s += glossyBolt(820, 300, 60, 'yellow', 8);
+  s += glossyStar(1040, 90, 22, 'yellow', 12);
+  s += glossyStar(880, 470, 18, 'lime', -8);
+  s += glossyHeart(500, 455, 48, 'black', -10);
+  s += shootingStar(130, 95, 28, 'yellow');
+
+  // ---- glitter clusters
+  const cluster = (cx, cy, seed) => {
+    const rr = lcg(seed);
+    const names = Object.keys(ids);
+    let out = glossyStar(cx, cy, 24 + rr() * 8, names[Math.floor(rr() * 6)], (rr() - 0.5) * 30);
+    for (let i = 0; i < 3; i++) out += sparkle(cx + (rr() - 0.5) * 170, cy + (rr() - 0.5) * 170, 20 + rr() * 24, ids[names[Math.floor(rr() * 6)]]);
+    for (let i = 0; i < 3; i++) out += sparkle(cx + (rr() - 0.5) * 200, cy + (rr() - 0.5) * 200, 9 + rr() * 7, '#FFFFFF');
+    return out;
+  };
+  s += cluster(660, 240, 11);
+  s += cluster(400, 430, 22);
+
+  // ---- headline: YOURSPACE, rainbow letters with jitter, gloss on top
   const HEAD = 'YOURSPACE';
-  const hs = 18;
-  const hx = 70;
-  const hy = 115;
-  const rainbow = [C.pink, C.orange, C.yellow, C.lime, C.cyan, C.blue, C.violet, C.pink, C.orange];
-  const jitter = [0, -8, 6, 0, -6, 10, -10, 6, 0];
-  s += outlinedText(HEAD, hx, hy, hs, rainbow, jitter, 6, 11, 13, C.navyEdge);
+  const fills = ['pink', 'orange', 'yellow', 'lime', 'cyan', 'violet', 'pink', 'orange', 'yellow'];
+  const target = [0, -8, 4, -4, 6, -10, 8, 0, -6];
+  const deltas = target.map((t, i) => t - (target[i - 1] ?? 0));
+  const tspans = (fillFor) =>
+    [...HEAD].map((ch, i) => `<tspan fill="${fillFor(i)}" dy="${deltas[i]}">${ch}</tspan>`).join('');
+  const headStyle = `font-family="Fira Sans Condensed Ultra" font-size="150" font-style="italic" letter-spacing="2"`;
+  s += `<g transform="rotate(-2 400 200)">`;
+  s += `<text x="66" y="238" ${headStyle} fill="${C.navyEdge}" opacity="0.55">${HEAD}</text>`;
+  s += `<text x="60" y="230" ${headStyle} stroke="${C.navyEdge}" stroke-width="10" stroke-linejoin="round" paint-order="stroke">${tspans((i) => `url(#g_${fills[i]})`)}</text>`;
+  s += `<text x="60" y="230" ${headStyle} fill="url(#g_shine)">${tspans(() => 'url(#g_shine)')}</text>`;
+  s += `</g>`;
 
   // ---- tagline
-  const TAG = "A HOME PAGE THAT'S ACTUALLY YOURS !!";
-  const ts = Math.floor(1020 / textCols(TAG)) || 4;
-  const tagY = hy + 7 * hs + 36;
-  const nChars = TAG.replace(/ /g, '').length;
-  const tagFills = Array.from({ length: nChars }, (_, i) => (i >= nChars - 7 ? C.pink : C.white));
-  s += pixelText(TAG, hx + 4, tagY, ts, tagFills);
+  const tagStyle = `font-family="Fira Sans ExtraBold" font-size="42" font-style="italic"`;
+  s += `<text x="62" y="312" ${tagStyle} fill="#FFFFFF" stroke="${C.navyEdge}" stroke-width="6" stroke-linejoin="round" paint-order="stroke">a home page that&#8217;s actually <tspan fill="url(#g_pink)">YOURS !!</tspan></text>`;
 
-  // ---- ONLINE NOW! pill
-  const pillY = 500;
-  s += `<rect x="70" y="${pillY}" width="330" height="56" rx="28" fill="${C.navy}"/>`;
-  s += `<circle cx="106" cy="${pillY + 28}" r="12" fill="${C.green}"/>`;
-  s += pixelText('ONLINE NOW!', 132, pillY + 12, 4, C.lime);
-
-  // ---- smiley sticker, tilted, lower right
-  s += `<g transform="rotate(6 1030 430)">`;
-  s += `<rect x="930" y="330" width="200" height="200" fill="${C.pink}"/>`;
-  s += `<rect x="937" y="337" width="186" height="186" fill="${C.cyan}"/>`;
-  s += `<rect x="943" y="343" width="174" height="174" fill="${C.navy}"/>`;
-  s += smiley(950, 350, 10, C.yellow, C.navy);
+  // ---- gel URL pill
+  s += `<g transform="rotate(-1 230 380)">`;
+  s += `<rect x="64" y="344" width="340" height="76" rx="38" fill="url(#g_lime)" stroke="${C.navyEdge}" stroke-width="6"/>`;
+  s += `<ellipse cx="234" cy="366" rx="140" ry="16" fill="#FFFFFF" opacity="0.45"/>`;
+  s += `<text x="234" y="394" font-family="Fira Sans ExtraBold" font-size="40" fill="${C.navy}" text-anchor="middle">yourspace.live</text>`;
   s += `</g>`;
 
-  // ---- NEW! starburst, top right
-  s += starburst(1090, 118, 72, 40, 9, C.yellow, C.navyEdge, 6, 0.3);
-  s += `<g transform="rotate(-8 1090 118)">${pixelText('NEW!', 1090 - (textCols('NEW!') * 5) / 2, 118 - 17, 5, C.pink)}</g>`;
+  // ---- glitter dust
+  const rr = lcg(77);
+  for (let i = 0; i < 22; i++) {
+    s += `<circle cx="${Math.round(rr() * W)}" cy="${Math.round(rr() * H)}" r="${(2 + rr() * 2.5).toFixed(1)}" fill="#FFFFFF" opacity="${(0.3 + rr() * 0.4).toFixed(2)}"/>`;
+  }
 
-  // ---- made w/ heart sticker
-  s += `<g transform="rotate(-3 690 529)">`;
-  s += `<rect x="580" y="505" width="220" height="48" fill="${C.white}" stroke="${C.pink}" stroke-width="5" stroke-dasharray="10 6"/>`;
-  s += pixelText('MADE W/ \u2665', 602, 517, 4, C.pink);
   s += `</g>`;
 
-  // ---- marquee strip
-  s += `<rect x="0" y="${H - MARQ}" width="${W}" height="${MARQ}" fill="${C.navy}"/>`;
-  const MARQUEE = '*.:* WELCOME 2 YOURSPACE *:. UR OWN HOME PAGE ON NOSTR .:*';
-  const ms = Math.floor((W - 60) / textCols(MARQUEE)) || 4;
-  const mw = textCols(MARQUEE) * ms;
-  s += pixelText(MARQUEE, (W - mw) / 2, H - MARQ + (MARQ - 7 * ms) / 2, ms, C.lime);
+  // ---- CRT scanlines
+  s += `<defs><pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000000"/></pattern></defs>`;
+  s += `<rect x="0" y="0" width="${W}" height="${H}" fill="url(#scan)" opacity="0.06"/>`;
 
   s += '</svg>';
   return s;
