@@ -589,7 +589,7 @@ const Index = () => {
   const [about, setAbout] = useState('hi !! this is ur demo page. every block on it can be moved, restyled, or deleted: that’s the whole editor.');
   const [links, setLinks] = useState(['my blog', 'my pics', 'zap me !!']);
   const [blocks, setBlocks] = useState(['header', 'about', 'links', 'music']);
-  const [glitter, setGlitter] = useState(true);
+  const [glitter, setGlitter] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const dragBlock = useRef<string | null>(null);
 
@@ -789,6 +789,12 @@ const Index = () => {
                   <>
                     <Sparkle color="#ffffff" className="ys-twinkle absolute top-2 right-3 z-10 w-4" />
                     <Sparkle color={accent} className="ys-twinkle absolute bottom-3 right-6 z-10 w-5" style={{ animationDelay: '0.5s' }} />
+                    <Sparkle color="#ffffff" className="ys-twinkle absolute top-10 left-4 z-10 w-3" style={{ animationDelay: '0.3s' }} />
+                    <Sparkle color={accent} className="ys-twinkle absolute bottom-10 left-8 z-10 w-4" style={{ animationDelay: '0.8s' }} />
+                    <Sparkle color="#ffffff" className="ys-twinkle absolute top-1/2 right-2 z-10 w-3" style={{ animationDelay: '0.6s' }} />
+                    <Sparkle color={accent} className="ys-twinkle absolute top-1/3 left-1/2 z-10 w-3" style={{ animationDelay: '0.9s' }} />
+                    <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-6 left-1/3 z-10 w-3" style={{ animationDelay: '0.2s' }} />
+                    <Sparkle color={accent} className="ys-twinkle absolute top-4 left-2/3 z-10 w-4" style={{ animationDelay: '0.7s' }} />
                   </>
                 )}
 
@@ -980,7 +986,7 @@ const Index = () => {
       </section>
 
       {/* Closing call to action: the page that could be yours */}
-      <section className="relative bg-ys-grape">
+      <section className="relative bg-[#16224e]">
         <div className="overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
         </div>
