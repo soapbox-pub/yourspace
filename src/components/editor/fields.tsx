@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { Image as ImageIcon, Loader2 } from 'lucide-react';
 
+import { CHECKERBOARD } from './checkerboard';
 import { cn } from '@/lib/utils';
 
 /**
@@ -243,6 +244,49 @@ interface ColorControlProps {
   value: string;
   onChange: (value: string) => void;
   fieldKey: string;
+  /** Adds a checkerboard button that clears the colour, making it transparent. */
+  allowTransparent?: boolean;
+}
+
+/**
+ * What the swatch shows for a value.
+ *
+ * `#rrggbb` is what the native picker understands. A colour that has been
+ * through a serialize/parse round-trip — a page switch, an edit in the code
+ * panel — comes back from the browser's own stylesheet as `rgb(255, 0, 0)`,
+ * so those are converted too; without it the swatch would insist a red it is
+ * painting is black. Anything else still shows black, and the text field
+ * beside the swatch stays the source of truth.
+ */
+function swatchColor(value: string): string {
+  const trimmed = value.trim();
+  if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+
+  const rgb = /^rgba?\(\s*(\d+)\s*[,\s]\s*(\d+)\s*[,\s]\s*(\d+)/i.exec(trimmed);
+  if (rgb) {
+    return `#${rgb
+      .slice(1, 4)
+      .map((channel) => Math.min(Number(channel), 255).toString(16).padStart(2, '0'))
+      .join('')}`;
+  }
+
+  return '#000000';
+}
+
+/**
+ * Whether a colour value amounts to see-through: unset, the keyword, or a
+ * zero alpha — which is what `transparent` returns as once the browser's
+ * stylesheet has serialized it (`rgba(0, 0, 0, 0)`). The alpha has to be a
+ * real fourth channel: in `rgb(255, 0, 0)` the trailing zero is blue.
+ */
+function isTransparent(value: string): boolean {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed === 'transparent') return true;
+
+  return (
+    /^rgba\([^,]+,[^,]+,[^,]+,\s*0(?:\.0+)?%?\s*\)$/.test(trimmed) ||
+    /^rgba?\([^,/]+\s+[^,/]+\s+[^,/]+\s*\/\s*0(?:\.0+)?%?\s*\)$/.test(trimmed)
+  );
 }
 
 /**
@@ -252,9 +296,16 @@ interface ColorControlProps {
  * of `transparent`, `rgb(...)` and gradients — so the text input stays
  * authoritative and the swatch is a convenience that writes into it.
  */
-export function ColorControl({ label, value, onChange, fieldKey }: ColorControlProps) {
+export function ColorControl({
+  label,
+  value,
+  onChange,
+  fieldKey,
+  allowTransparent,
+}: ColorControlProps) {
   const id = useId();
-  const swatch = /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : '#000000';
+  const swatch = swatchColor(value);
+  const transparent = isTransparent(value);
 
   return (
     <Field label={label} htmlFor={id}>
@@ -275,6 +326,24 @@ export function ColorControl({ label, value, onChange, fieldKey }: ColorControlP
           onChange={(event) => onChange(event.target.value)}
           className={cn(controlClass, 'font-mono text-xs')}
         />
+        {allowTransparent && (
+          <button
+            type="button"
+            aria-pressed={transparent}
+            title="Transparent"
+            onClick={() => onChange('')}
+            style={CHECKERBOARD}
+            className={cn(
+              'h-8 w-9 shrink-0 rounded-md border transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              transparent
+                ? 'border-primary ring-2 ring-primary/30'
+                : 'border-input hover:border-ring/60',
+            )}
+          >
+            <span className="sr-only">Transparent</span>
+          </button>
+        )}
       </div>
     </Field>
   );

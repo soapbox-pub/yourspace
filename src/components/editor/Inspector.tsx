@@ -217,6 +217,7 @@ function BackgroundFields({ target, fieldKey, images, onUpload }: BackgroundFiel
         label="Colour"
         value={color}
         fieldKey={`${fieldKey}:background-color`}
+        allowTransparent
         onChange={(value) => setBackground(target, { 'background-color': value })}
       />
 
