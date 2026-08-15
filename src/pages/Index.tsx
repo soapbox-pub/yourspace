@@ -213,6 +213,55 @@ function ShootingStar({ className, style }: StickerProps) {
   );
 }
 
+/*
+ * Ballpoint-pen doodles for the notebook-paper section: one wobbly stroke
+ * each, no gloss, colored via currentColor like real ink.
+ */
+function DoodleStar({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M50 10 Q52 24 55 36 Q70 35 84 38 Q73 47 64 55 Q69 70 72 84 Q60 76 50 69 Q39 77 28 85 Q32 70 36 55 Q26 47 15 37 Q30 36 45 36 Q47 23 50 10 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DoodleHeart({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M50 82 Q22 56 20 36 Q19 18 34 17 Q46 16 50 29 Q54 16 66 17 Q81 18 80 36 Q78 56 50 82 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M26 12 L20 4 M38 8 L36 0 M15 24 L6 20" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DoodleSpiral({ className, style }: StickerProps) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} aria-hidden="true">
+      <path
+        d="M52 48 Q57 50 55 55 Q52 61 44 58 Q35 54 38 44 Q42 33 54 36 Q68 40 64 54 Q59 70 42 66 Q24 61 29 42 Q35 22 56 26 Q78 31 74 56"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /* Rainbow with cloud ends, like the one on the banner and background. */
 function Rainbow({ className, style }: StickerProps) {
   const bands = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
@@ -479,15 +528,18 @@ const Index = () => {
         neutral background than on the sky.
       */}
       <section className="relative overflow-hidden bg-background px-6 py-20 text-foreground">
-        {/* A whisper of wallpaper: faint tiled dots and a little edge glitter */}
+        {/* Lined notebook paper: ruled lines, a margin line, ballpoint doodles */}
         <div
           className="pointer-events-none absolute inset-0"
           aria-hidden="true"
-          style={{ background: 'radial-gradient(rgb(74 29 122 / 0.05) 1.5px, transparent 1.5px) 0 0 / 22px 22px' }}
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 40px, rgb(255 45 158 / 0.16) 40px, rgb(255 45 158 / 0.16) 42px, transparent 42px), repeating-linear-gradient(transparent 0 31px, rgb(77 124 255 / 0.14) 31px 32px)',
+          }}
         />
-        <Sparkle color="#b14dff" className="pointer-events-none absolute top-10 right-[4%] w-6 opacity-30" />
-        <Sparkle color="#ff2d9e" className="pointer-events-none absolute bottom-12 left-[3%] hidden w-5 opacity-30 sm:block" />
-        <GlossyStar color="#00d9ff" className="pointer-events-none absolute top-1/2 -right-7 hidden w-16 rotate-12 opacity-20 lg:block" />
+        <DoodleStar className="pointer-events-none absolute top-8 right-[3%] w-14 rotate-6 text-[#3f63d2] opacity-40" />
+        <DoodleHeart className="pointer-events-none absolute bottom-10 left-[2%] hidden w-14 -rotate-12 text-[#3f63d2] opacity-40 sm:block" />
+        <DoodleSpiral className="pointer-events-none absolute top-[52%] right-[1.5%] hidden w-12 rotate-12 text-[#3f63d2] opacity-35 lg:block" />
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
             <h2 className="mb-3 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
