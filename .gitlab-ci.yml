@@ -13,19 +13,11 @@ test:
   script:
     - npm run test
 
-pages:
-  stage: deploy
-  script:
-    - npm run build
-    - rm -rf public
-    - mv dist public
-  artifacts:
-    paths:
-      - public
-  only:
-    variables:
-      - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME
-
+# GitLab is a mirror of the nostr repo; the site itself is an nsite served
+# through npanel (yourspace.live). This job is here only because the mirror
+# has CI runners: it publishes dist/ to Blossom servers and nostr relays,
+# nothing is hosted on GitLab.
+#
 # Publishes dist/ as the named nsite (.nsite/config.json) signed with
 # $NSITE_SECRET, a masked+protected CI variable holding an nbunksec
 # (preferred, from `nsyte ci <bunker-url>`) or an nsec. The secrets scan
