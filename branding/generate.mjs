@@ -778,7 +778,7 @@ function sectionBg() {
   s += `<g shape-rendering="auto">`;
 
   // ---- ska checker band, bottom-left diagonal
-  s += `<g transform="rotate(-12 300 860)">${checker(-200, 820, 1100, 64, 32, '#FFFFFF', C.navyEdge)}</g>`;
+  s += `<g transform="rotate(-12 300 860)">${checker(-300, 820, 2400, 64, 32, '#FFFFFF', C.navyEdge)}</g>`;
 
   // ---- the anchors: cassette and skull
   s += glossyCassette(330, 300, 210, -8);

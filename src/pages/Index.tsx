@@ -214,73 +214,72 @@ function ShootingStar({ className, style }: StickerProps) {
 }
 
 /*
- * One continuous ballpoint border, the bored-study-period kind: a vine that
- * snakes the whole margin with swirl offshoots, leaves, a looped flower, a
- * star on a thread, a hanging heart, dot chains, bubbles, plus-sign fillers,
- * a smiley, and a tiny ghost. The tile meets itself end to end, so the
- * strips repeat seamlessly for any page height.
+ * A layered gel-pen border, patterned like hand-drawn divider sheets: three
+ * parallel repeating bands (scalloped lace with hatch shading, a leaf vine,
+ * a heart garland with asterisk flowers) plus pale glints on the strokes so
+ * the ink reads as purple sparkle gel. The tile meets itself end to end, so
+ * the strips repeat seamlessly for any page height.
  */
-function DoodleVineTile() {
+function DoodleBorderTile() {
   return (
     <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      {/* the vine itself, entering and leaving at the same x */}
-      <path d="M32 0 C12 24 52 44 32 66 C14 86 14 104 32 120 C52 138 50 160 32 176 C14 192 14 214 32 230 C52 246 50 268 32 284 C15 299 16 318 32 332 C50 347 48 372 32 386 C18 399 20 420 32 432 C40 442 36 452 32 460" />
-      {/* swirl offshoots */}
-      <path d="M32 66 Q45 60 50 50 Q53 42 46 39 Q40 38 39 45 Q39 52 47 53" strokeWidth="2.5" />
-      <path d="M38 434 Q50 430 53 422 Q55 415 49 413 Q44 413 44 419 Q45 425 51 425" strokeWidth="2.5" />
-      {/* leaf pairs */}
-      <path d="M23 100 Q10 96 6 84 Q18 88 23 100 Z" strokeWidth="2.5" />
-      <path d="M22 108 Q8 110 2 122 Q16 118 22 108 Z" strokeWidth="2.5" />
-      <path d="M20 300 Q8 294 4 282 Q16 288 20 300 Z" strokeWidth="2.5" />
-      <path d="M19 308 Q6 310 2 322 Q14 318 19 308 Z" strokeWidth="2.5" />
-      {/* smiley tucked in the bend */}
-      <circle cx="14" cy="140" r="9" strokeWidth="2.5" />
-      <path d="M10.5 137 L10.5 140 M17.5 137 L17.5 140" strokeWidth="2.5" />
-      <path d="M10 144 Q14 148 18 144" strokeWidth="2.5" />
-      {/* looped flower on a stem */}
-      <path d="M32 176 Q42 172 47 179" strokeWidth="2.5" />
-      {[0, 72, 144, 216, 288].map((r) => (
-        <path key={r} d="M48 184 Q43 174 48 170 Q53 174 48 184" strokeWidth="2.5" transform={`rotate(${r} 48 184)`} />
+      {/* band 1: scalloped lace, hatched, with a bead at every cusp */}
+      {[0, 20, 40, 60, 80, 100].map((y) => (
+        <g key={y} transform={`translate(0 ${y})`}>
+          <path d="M14 0 A10 10 0 0 0 14 20" />
+          <path d="M10 6 L5 10 M9 12 L4 15" strokeWidth="2" />
+          <circle cx="15.5" cy="20" r="1.5" fill="currentColor" stroke="none" />
+        </g>
       ))}
-      <circle cx="48" cy="184" r="3" strokeWidth="2.5" />
-      {/* dot chain */}
-      <circle cx="50" cy="204" r="1.8" fill="currentColor" stroke="none" />
-      <circle cx="54" cy="214" r="1.8" fill="currentColor" stroke="none" />
-      <circle cx="51" cy="224" r="1.8" fill="currentColor" stroke="none" />
-      {/* star on a thread */}
-      <path d="M32 230 Q40 240 43 248" strokeWidth="2.5" />
-      <path d="M46 247 L49 254 L57 254 L51 259 L53 267 L46 262 L39 267 L41 259 L35 254 L43 254 Z" strokeWidth="2.5" />
-      {/* plus-sign fillers */}
-      <path d="M14 44 L14 52 M10 48 L18 48" strokeWidth="2.5" />
-      <path d="M52 296 L52 304 M48 300 L56 300" strokeWidth="2.5" />
-      {/* hanging heart */}
-      <path d="M32 332 Q22 336 17 344" strokeWidth="2.5" />
-      <path d="M13 361 Q4 352 4 347 Q4 341 9 341 Q13 341 13 346 Q13 341 17 341 Q22 341 22 347 Q22 352 13 361 Z" strokeWidth="2.5" />
-      {/* bubble trail */}
-      <circle cx="50" cy="356" r="3.5" strokeWidth="2.5" />
-      <circle cx="56" cy="364" r="2.5" strokeWidth="2.5" />
-      <circle cx="52" cy="371" r="1.5" fill="currentColor" stroke="none" />
-      {/* zigzag */}
-      <path d="M36 408 L40 400 L44 408 L48 400 L52 408" strokeWidth="2.5" />
-      {/* tiny ghost */}
-      <path d="M4 430 L4 414 Q4 406 12 406 Q20 406 20 414 L20 430 Q17.3 427 14.7 430 Q12 427 9.3 430 Q6.7 427 4 430 Z" strokeWidth="2.5" />
-      <path d="M9 414 L9 418 M15 414 L15 418" strokeWidth="2.5" />
+      {/* band 2: leaf vine with buds */}
+      <path d="M34 0 Q40 15 34 30 Q28 45 34 60 Q40 75 34 90 Q28 105 34 120" />
+      <path d="M37 15 Q46 12 50 4 Q40 6 37 15 Z" strokeWidth="2.5" />
+      <path d="M31 45 Q22 42 18 34 Q28 36 31 45 Z" strokeWidth="2.5" />
+      <path d="M37 75 Q46 72 50 64 Q40 66 37 75 Z" strokeWidth="2.5" />
+      <path d="M31 105 Q22 102 18 94 Q28 96 31 105 Z" strokeWidth="2.5" />
+      <circle cx="29" cy="22" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="39" cy="52" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="29" cy="82" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="39" cy="112" r="1.5" fill="currentColor" stroke="none" />
+      {/* band 3: heart garland with asterisk flowers */}
+      <path d="M52 0 Q58 20 52 40 Q46 60 52 80 Q58 100 52 120" />
+      {[0, 40, 80].map((dy) => (
+        <g key={dy} transform={`translate(0 ${dy})`}>
+          <path d="M52 34 Q45 27 45 23 Q45 19 48.5 19 Q52 19 52 22 Q52 19 55.5 19 Q59 19 59 23 Q59 27 52 34 Z" strokeWidth="2.5" />
+          <path d="M52 4 L52 12 M48 8 L56 8 M49.2 5.2 L54.8 10.8 M54.8 5.2 L49.2 10.8" strokeWidth="2" />
+        </g>
+      ))}
+      {/* gel glitter: pale glints sitting right on the ink */}
+      <g fill="#f3e8ff" stroke="none">
+        <path d="M4 6.8 L6.2 10 L4 13.2 L1.8 10 Z" />
+        <path d="M34 56.8 L36.2 60 L34 63.2 L31.8 60 Z" />
+        <path d="M52 36.8 L54.2 40 L52 43.2 L49.8 40 Z" />
+        <path d="M47 5.8 L49.2 9 L47 12.2 L44.8 9 Z" />
+        <path d="M14 96.8 L16.2 100 L14 103.2 L11.8 100 Z" />
+        <circle cx="15.5" cy="60" r="0.9" fill="#ffffff" />
+        <circle cx="45" cy="23" r="0.9" fill="#ffffff" />
+        <circle cx="34" cy="30" r="0.9" fill="#ffffff" />
+      </g>
     </g>
   );
 }
 
 /*
- * A strip of the vine border: repeats DoodleVineTile down its full length.
- * Vertical by default; `horizontal` rotates the chain to run along the top
- * or bottom edge.
+ * A strip of the border: repeats DoodleBorderTile down its full length.
+ * Vertical by default; `horizontal` lays four tiles along the top or bottom
+ * edge, anchored so the chain meets the corner on the right.
  */
-function DoodleVineStrip({ horizontal = false, className }: { horizontal?: boolean; className?: string }) {
+function DoodleBorderStrip({ horizontal = false, className }: { horizontal?: boolean; className?: string }) {
   const id = useId();
   if (horizontal) {
     return (
-      <svg viewBox="0 0 460 64" className={className} aria-hidden="true">
-        <g transform="translate(0 64) rotate(-90)">
-          <DoodleVineTile />
+      <svg viewBox="0 0 480 64" className={className} aria-hidden="true">
+        <g transform="translate(480 0) rotate(90)">
+          {[0, 120, 240, 360].map((y) => (
+            <g key={y} transform={`translate(0 ${y})`}>
+              <DoodleBorderTile />
+            </g>
+          ))}
         </g>
       </svg>
     );
@@ -288,8 +287,8 @@ function DoodleVineStrip({ horizontal = false, className }: { horizontal?: boole
   return (
     <svg className={className} aria-hidden="true">
       <defs>
-        <pattern id={id} width="64" height="460" patternUnits="userSpaceOnUse">
-          <DoodleVineTile />
+        <pattern id={id} width="64" height="120" patternUnits="userSpaceOnUse">
+          <DoodleBorderTile />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
@@ -573,16 +572,16 @@ const Index = () => {
           }}
         />
         {/* The border, doodled corner to corner like a bored study period */}
-        <div className="pointer-events-none absolute inset-0 text-[#3f63d2] opacity-40" aria-hidden="true">
-          <DoodleVineStrip className="absolute inset-y-0 left-0 h-full w-16" />
-          <DoodleVineStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
-          <DoodleVineStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[460px] md:block" />
-          <DoodleVineStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[460px] -scale-y-100 md:block" />
+        <div className="pointer-events-none absolute inset-0 text-[#9641d9] opacity-50" aria-hidden="true">
+          <DoodleBorderStrip className="absolute inset-y-0 left-0 h-full w-16" />
+          <DoodleBorderStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
+          <DoodleBorderStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[480px] md:block" />
+          <DoodleBorderStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[480px] -scale-y-100 md:block" />
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
             <h2 className="mb-3 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
-              fresh off the press
+              other people’s spaces
               <Alien className="ml-3 inline-block w-9 -rotate-6 align-[-0.3em] sm:w-11" />
             </h2>
             <p className="max-w-2xl text-lg text-muted-foreground">
