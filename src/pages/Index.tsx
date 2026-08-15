@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { GripVertical } from 'lucide-react';
 
 import { LoginArea } from '@/components/auth/LoginArea';
-import { Alien, Bat, Cat, DevilHeart } from '@/components/Characters';
+import { Alien, Bat, Bunny, Cat, DevilHeart } from '@/components/Characters';
 import { Logo } from '@/components/Logo';
 import { NsiteShowcase } from '@/components/NsiteShowcase';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -987,26 +987,29 @@ const Index = () => {
 
       {/* Closing call to action */}
       <section className="relative bg-[#14ff89]">
+        <Bunny className="absolute top-1/2 left-[12%] w-20 -translate-y-1/2 -rotate-6 sm:w-36" />
+        <DevilHeart className="absolute top-1/2 right-[12%] w-16 -translate-y-1/2 rotate-12 sm:w-32" />
+
         <div className="overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
         </div>
 
         <div className="px-6 py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="ys-outline mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
+          <div className="relative mx-auto max-w-2xl text-center">
+            <h2 className="ys-outline relative z-10 mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
               your space is waiting...
             </h2>
 
             {user ? (
               <Link
                 to="/edit"
-                className="ys-gel px-10 py-4 text-2xl"
+                className="ys-gel relative z-10 px-10 py-4 text-2xl"
                 style={{ background: 'linear-gradient(180deg, #dcb0ff 0%, #b14dff 55%, #8a2bd9 100%)' }}
               >
                 start building
               </Link>
             ) : (
-              <div className="flex justify-center">
+              <div className="relative z-10 flex justify-center">
                 <LoginArea className="w-full max-w-xs" />
               </div>
             )}
