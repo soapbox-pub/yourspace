@@ -736,7 +736,7 @@ const Index = () => {
           <DoodleBorderStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[520px] md:block" />
           <DoodleBorderStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[520px] -scale-y-100 md:block" />
         </div>
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto max-w-6xl pl-16 sm:pr-16 xl:pl-0 xl:pr-0">
           <div className="mb-10">
             <h2 className="mb-0 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
               other people’s spaces
@@ -987,8 +987,8 @@ const Index = () => {
 
       {/* Closing call to action */}
       <section className="relative bg-[#8fe800]">
-        <Bunny className="absolute top-1/2 left-[12%] w-20 -translate-y-1/2 -rotate-6 sm:w-36" />
-        <DevilHeart className="absolute top-1/2 right-[12%] w-16 -translate-y-1/2 rotate-12 sm:w-32" />
+        <Bunny className="absolute bottom-4 left-2 w-16 -rotate-6 sm:top-1/2 sm:bottom-auto sm:left-[12%] sm:w-36 sm:-translate-y-1/2" />
+        <DevilHeart className="absolute top-3 right-2 w-14 rotate-12 sm:top-1/2 sm:right-[12%] sm:w-32 sm:-translate-y-1/2" />
 
         <div className="overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
@@ -1018,7 +1018,7 @@ const Index = () => {
       </section>
 
       <footer className="bg-ys-edge px-6 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-dusk sm:flex-row sm:justify-between sm:text-left">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-lavender/70 sm:flex-row sm:justify-between sm:text-left">
           <Logo className="text-white" />
           <p>
             built on{' '}
