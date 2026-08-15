@@ -214,51 +214,54 @@ function ShootingStar({ className, style }: StickerProps) {
 }
 
 /*
- * A layered gel-pen border, patterned like hand-drawn divider sheets: three
- * parallel repeating bands (scalloped lace with hatch shading, a leaf vine,
- * a heart garland with asterisk flowers) plus pale glints on the strokes so
- * the ink reads as purple sparkle gel. The tile meets itself end to end, so
- * the strips repeat seamlessly for any page height.
+ * A chaotic gel-pen border, sketchbook style: a lazy vine weaving down the
+ * strip with fat spiral curls sprouting off it, hatched hearts and stars
+ * tossed in at random tilts, dash bursts, squiggles, and dots. Pale glints
+ * sit on the ink so it reads as purple sparkle gel. The tile meets itself
+ * end to end, so the strips repeat seamlessly.
  */
 function DoodleBorderTile() {
   return (
-    <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      {/* band 1: scalloped lace, hatched, with a bead at every cusp */}
-      {[0, 20, 40, 60, 80, 100].map((y) => (
-        <g key={y} transform={`translate(0 ${y})`}>
-          <path d="M14 0 A10 10 0 0 0 14 20" />
-          <path d="M10 6 L5 10 M9 12 L4 15" strokeWidth="2" />
-          <circle cx="15.5" cy="20" r="1.5" fill="currentColor" stroke="none" />
-        </g>
-      ))}
-      {/* band 2: leaf vine with buds */}
-      <path d="M34 0 Q40 15 34 30 Q28 45 34 60 Q40 75 34 90 Q28 105 34 120" />
-      <path d="M37 15 Q46 12 50 4 Q40 6 37 15 Z" strokeWidth="2.5" />
-      <path d="M31 45 Q22 42 18 34 Q28 36 31 45 Z" strokeWidth="2.5" />
-      <path d="M37 75 Q46 72 50 64 Q40 66 37 75 Z" strokeWidth="2.5" />
-      <path d="M31 105 Q22 102 18 94 Q28 96 31 105 Z" strokeWidth="2.5" />
-      <circle cx="29" cy="22" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="39" cy="52" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="29" cy="82" r="1.5" fill="currentColor" stroke="none" />
-      <circle cx="39" cy="112" r="1.5" fill="currentColor" stroke="none" />
-      {/* band 3: heart garland with asterisk flowers */}
-      <path d="M52 0 Q58 20 52 40 Q46 60 52 80 Q58 100 52 120" />
-      {[0, 40, 80].map((dy) => (
-        <g key={dy} transform={`translate(0 ${dy})`}>
-          <path d="M52 34 Q45 27 45 23 Q45 19 48.5 19 Q52 19 52 22 Q52 19 55.5 19 Q59 19 59 23 Q59 27 52 34 Z" strokeWidth="2.5" />
-          <path d="M52 4 L52 12 M48 8 L56 8 M49.2 5.2 L54.8 10.8 M54.8 5.2 L49.2 10.8" strokeWidth="2" />
-        </g>
-      ))}
-      {/* gel glitter: pale glints sitting right on the ink */}
+    <g fill="none" stroke="currentColor" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round">
+      {/* the vine, weaving */}
+      <path d="M30 0 C46 18 12 30 20 54 C26 72 52 66 50 88 C48 108 14 104 15 128 C16 150 50 146 47 170 C44 192 12 188 17 212 C21 234 44 234 34 260" />
+      {/* fat spiral curls */}
+      <path d="M20 54 Q34 46 40 34 Q44 24 36 21 Q29 19 28 27 Q27 35 36 36" strokeWidth="2.5" />
+      <path d="M15 128 Q4 118 6 106 Q8 97 15 100 Q21 103 17 110" strokeWidth="2.5" />
+      <path d="M47 170 Q58 162 57 151 Q56 142 48 145 Q42 148 46 155" strokeWidth="2.5" />
+      {/* hatched heart, tilted */}
+      <g transform="rotate(-16 44 116)">
+        <path d="M44 128 Q32 117 32 109 Q32 102 38 102 Q43 102 44 107 Q45 102 50 102 Q56 102 56 109 Q56 117 44 128 Z" strokeWidth="2.5" />
+        <path d="M37 107 L42 112 M36 113 L43 120 M46 121 L51 114" strokeWidth="1.6" />
+      </g>
+      {/* half-hatched star with a dash burst */}
+      <g transform="rotate(18 24 226)">
+        <path d="M24 214 L27.5 221 L35.5 221 L29.5 226 L31.5 234 L24 229.5 L16.5 234 L18.5 226 L12.5 221 L20.5 221 Z" strokeWidth="2.5" />
+        <path d="M25 216 L29 220 M22 218 L28 224" strokeWidth="1.6" />
+      </g>
+      <path d="M40 208 L44 204 M44 214 L49 212 M42 220 L47 221" strokeWidth="1.8" />
+      {/* loose hearts and stars at odd angles */}
+      <g transform="rotate(24 52 24)">
+        <path d="M52 30 Q46 24.5 46 21 Q46 18 49 18 Q51.5 18 52 20.5 Q52.5 18 55 18 Q58 18 58 21 Q58 24.5 52 30 Z" strokeWidth="2" />
+      </g>
+      <g transform="rotate(-20 10 78)">
+        <path d="M10 72 L11.5 76 L15.5 76 L12.5 78.5 L13.5 82.5 L10 80 L6.5 82.5 L7.5 78.5 L4.5 76 L8.5 76 Z" strokeWidth="1.8" />
+      </g>
+      <g transform="rotate(30 54 192)">
+        <path d="M54 198 Q48 192.5 48 189 Q48 186 51 186 Q53.5 186 54 188.5 Q54.5 186 57 186 Q60 186 60 189 Q60 192.5 54 198 Z" strokeWidth="2" />
+      </g>
+      {/* squiggle and dots */}
+      <path d="M46 246 Q50 240 54 246 Q58 252 62 246" strokeWidth="2" />
+      <circle cx="8" cy="20" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="56" cy="60" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="160" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="244" r="1.5" fill="currentColor" stroke="none" />
+      {/* gel glitter */}
       <g fill="#f3e8ff" stroke="none">
-        <path d="M4 6.8 L6.2 10 L4 13.2 L1.8 10 Z" />
-        <path d="M34 56.8 L36.2 60 L34 63.2 L31.8 60 Z" />
-        <path d="M52 36.8 L54.2 40 L52 43.2 L49.8 40 Z" />
-        <path d="M47 5.8 L49.2 9 L47 12.2 L44.8 9 Z" />
-        <path d="M14 96.8 L16.2 100 L14 103.2 L11.8 100 Z" />
-        <circle cx="15.5" cy="60" r="0.9" fill="#ffffff" />
-        <circle cx="45" cy="23" r="0.9" fill="#ffffff" />
-        <circle cx="34" cy="30" r="0.9" fill="#ffffff" />
+        <path d="M20 50.8 L22.2 54 L20 57.2 L17.8 54 Z" />
+        <path d="M44 124.8 L46.2 128 L44 131.2 L41.8 128 Z" />
+        <path d="M47 166.8 L49.2 170 L47 173.2 L44.8 170 Z" />
+        <circle cx="24" cy="226" r="0.9" fill="#ffffff" />
       </g>
     </g>
   );
@@ -266,16 +269,16 @@ function DoodleBorderTile() {
 
 /*
  * A strip of the border: repeats DoodleBorderTile down its full length.
- * Vertical by default; `horizontal` lays four tiles along the top or bottom
+ * Vertical by default; `horizontal` lays two tiles along the top or bottom
  * edge, anchored so the chain meets the corner on the right.
  */
 function DoodleBorderStrip({ horizontal = false, className }: { horizontal?: boolean; className?: string }) {
   const id = useId();
   if (horizontal) {
     return (
-      <svg viewBox="0 0 480 64" className={className} aria-hidden="true">
-        <g transform="translate(480 0) rotate(90)">
-          {[0, 120, 240, 360].map((y) => (
+      <svg viewBox="0 0 520 64" className={className} aria-hidden="true">
+        <g transform="translate(520 0) rotate(90)">
+          {[0, 260].map((y) => (
             <g key={y} transform={`translate(0 ${y})`}>
               <DoodleBorderTile />
             </g>
@@ -287,8 +290,154 @@ function DoodleBorderStrip({ horizontal = false, className }: { horizontal?: boo
   return (
     <svg className={className} aria-hidden="true">
       <defs>
-        <pattern id={id} width="64" height="120" patternUnits="userSpaceOnUse">
+        <pattern id={id} width="64" height="260" patternUnits="userSpaceOnUse">
           <DoodleBorderTile />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+/*
+ * The crew as margin doodles: chibi pen sketches of the site's characters
+ * (ghost, skull, cat, bat, alien, devil heart, bunny) tumbling down the
+ * margin at odd tilts, with hearts, stars, sparkles, dash bursts, and
+ * spirals scribbled in the gaps. The tile repeats seamlessly every 520px.
+ */
+function DoodleCrewTile() {
+  return (
+    <g fill="none" stroke="currentColor" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round">
+      {/* ghost, listing to port */}
+      <g transform="rotate(-9 32 34)">
+        <path d="M12 60 L12 26 Q12 8 32 8 Q52 8 52 26 L52 60 Q47 55 42 60 Q37 55 32 60 Q27 55 22 60 Q17 55 12 60 Z" />
+        <ellipse cx="25" cy="32" rx="2.5" ry="4" fill="currentColor" stroke="none" />
+        <ellipse cx="39" cy="32" rx="2.5" ry="4" fill="currentColor" stroke="none" />
+        <path d="M29 41 Q32 44 35 41" />
+        <path d="M19 38 L22 36 M42 36 L45 38" strokeWidth="1.6" />
+      </g>
+      <g transform="rotate(28 57 8)">
+        <path d="M57 12 Q53 8 53 5.5 Q53 3 55.2 3 Q57 3 57 4.8 Q57 3 58.8 3 Q61 3 61 5.5 Q61 8 57 12 Z" strokeWidth="2" />
+      </g>
+      <path d="M55 30 L60 28 M55 37 L61 37 M54 44 L59 47" strokeWidth="1.8" />
+      <g transform="rotate(-15 7 46)">
+        <path d="M7 42 L7 50 M3 46 L11 46" strokeWidth="2" />
+      </g>
+      {/* skull, tipped back */}
+      <g transform="translate(3 0) rotate(11 32 100)">
+        <path d="M32 78 Q14 78 14 95 Q14 105 20 109 L20 117 Q20 121 24 121 L40 121 Q44 121 44 117 L44 109 Q50 105 50 95 Q50 78 32 78 Z" />
+        <circle cx="25" cy="96" r="3.8" fill="currentColor" stroke="none" />
+        <circle cx="39" cy="96" r="3.8" fill="currentColor" stroke="none" />
+        <path d="M32 103 L30 107 L34 107 Z" fill="currentColor" stroke="none" />
+        <path d="M28 115 L28 120 M32 115 L32 120 M36 115 L36 120" strokeWidth="2" />
+        <path d="M45 80 L39 75 L41 82 Z M45 80 L51 75 L51 82 Z" strokeWidth="2" />
+      </g>
+      <g transform="rotate(-18 9 71)">
+        <path d="M9 66 L10.5 70 L14.5 70 L11.5 72.5 L12.5 76.5 L9 74 L5.5 76.5 L6.5 72.5 L3.5 70 L7.5 70 Z" strokeWidth="1.8" />
+      </g>
+      <path d="M8 96 Q14 92 15 86" strokeWidth="1.8" />
+      <circle cx="55" cy="128" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="50" cy="135" r="1" fill="currentColor" stroke="none" />
+      {/* cat, leaning in */}
+      <g transform="translate(-3 2) rotate(-13 32 176)">
+        <path d="M22 160 L17 146 L29 154 Q32 153 35 154 L47 146 L42 160 Q50 168 50 180 Q50 198 32 198 Q14 198 14 180 Q14 168 22 160 Z" />
+        <ellipse cx="25" cy="176" rx="2.5" ry="4" fill="currentColor" stroke="none" />
+        <ellipse cx="39" cy="176" rx="2.5" ry="4" fill="currentColor" stroke="none" />
+        <path d="M32 184 L30 187 L34 187 Z" fill="currentColor" stroke="none" />
+        <path d="M28 191 Q30 194 32 191 Q34 194 36 191" strokeWidth="2" />
+        <path d="M6 176 L14 178 M6 184 L14 183 M58 176 L50 178 M58 184 L50 183" strokeWidth="2" />
+      </g>
+      <g transform="rotate(-26 56 148)">
+        <path d="M56 152 Q52 148 52 145.5 Q52 143 54.2 143 Q56 143 56 144.8 Q56 143 57.8 143 Q60 143 60 145.5 Q60 148 56 152 Z" strokeWidth="2" />
+      </g>
+      <path d="M8 206 Q16 202 18 195 Q19 189 13 188 Q8 188 9 193 Q10 198 15 198" strokeWidth="1.8" />
+      {/* bat, banking right */}
+      <g transform="rotate(7 32 246)">
+        <path d="M16 246 Q4 240 2 252 Q8 250 8 258 Q14 255 17 262" strokeWidth="2.5" />
+        <path d="M48 246 Q60 240 62 252 Q56 250 56 258 Q50 255 47 262" strokeWidth="2.5" />
+        <path d="M22 238 L18 226 L28 233 M42 238 L46 226 L36 233" />
+        <circle cx="32" cy="250" r="16" />
+        <circle cx="26" cy="248" r="3" fill="currentColor" stroke="none" />
+        <circle cx="38" cy="248" r="3" fill="currentColor" stroke="none" />
+        <path d="M28 257 L30 261 L32 257 M32 257 L34 261 L36 257" strokeWidth="2" />
+      </g>
+      <g transform="rotate(21 9 226)">
+        <path d="M9 222 L9 230 M5 226 L13 226" strokeWidth="2" />
+      </g>
+      <path d="M50 224 L54 220 M53 230 L58 228" strokeWidth="1.8" />
+      <circle cx="54" cy="272" r="1.4" fill="currentColor" stroke="none" />
+      {/* alien, tilting away */}
+      <g transform="translate(2 0) rotate(-10 32 318)">
+        <path d="M26 296 Q24 290 20 289 M38 296 Q40 290 44 289" strokeWidth="2" />
+        <circle cx="19" cy="288" r="2.5" strokeWidth="2" />
+        <circle cx="45" cy="288" r="2.5" strokeWidth="2" />
+        <path d="M32 294 Q50 294 50 314 Q50 334 32 342 Q14 334 14 314 Q14 294 32 294 Z" />
+        <ellipse cx="25" cy="316" rx="4" ry="6" fill="currentColor" stroke="none" />
+        <ellipse cx="39" cy="316" rx="4" ry="6" fill="currentColor" stroke="none" />
+        <path d="M30 330 Q32 332 34 330" strokeWidth="2" />
+      </g>
+      <g transform="rotate(22 56 305)">
+        <path d="M56 300 L57.5 304 L61.5 304 L58.5 306.5 L59.5 310.5 L56 308 L52.5 310.5 L53.5 306.5 L50.5 304 L54.5 304 Z" strokeWidth="1.8" />
+      </g>
+      <g transform="rotate(-12 8 340)">
+        <path d="M8 336 L8 344 M4 340 L12 340" strokeWidth="2" />
+      </g>
+      {/* devil heart, scribble-shaded */}
+      <g transform="translate(-2 0) rotate(15 32 396)">
+        <path d="M20 376 Q16 368 12 367 Q17 366 22 370 M44 376 Q48 368 52 367 Q47 366 42 370" strokeWidth="2" />
+        <path d="M32 418 Q12 400 12 386 Q12 374 22 374 Q30 374 32 382 Q34 374 42 374 Q52 374 52 386 Q52 400 32 418 Z" />
+        <path d="M22 384 L28 387 M42 384 L36 387" strokeWidth="2" />
+        <circle cx="25" cy="392" r="2.5" fill="currentColor" stroke="none" />
+        <circle cx="39" cy="392" r="2.5" fill="currentColor" stroke="none" />
+        <path d="M28 399 L30 403 L32 399 M32 399 L34 403 L36 399" strokeWidth="2" />
+        <path d="M20 396 L26 402 M24 406 L30 411" strokeWidth="1.6" />
+      </g>
+      <circle cx="56" cy="412" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="380" r="1" fill="currentColor" stroke="none" />
+      <path d="M54 380 L59 377 M56 388 L61 388" strokeWidth="1.8" />
+      {/* bunny, head cocked */}
+      <g transform="rotate(-8 32 470)">
+        <path d="M24 462 Q20 440 26 437 Q31 437 30 460" />
+        <path d="M38 460 Q38 440 46 437 Q53 436 52 443 Q46 442 44 452 Q43 457 43 461" />
+        <ellipse cx="32" cy="482" rx="17" ry="14" />
+        <circle cx="26" cy="478" r="2.5" fill="currentColor" stroke="none" />
+        <circle cx="38" cy="478" r="2.5" fill="currentColor" stroke="none" />
+        <path d="M29 486 L35 486 L35 491 L29 491 Z M32 486 L32 491" strokeWidth="2" />
+        <path d="M20 484 L23 482 M41 482 L44 484" strokeWidth="1.6" />
+      </g>
+      <g transform="rotate(-30 10 447)">
+        <path d="M10 452 Q6 448 6 445.5 Q6 443 8.2 443 Q10 443 10 444.8 Q10 443 11.8 443 Q14 443 14 445.5 Q14 448 10 452 Z" strokeWidth="2" />
+      </g>
+      <g transform="rotate(12 56 474)">
+        <path d="M56 470 L56 478 M52 474 L60 474" strokeWidth="2" />
+      </g>
+      <circle cx="12" cy="508" r="1.4" fill="currentColor" stroke="none" />
+      <g transform="rotate(14 32 509)">
+        <path d="M32 504 L33.5 508 L37.5 508 L34.5 510.5 L35.5 514.5 L32 512 L28.5 514.5 L29.5 510.5 L26.5 508 L30.5 508 Z" strokeWidth="1.8" />
+      </g>
+      {/* gel glitter glints */}
+      <g fill="#f3e8ff" stroke="none">
+        <path d="M12 22.8 L14.2 26 L12 29.2 L9.8 26 Z" />
+        <path d="M50 95 L52.2 98.2 L50 101.4 L47.8 98.2 Z" />
+        <path d="M32 250 L34.2 253.2 L32 256.4 L29.8 253.2 Z" />
+        <path d="M14 310 L16.2 313.2 L14 316.4 L11.8 313.2 Z" />
+        <path d="M32 418 L34.2 421.2 L32 424.4 L29.8 421.2 Z" />
+        <circle cx="32" cy="8" r="0.9" fill="#ffffff" />
+        <circle cx="50" cy="180" r="0.9" fill="#ffffff" />
+        <circle cx="32" cy="496" r="0.9" fill="#ffffff" />
+      </g>
+    </g>
+  );
+}
+
+/* A vertical strip of crew doodles, tiled to any height. */
+function DoodleCrewStrip({ className }: { className?: string }) {
+  const id = useId();
+  return (
+    <svg className={className} aria-hidden="true">
+      <defs>
+        <pattern id={id} width="64" height="520" patternUnits="userSpaceOnUse">
+          <DoodleCrewTile />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id})`} />
@@ -572,11 +721,11 @@ const Index = () => {
           }}
         />
         {/* The border, doodled corner to corner like a bored study period */}
-        <div className="pointer-events-none absolute inset-0 text-[#9641d9] opacity-50" aria-hidden="true">
-          <DoodleBorderStrip className="absolute inset-y-0 left-0 h-full w-16" />
+        <div className="pointer-events-none absolute inset-0 text-[#8429e0] opacity-75" aria-hidden="true">
+          <DoodleCrewStrip className="absolute inset-y-0 left-0 h-full w-16" />
           <DoodleBorderStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
-          <DoodleBorderStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[480px] md:block" />
-          <DoodleBorderStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[480px] -scale-y-100 md:block" />
+          <DoodleBorderStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[520px] md:block" />
+          <DoodleBorderStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[520px] -scale-y-100 md:block" />
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
