@@ -19,6 +19,8 @@
   --color-ys-lavender: #d9c8ff;
   --color-ys-purple: #4a1d7a;
   --color-ys-grape: #2c0b4e;
+  --color-ys-pastel: #f2e9ff;
+  --color-ys-dusk: #4a3a6b;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -330,6 +332,16 @@
   background:
     linear-gradient(rgb(12 17 48 / 0.15), rgb(12 17 48 / 0.3)),
     url('/section-bg.png') center / cover no-repeat;
+}
+
+/* The light pastel variant, so the demo card and controls pop off the dark wallpaper. */
+.ys-card-pastel {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.5) 0%, transparent 45%),
+    var(--color-ys-pastel);
+  border: 3px solid var(--color-ys-edge);
+  border-radius: 1.25rem;
+  box-shadow: 0 6px 0 rgb(12 17 48 / 0.5);
 }
 
 /* Glossy navy sticker card. */

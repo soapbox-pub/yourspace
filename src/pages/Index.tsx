@@ -18,6 +18,16 @@ function lighten(hex: string, f: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
+/* Darken a hex color, for text and borders on the pastel cards. */
+function darken(hex: string, f: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (v: number) => Math.round(v * (1 - f));
+  const r = mix((n >> 16) & 255);
+  const g = mix((n >> 8) & 255);
+  const b = mix(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
 /*
  * Glossy clip-art stickers, drawn exactly like the ones in the social
  * graphics (branding/generate.mjs): gradient fill, dark outline, white
@@ -301,16 +311,16 @@ function patternStyle(pattern: (typeof PATTERNS)[number]): React.CSSProperties {
   if (pattern === 'checker') {
     return {
       background:
-        'repeating-conic-gradient(rgb(0 0 0 / 0.18) 0% 25%, rgb(255 255 255 / 0.04) 0% 50%) 0 0 / 18px 18px, #1b2350',
+        'repeating-conic-gradient(rgb(12 17 48 / 0.1) 0% 25%, rgb(255 255 255 / 0.5) 0% 50%) 0 0 / 18px 18px, #e7d9ff',
     };
   }
   if (pattern === 'stripes') {
     return {
       background:
-        'repeating-linear-gradient(45deg, rgb(255 255 255 / 0.05) 0 8px, transparent 8px 22px), #1b2350',
+        'repeating-linear-gradient(45deg, rgb(12 17 48 / 0.07) 0 8px, transparent 8px 22px), #e7d9ff',
     };
   }
-  return { background: '#1b2350' };
+  return { background: '#e7d9ff' };
 }
 
 function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[number]; accent: string; className?: string }) {
@@ -334,6 +344,9 @@ const Index = () => {
   const [glitter, setGlitter] = useState(true);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const dragBlock = useRef<string | null>(null);
+
+  /* The accent, deepened so it reads as text and borders on the pastel cards. */
+  const accentDark = darken(accent, 0.25);
 
   /* Drag a block by its grip onto another block: it lands before it. */
   const dropProps = (target: string) => ({
@@ -483,7 +496,7 @@ const Index = () => {
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">
-              pimp this page !!
+              make it urs !!
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-ys-lavender">
               This page is built from blocks, the way yours will be. Drag a block by its
@@ -493,7 +506,7 @@ const Index = () => {
 
           <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-stretch lg:justify-center">
             {/* The demo page itself */}
-            <div className="ys-card-gloss flex w-full max-w-md flex-col overflow-hidden">
+            <div className="ys-card-pastel flex w-full max-w-md flex-col overflow-hidden">
               <div className="flex items-center justify-between border-b-[3px] border-ys-edge bg-[#1b2350] px-4 py-2.5">
                 <span className="font-display text-sm font-bold italic text-ys-lavender">demo-page.html</span>
                 <span className="flex gap-1.5" aria-hidden="true">
@@ -505,7 +518,7 @@ const Index = () => {
 
               {pattern === 'zebra' && <ZebraStrip className="block h-6 w-full" />}
 
-              <div className="relative flex-1 space-y-4 p-5 transition-colors" style={patternStyle(pattern)}>
+              <div className="relative flex flex-1 flex-col justify-center space-y-4 p-5 transition-colors" style={patternStyle(pattern)}>
                 {glitter && (
                   <>
                     <Sparkle color="#ffffff" className="ys-twinkle absolute top-2 right-3 z-10 w-4" />
@@ -531,14 +544,14 @@ const Index = () => {
                       }}
                       title="Drag to rearrange"
                       aria-label={`Drag the ${block} block to rearrange`}
-                      className="absolute inset-y-0 left-0 z-10 flex w-7 cursor-grab items-center justify-center rounded-l-md bg-white/5 text-ys-lavender/70 hover:bg-white/10 hover:text-white active:cursor-grabbing"
+                      className="absolute inset-y-0 left-0 z-10 flex w-7 cursor-grab items-center justify-center rounded-l-md bg-ys-edge/5 text-ys-edge/60 hover:bg-ys-edge/10 hover:text-ys-navy active:cursor-grabbing"
                     >
                       <GripVertical className="size-4" aria-hidden="true" />
                     </span>
                   );
                   if (block === 'header') {
                     return (
-                      <div key="header" {...dropProps('header')} className={shared} style={{ borderColor: accent }}>
+                      <div key="header" {...dropProps('header')} className={shared} style={{ borderColor: accentDark }}>
                         {grip}
                         <span className="flex items-center gap-3 pr-5">
                           <img
@@ -546,7 +559,7 @@ const Index = () => {
                             alt=""
                             aria-hidden="true"
                             className="w-14 rounded-lg border-2 bg-ys-purple transition-colors"
-                            style={{ borderColor: accent }}
+                            style={{ borderColor: accentDark }}
                           />
                           <span className="min-w-0 flex-1">
                             <input
@@ -555,10 +568,10 @@ const Index = () => {
                               onChange={(e) => setName(e.target.value)}
                               aria-label="Page name"
                               placeholder="ur demo page"
-                              className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:bg-ys-edge focus:outline-none"
-                              style={{ color: accent }}
+                              className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:bg-white focus:outline-none"
+                              style={{ color: accentDark }}
                             />
-                            <span className="flex items-center gap-1.5 text-xs text-ys-lavender">
+                            <span className="flex items-center gap-1.5 text-xs text-ys-dusk">
                               <span className="inline-block size-2 rounded-full bg-[#2ee86c]" aria-hidden="true" />
                               online now!
                             </span>
@@ -570,14 +583,14 @@ const Index = () => {
                 }
                 if (block === 'about') {
                   return (
-                    <div key="about" {...dropProps('about')} className={shared} style={{ borderColor: accent }}>
+                    <div key="about" {...dropProps('about')} className={shared} style={{ borderColor: accentDark }}>
                       {grip}
                       <textarea
                         value={about}
                         rows={3}
                         onChange={(e) => setAbout(e.target.value)}
                         aria-label="About me text"
-                        className="w-full resize-none rounded bg-transparent pr-5 text-sm leading-relaxed text-ys-lavender focus:bg-ys-edge focus:outline-none"
+                        className="w-full resize-none rounded bg-transparent pr-5 text-sm leading-relaxed text-ys-dusk focus:bg-white focus:outline-none"
                       />
                     </div>
                   );
@@ -588,7 +601,7 @@ const Index = () => {
                       key="links"
                       {...dropProps('links')}
                       className={`${shared} flex flex-wrap gap-2 pr-5`}
-                      style={{ borderColor: accent }}
+                      style={{ borderColor: accentDark }}
                     >
                       {grip}
                       {links.map((label, i) => (
@@ -609,11 +622,11 @@ const Index = () => {
                   <div
                     key="music"
                     {...dropProps('music')}
-                    className={`${shared} flex items-center gap-2 pr-5 text-sm text-ys-lavender`}
-                    style={{ borderColor: accent }}
+                    className={`${shared} flex items-center gap-2 pr-5 text-sm text-ys-dusk`}
+                    style={{ borderColor: accentDark }}
                   >
                     {grip}
-                    <Note color={accent} className="w-6 shrink-0 transition-colors" />
+                    <Note color={accentDark} className="w-6 shrink-0 transition-colors" />
                     now playing: something emo
                   </div>
                 );
@@ -622,9 +635,9 @@ const Index = () => {
             </div>
 
             {/* The controls, on their own glossy panel so they read over the wallpaper */}
-            <div className="ys-card-gloss w-full max-w-md space-y-5 p-5 lg:max-w-60">
+            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5 lg:max-w-60">
               <div>
-                <p className="mb-2 font-display text-lg font-extrabold italic text-white">color</p>
+                <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">color</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Accent color">
                   {ACCENTS.map((color) => (
                     <button
@@ -643,7 +656,7 @@ const Index = () => {
               </div>
 
               <div>
-                <p className="mb-2 font-display text-lg font-extrabold italic text-white">background</p>
+                <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">background</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Background pattern">
                   {PATTERNS.map((p) => (
                     <button
@@ -664,7 +677,7 @@ const Index = () => {
               </div>
 
               <div>
-                <p className="mb-2 font-display text-lg font-extrabold italic text-white">sticker</p>
+                <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">sticker</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Page sticker">
                   {STICKERS.map((k) => (
                     <button
@@ -673,7 +686,7 @@ const Index = () => {
                       onClick={() => setSticker(k)}
                       aria-label={`Sticker ${k}`}
                       aria-pressed={sticker === k}
-                      className={`flex size-11 items-center justify-center rounded-full border-[3px] border-ys-edge bg-[#1b2350] transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                      className={`flex size-11 items-center justify-center rounded-full border-[3px] border-ys-edge bg-white/70 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                         sticker === k ? 'ring-4 ring-white' : ''
                       }`}
                     >
@@ -684,13 +697,13 @@ const Index = () => {
               </div>
 
               <div>
-                <p className="mb-2 font-display text-lg font-extrabold italic text-white">glitter</p>
+                <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">glitter</p>
                 <button
                   type="button"
                   onClick={() => setGlitter((g) => !g)}
                   aria-pressed={glitter}
                   className="rounded-full border-[3px] border-ys-edge px-5 py-1.5 font-display text-sm font-extrabold italic transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ backgroundColor: glitter ? '#14ff89' : '#1b2350', color: glitter ? '#131a3a' : '#d9c8ff' }}
+                  style={{ backgroundColor: glitter ? '#14ff89' : 'rgb(255 255 255 / 0.7)', color: '#131a3a' }}
                 >
                   {glitter ? 'on !!' : 'off'}
                 </button>
@@ -730,7 +743,7 @@ const Index = () => {
                 />
                 <div className="text-center sm:text-left">
                   <p className="font-display text-3xl font-black italic text-white">ur page</p>
-                  <p className="mt-1 text-sm text-ys-lavender">currently: under construction ♥</p>
+                  <p className="mt-1 text-sm text-ys-dusk">currently: under construction ♥</p>
                   <p className="mt-3 text-sm leading-relaxed text-ys-lavender">
                     no walled gardens, no algorithm, no feed to please. the pic, the colors, the
                     blocks: all up to u. published under ur own key, so it stays urs.
@@ -753,7 +766,7 @@ const Index = () => {
       </section>
 
       <footer className="bg-ys-edge px-6 py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-lavender sm:flex-row sm:justify-between sm:text-left">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-dusk sm:flex-row sm:justify-between sm:text-left">
           <Logo className="text-white" />
           <p>
             Built on{' '}
