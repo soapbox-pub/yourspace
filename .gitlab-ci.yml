@@ -2,42 +2,15 @@ image: node:22
 
 default:
   interruptible: true
-  timeout: 1 minute
+  timeout: 5 minutes
 
 stages:
   - test
-  - deploy
 
+# GitLab is a mirror of the nostr repo. It runs tests on its own runner; the
+# nsite deploy lives in .ngit/act/workflows/deploy-nsite.yml and runs on the
+# ngit-ci coordinator. Nothing is hosted on GitLab.
 test:
   stage: test
   script:
     - npm run test
-
-# GitLab is a mirror of the nostr repo; the site itself is an nsite served
-# through npanel (yourspace.live). This job is here only because the mirror
-# has CI runners: it publishes dist/ to Blossom servers and nostr relays,
-# nothing is hosted on GitLab.
-#
-# Publishes dist/ as the named nsite (.nsite/config.json) signed with
-# $NSITE_SECRET, a masked+protected CI variable holding an nbunksec
-# (preferred, from `nsyte ci <bunker-url>`) or an nsec. The secrets scan
-# is skipped because it prompts on false positives in our own bundle
-# (pubkeys and bunker:// parsing code), which would hang a CI run.
-nsite:
-  stage: deploy
-  timeout: 10 minutes
-  script:
-    - npm run build
-    - curl -sSL -o /usr/local/bin/nsyte https://github.com/sandwichfarm/nsyte/releases/download/v0.27.2/nsyte-linux-0.27.2
-    - chmod +x /usr/local/bin/nsyte
-    # Deploy is idempotent: a push that doesn't change site files makes nsyte
-    # exit non-zero with "No new files to upload", which is success, not a
-    # failure. Fail only on a real error.
-    - |
-      nsyte deploy dist --sec "$NSITE_SECRET" --use-fallback-relays --non-interactive --skip-secrets-scan 2>&1 | tee /tmp/nsyte.log
-      if ! grep -qE 'No new files to upload|published|manifest' /tmp/nsyte.log; then
-        exit 1
-      fi
-  only:
-    variables:
-      - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME

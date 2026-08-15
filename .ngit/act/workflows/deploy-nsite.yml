@@ -1,0 +1,69 @@
+name: Deploy nsite
+
+# Builds dist/ and publishes it as the named nsite "yourspace" (kind 35128)
+# from .nsite/config.json, served through npanel at yourspace.live. Runs on
+# pushes to the default branch (main), alongside the Test workflow.
+#
+# ── Secrets (provisioned by the ngit-ci operator for this repo's alias) ──────
+# ngit-ci injects ${{ secrets.* }} ONLY on maintainer-authored triggers — a
+# push to a watched repo always qualifies — and ONLY for secrets the operator
+# has provisioned for this repo. Ask the operator to set, keyed to this repo's
+# alias, reusing the same NIP-46 bunker the Armada repo already signs with:
+#   NSITE_BUNKER_URL        bunker:// URL of the NIP-46 signer for the
+#                           Soapbox identity (the account that owns the nsite)
+# If NSITE_BUNKER_URL is empty (not provisioned, or a non-maintainer PR), the
+# job builds and then skips the deploy instead of failing.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NSITE_BUNKER_URL: ${{ secrets.NSITE_BUNKER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      # Build the SPA (npm build inlines the stylesheet and copies 404.html).
+      - run: npm run build
+
+      - name: Deploy to Blossom + relays
+        env:
+          NSITE_BUNKER_URL: ${{ secrets.NSITE_BUNKER_URL }}
+        run: |
+          set -eu
+
+          # No bunker provisioned (or non-maintainer trigger): build only.
+          if [ -z "${NSITE_BUNKER_URL:-}" ]; then
+            echo "NSITE_BUNKER_URL not set; skipping nsite deploy (build verified)."
+            exit 0
+          fi
+
+          # Install the pinned nsyte binary (act images are minimal).
+          curl -sSL -o /usr/local/bin/nsyte \
+            https://github.com/sandwichfarm/nsyte/releases/download/v0.27.2/nsyte-linux-0.27.2
+          chmod +x /usr/local/bin/nsyte
+
+          # Hand the bunker URL straight to nsyte, which speaks NIP-46 itself.
+          # Deploy is idempotent: a push that changes no site files makes nsyte
+          # exit non-zero with "No new files to upload", which is success, not a
+          # failure. The secrets scan is skipped because it prompts on false
+          # positives in our own bundle (pubkeys, bunker:// parsing code), which
+          # would hang a headless run.
+          nsyte deploy dist \
+            --sec "$NSITE_BUNKER_URL" \
+            --use-fallback-relays \
+            --non-interactive \
+            --skip-secrets-scan 2>&1 | tee /tmp/nsyte.log
+          if ! grep -qE 'No new files to upload|published|manifest' /tmp/nsyte.log; then
+            exit 1
+          fi
