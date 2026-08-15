@@ -10,6 +10,7 @@
     "wss://offchain.pub"
   ],
   "publishServerList": true,
+  "id": "yourspace",
   "servers": [
     "https://blossom.primal.net",
     "https://cdn.hzrd149.com"
