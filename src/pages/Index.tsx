@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { GripVertical } from 'lucide-react';
 
 import { LoginArea } from '@/components/auth/LoginArea';
-import { Alien, Bat, Bunny, Cat, DevilHeart } from '@/components/Characters';
+import { Alien, Bat, Cat, DevilHeart } from '@/components/Characters';
 import { Logo } from '@/components/Logo';
 import { NsiteShowcase } from '@/components/NsiteShowcase';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -982,7 +982,7 @@ const Index = () => {
             </h2>
 
             <div className="relative">
-              <Bunny className="absolute -top-[72px] right-10 w-24 rotate-3" />
+              <Cat className="absolute -top-[60px] right-10 w-24 rotate-3" />
               <div className="ys-card-gloss relative overflow-hidden text-left">
               <div className="flex items-center justify-between border-b-[3px] border-ys-edge bg-[#1b2350] px-4 py-2.5">
                 <span className="font-display text-sm font-bold italic text-ys-lavender">ur-space.html</span>
