@@ -30,7 +30,14 @@ nsite:
     - npm run build
     - curl -sSL -o /usr/local/bin/nsyte https://github.com/sandwichfarm/nsyte/releases/download/v0.27.2/nsyte-linux-0.27.2
     - chmod +x /usr/local/bin/nsyte
-    - nsyte deploy dist --sec "$NSITE_SECRET" --use-fallback-relays --non-interactive --skip-secrets-scan
+    # Deploy is idempotent: a push that doesn't change site files makes nsyte
+    # exit non-zero with "No new files to upload", which is success, not a
+    # failure. Fail only on a real error.
+    - |
+      nsyte deploy dist --sec "$NSITE_SECRET" --use-fallback-relays --non-interactive --skip-secrets-scan 2>&1 | tee /tmp/nsyte.log
+      if ! grep -qE 'No new files to upload|published|manifest' /tmp/nsyte.log; then
+        exit 1
+      fi
   only:
     variables:
       - $CI_DEFAULT_BRANCH == $CI_COMMIT_REF_NAME
