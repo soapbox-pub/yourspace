@@ -7,11 +7,15 @@ name: Deploy nsite
 # ── Secrets (provisioned by the ngit-ci operator for this repo's alias) ──────
 # ngit-ci injects ${{ secrets.* }} ONLY on maintainer-authored triggers — a
 # push to a watched repo always qualifies — and ONLY for secrets the operator
-# has provisioned for this repo. This reuses the SAME NIP-46 bunker the Armada
-# repo already signs with, so no new secret is needed:
-#   ZAPSTORE_BUNKER_URL     bunker:// URL of the NIP-46 signer
-# If it is empty (not provisioned for this alias, or a non-maintainer PR), the
-# job builds and then skips the deploy instead of failing.
+# has provisioned for this repo. The operator sets them as
+# NGIT_CI_SECRET_<ALIAS>__<NAME> on the coordinator (note the double
+# underscore); <NAME> is what shows up here as ${{ secrets.<NAME> }}, so
+# NGIT_CI_SECRET_SOAPBOX__NSYTE_BUNKER arrives as secrets.NSYTE_BUNKER for the
+# repo whose --repos entry carries #SOAPBOX:
+#   NSYTE_BUNKER            nbunksec1... — a pre-established NIP-46 session,
+#                           the form nsyte documents for CI.
+# If it is empty (nothing provisioned for this alias, or a non-maintainer PR)
+# the deploy fails rather than passing quietly without publishing.
 
 on:
   push:
@@ -21,8 +25,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      ZAPSTORE_BUNKER_URL: ${{ secrets.ZAPSTORE_BUNKER_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,29 +39,23 @@ jobs:
 
       - name: Deploy to Blossom + relays
         env:
-          ZAPSTORE_BUNKER_URL: ${{ secrets.ZAPSTORE_BUNKER_URL }}
+          NSYTE_BUNKER: ${{ secrets.NSYTE_BUNKER }}
         run: |
           set -eu
-
-          # No bunker provisioned (or non-maintainer trigger): build only.
-          if [ -z "${ZAPSTORE_BUNKER_URL:-}" ]; then
-            echo "ZAPSTORE_BUNKER_URL not set; skipping nsite deploy (build verified)."
-            exit 0
-          fi
 
           # Install the pinned nsyte binary (act images are minimal).
           curl -sSL -o /usr/local/bin/nsyte \
             https://github.com/sandwichfarm/nsyte/releases/download/v0.27.2/nsyte-linux-0.27.2
           chmod +x /usr/local/bin/nsyte
 
-          # Hand the bunker URL straight to nsyte, which speaks NIP-46 itself.
+          # Hand the nbunksec straight to nsyte, which speaks NIP-46 itself.
           # Deploy is idempotent: a push that changes no site files makes nsyte
           # exit non-zero with "No new files to upload", which is success, not a
           # failure. The secrets scan is skipped because it prompts on false
           # positives in our own bundle (pubkeys, bunker:// parsing code), which
           # would hang a headless run.
           nsyte deploy dist \
-            --sec "$ZAPSTORE_BUNKER_URL" \
+            --sec "$NSYTE_BUNKER" \
             --use-fallback-relays \
             --non-interactive \
             --skip-secrets-scan 2>&1 | tee /tmp/nsyte.log
