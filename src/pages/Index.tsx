@@ -568,7 +568,7 @@ const Index = () => {
                               onChange={(e) => setName(e.target.value)}
                               aria-label="Page name"
                               placeholder="ur demo page"
-                              className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:bg-white focus:outline-none"
+                              className="w-full truncate rounded-md border-2 border-ys-edge/15 bg-white px-2 py-0.5 font-display text-xl font-black italic transition-colors focus:border-ys-edge/40 focus:outline-none"
                               style={{ color: accentDark }}
                             />
                             <span className="flex items-center gap-1.5 text-xs text-ys-dusk">
@@ -590,7 +590,7 @@ const Index = () => {
                         rows={3}
                         onChange={(e) => setAbout(e.target.value)}
                         aria-label="About me text"
-                        className="w-full resize-none rounded bg-transparent pr-5 text-sm leading-relaxed text-ys-dusk focus:bg-white focus:outline-none"
+                        className="w-full resize-none rounded-md border-2 border-ys-edge/15 bg-white p-2 pr-5 text-sm leading-relaxed text-ys-dusk transition-colors focus:border-ys-edge/40 focus:outline-none"
                       />
                     </div>
                   );
