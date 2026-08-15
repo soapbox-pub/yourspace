@@ -237,14 +237,14 @@ function avatar() {
   s += `<rect x="134" y="134" width="732" height="732" rx="20" fill="${C.cyan}"/>`;
   s += `<rect x="152" y="152" width="696" height="696" rx="14" fill="${C.navy}"/>`;
 
-  // cute scene skull with the hair bow, front and center
-  s += glossySkull(500, 470, 470);
+  // cute ghost holding a heart, front and center
+  s += glossyGhost(500, 460, 500, 2);
+  s += glossyHeart(690, 660, 130, 'pink', 12);
 
-  // glossy corner sparkles + a held pixel heart, matching the OG/banner
+  // glossy corner sparkles
   s += sparkle(238, 250, 84, C.lime);
-  s += sparkle(768, 742, 100, C.pink);
+  s += sparkle(240, 750, 90, C.pink);
   s += sparkle(756, 238, 50, C.white);
-  s += pixelHeart(196, 742, 14, C.pink);
 
   s += '</svg>';
   return s;
