@@ -465,8 +465,7 @@ const Index = () => {
               fresh off the press
             </h2>
             <p className="max-w-2xl text-lg text-muted-foreground">
-              Homepages published to Nostr, newest first. Every one of them is a real
-              site owned by the person who made it.
+              Browse the latest homepages published to Nostr
             </p>
           </div>
 
@@ -484,7 +483,7 @@ const Index = () => {
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">
-              go ahead, touch it
+              pimp this page !!
             </h2>
             <p className="mx-auto max-w-2xl text-lg text-ys-lavender">
               This page is built from blocks, the way yours will be. Drag a block by its

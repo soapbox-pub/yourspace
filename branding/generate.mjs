@@ -785,7 +785,7 @@ function sectionBg() {
   s += glossySkull(1330, 320, 165, 6);
 
   // ---- bolts
-  s += glossyBolt(700, 190, 74, 'yellow', 8);
+  s += glossyBolt(1350, 790, 74, 'yellow', 8);
   s += glossyBolt(1470, 700, 62, 'pink', -12);
 
   // ---- hearts, including the emo ones
@@ -812,11 +812,6 @@ function sectionBg() {
       s += sparkle(cx + jig(110), cy + jig(110), 9 + rnd() * 7, '#FFFFFF');
     }
   });
-
-  // ---- glitter dust
-  for (let i = 0; i < 24; i++) {
-    s += `<circle cx="${Math.round(rnd() * W)}" cy="${Math.round(rnd() * H)}" r="${(2 + rnd() * 2.5).toFixed(1)}" fill="#FFFFFF" opacity="${(0.3 + rnd() * 0.4).toFixed(2)}"/>`;
-  }
 
   s += `</g>`;
 
