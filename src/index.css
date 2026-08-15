@@ -389,7 +389,7 @@
   display: inline-block;
   white-space: nowrap;
   will-change: transform;
-  animation: ys-marquee 22s linear infinite;
+  animation: ys-marquee 28s linear infinite;
 }
 
 @keyframes ys-marquee {
