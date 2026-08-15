@@ -211,6 +211,12 @@ function starburst(cx, cy, rOuter, rInner, points, fill, stroke, strokeW, rot = 
 const svgOpen = (w, h) =>
   `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
 
+// deterministic RNG so the background is reproducible
+function lcg(seed) {
+  let x = seed >>> 0;
+  return () => ((x = (x * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+}
+
 // ================================================================ AVATAR
 function avatar() {
   const W = 1000;
@@ -399,7 +405,56 @@ function og() {
   return s;
 }
 
+// ================================================================ BACKGROUND
+// Dim tiling wallpaper for the Ditto theme: the brand checker a shade darker,
+// with faint scattered sparkles, hearts, and pixel stars. Both cell counts are
+// even (64x36 at 30px) so the checker tiles seamlessly; deco keeps a margin
+// from the edges.
+function background() {
+  const W = 1920;
+  const H = 1080;
+  const CELL = 30;
+  let s = svgOpen(W, H);
+  s += checker(0, 0, W, H, CELL, '#401766', '#350F55');
+
+  const rnd = lcg(20040815);
+  const margin = 48;
+  const px = () => margin + rnd() * (W - 2 * margin);
+  const py = () => margin + rnd() * (H - 2 * margin);
+
+  // tiny 5-pixel plus-shaped stars in a lighter purple
+  for (let i = 0; i < 34; i++) {
+    const x = Math.round(px());
+    const y = Math.round(py());
+    const p = 4;
+    s += `<g fill="#6A35A8" opacity="0.55">`;
+    s += `<rect x="${x}" y="${y - p}" width="${p}" height="${p * 3}"/>`;
+    s += `<rect x="${x - p}" y="${y}" width="${p * 3}" height="${p}"/>`;
+    s += `</g>`;
+  }
+
+  // faint sparkles
+  const sparkleColors = [
+    [C.white, 0.12], [C.yellow, 0.16], [C.cyan, 0.14], [C.pink, 0.16], [C.lime, 0.1],
+  ];
+  for (let i = 0; i < 20; i++) {
+    const [color, op] = sparkleColors[i % sparkleColors.length];
+    const size = 20 + rnd() * 30;
+    s += `<g opacity="${op}">${sparkle(px(), py(), size, color)}</g>`;
+  }
+
+  // faint pixel hearts
+  for (let i = 0; i < 8; i++) {
+    const color = i % 2 === 0 ? C.pink : C.violet;
+    s += `<g opacity="0.16">${pixelHeart(px(), py(), 5 + Math.round(rnd() * 3), color)}</g>`;
+  }
+
+  s += '</svg>';
+  return s;
+}
+
 writeFileSync(join(OUT, 'avatar.svg'), avatar());
 writeFileSync(join(OUT, 'banner.svg'), banner());
 writeFileSync(join(OUT, 'og-image.svg'), og());
-console.log('wrote avatar.svg + banner.svg + og-image.svg');
+writeFileSync(join(OUT, 'background.svg'), background());
+console.log('wrote avatar.svg + banner.svg + og-image.svg + background.svg');
