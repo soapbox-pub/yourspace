@@ -276,16 +276,19 @@ function DoodleVineTile() {
  */
 function DoodleVineStrip({ horizontal = false, className }: { horizontal?: boolean; className?: string }) {
   const id = useId();
+  if (horizontal) {
+    return (
+      <svg viewBox="0 0 460 64" className={className} aria-hidden="true">
+        <g transform="translate(0 64) rotate(-90)">
+          <DoodleVineTile />
+        </g>
+      </svg>
+    );
+  }
   return (
     <svg className={className} aria-hidden="true">
       <defs>
-        <pattern
-          id={id}
-          width="64"
-          height="460"
-          patternUnits="userSpaceOnUse"
-          patternTransform={horizontal ? 'rotate(90)' : undefined}
-        >
+        <pattern id={id} width="64" height="460" patternUnits="userSpaceOnUse">
           <DoodleVineTile />
         </pattern>
       </defs>
@@ -573,8 +576,8 @@ const Index = () => {
         <div className="pointer-events-none absolute inset-0 text-[#3f63d2] opacity-40" aria-hidden="true">
           <DoodleVineStrip className="absolute inset-y-0 left-0 h-full w-16" />
           <DoodleVineStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
-          <DoodleVineStrip horizontal className="absolute top-0 left-16 right-16 hidden h-16 md:block" />
-          <DoodleVineStrip horizontal className="absolute bottom-0 left-16 right-16 hidden h-16 -scale-y-100 md:block" />
+          <DoodleVineStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[460px] md:block" />
+          <DoodleVineStrip horizontal className="absolute bottom-0 right-16 hidden h-16 w-[460px] -scale-y-100 md:block" />
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
