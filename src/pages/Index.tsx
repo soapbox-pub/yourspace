@@ -216,9 +216,9 @@ function ShootingStar({ className, style }: StickerProps) {
 /*
  * A chaotic gel-pen border, sketchbook style: a lazy vine weaving down the
  * strip with fat spiral curls sprouting off it, hatched hearts and stars
- * tossed in at random tilts, dash bursts, squiggles, and dots. Pale glints
- * sit on the ink so it reads as purple sparkle gel. The tile meets itself
- * end to end, so the strips repeat seamlessly.
+ * tossed in at random tilts, dash bursts, squiggles, and dots, all in
+ * full-strength gel-pen purple. The tile meets itself end to end, so the
+ * strips repeat seamlessly.
  */
 function DoodleBorderTile() {
   return (
@@ -256,13 +256,6 @@ function DoodleBorderTile() {
       <circle cx="56" cy="60" r="1.5" fill="currentColor" stroke="none" />
       <circle cx="10" cy="160" r="1.5" fill="currentColor" stroke="none" />
       <circle cx="12" cy="244" r="1.5" fill="currentColor" stroke="none" />
-      {/* gel glitter */}
-      <g fill="#f3e8ff" stroke="none">
-        <path d="M20 50.8 L22.2 54 L20 57.2 L17.8 54 Z" />
-        <path d="M44 124.8 L46.2 128 L44 131.2 L41.8 128 Z" />
-        <path d="M47 166.8 L49.2 170 L47 173.2 L44.8 170 Z" />
-        <circle cx="24" cy="226" r="0.9" fill="#ffffff" />
-      </g>
     </g>
   );
 }
@@ -415,17 +408,6 @@ function DoodleCrewTile() {
       <g transform="rotate(14 32 509)">
         <path d="M32 504 L33.5 508 L37.5 508 L34.5 510.5 L35.5 514.5 L32 512 L28.5 514.5 L29.5 510.5 L26.5 508 L30.5 508 Z" strokeWidth="1.8" />
       </g>
-      {/* gel glitter glints */}
-      <g fill="#f3e8ff" stroke="none">
-        <path d="M12 22.8 L14.2 26 L12 29.2 L9.8 26 Z" />
-        <path d="M50 95 L52.2 98.2 L50 101.4 L47.8 98.2 Z" />
-        <path d="M32 250 L34.2 253.2 L32 256.4 L29.8 253.2 Z" />
-        <path d="M14 310 L16.2 313.2 L14 316.4 L11.8 313.2 Z" />
-        <path d="M32 418 L34.2 421.2 L32 424.4 L29.8 421.2 Z" />
-        <circle cx="32" cy="8" r="0.9" fill="#ffffff" />
-        <circle cx="50" cy="180" r="0.9" fill="#ffffff" />
-        <circle cx="32" cy="496" r="0.9" fill="#ffffff" />
-      </g>
     </g>
   );
 }
@@ -509,6 +491,33 @@ function ZebraStrip({ className, style }: { className?: string; style?: React.CS
       <path d={teeth.join(' ')} fill="#131a3a" />
       <rect width="1200" height="5" fill="#0c1130" />
       <rect y="55" width="1200" height="5" fill="#0c1130" />
+    </svg>
+  );
+}
+
+/*
+ * Neon slime pouring over a section's top edge: punk drip border in the
+ * brand mint, glossy clip-art style with the navy outline and a few
+ * detached drops mid-fall.
+ */
+function SlimeDrip({ className }: { className?: string }) {
+  const { id, stops } = useGloss('#14ff89');
+  return (
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className={className} aria-hidden="true">
+      <Gloss id={id} stops={stops} />
+      <path
+        d="M0 26 C30 26 40 60 60 60 C80 60 78 20 100 20 C130 20 130 44 150 44 C170 44 168 84 190 84 C212 84 205 22 230 22 C260 22 258 50 280 50 C302 50 300 18 330 18 C360 18 355 70 380 70 C405 70 400 24 430 24 C460 24 458 46 480 46 C502 46 500 90 525 90 C550 90 545 20 575 20 C605 20 600 55 625 55 C650 55 648 26 675 26 C705 26 700 74 725 74 C750 74 748 22 775 22 C805 22 800 48 825 48 C850 48 848 16 880 16 C910 16 905 62 930 62 C955 62 950 24 980 24 C1010 24 1008 52 1030 52 C1052 52 1050 88 1075 88 C1100 88 1095 20 1125 20 C1155 20 1150 44 1175 44 C1200 44 1198 70 1225 70 C1252 70 1245 18 1275 18 C1305 18 1300 50 1325 50 C1350 50 1348 28 1375 28 C1405 28 1402 58 1420 58 C1435 58 1438 30 1440 26 L1440 0 L0 0 Z"
+        fill={`url(#${id})`}
+        stroke="#0c1130"
+        strokeWidth="6"
+        strokeLinejoin="round"
+      />
+      <circle cx="192" cy="102" r="5" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" />
+      <circle cx="527" cy="106" r="7" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" />
+      <circle cx="1077" cy="104" r="6" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" />
+      <ellipse cx="130" cy="9" rx="34" ry="4" fill="#ffffff" opacity="0.45" />
+      <ellipse cx="700" cy="9" rx="40" ry="4" fill="#ffffff" opacity="0.45" />
+      <ellipse cx="1240" cy="9" rx="30" ry="4" fill="#ffffff" opacity="0.45" />
     </svg>
   );
 }
@@ -721,7 +730,7 @@ const Index = () => {
           }}
         />
         {/* The border, doodled corner to corner like a bored study period */}
-        <div className="pointer-events-none absolute inset-0 text-[#8429e0] opacity-75" aria-hidden="true">
+        <div className="pointer-events-none absolute inset-0 text-[#8429e0]" aria-hidden="true">
           <DoodleCrewStrip className="absolute inset-y-0 left-0 h-full w-16" />
           <DoodleBorderStrip className="absolute inset-y-0 right-0 hidden h-full w-16 -scale-x-100 sm:block" />
           <DoodleBorderStrip horizontal className="absolute top-0 right-16 hidden h-16 w-[520px] md:block" />
@@ -748,7 +757,8 @@ const Index = () => {
         boxes, restyle it from the sidebar. The wallpaper is the punk
         retro-internet image from branding/.
       */}
-      <section className="ys-section-img relative overflow-hidden px-6 py-24">
+      <section className="ys-section-img relative overflow-hidden px-6 pb-24 pt-32">
+        <SlimeDrip className="absolute inset-x-0 top-0 h-24 w-full" />
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
             <h2 className="ys-outline mb-4 font-display text-4xl font-black italic text-white sm:text-6xl">

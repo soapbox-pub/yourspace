@@ -874,8 +874,6 @@ function charCat(cx, cy, size, rotDeg = 0) {
   let o = `<path d="M22 38 L15 8 L40 21 C43 20 57 20 60 21 L85 8 L78 38 C83 45 86 53 86 62 C86 81 70 92 50 92 C30 92 14 81 14 62 C14 53 17 45 22 38 Z" fill="url(#g_violet)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
   o += `<path d="M25 30 L21 14 L34 21 Z" fill="${C.pink}" opacity="0.8"/>`;
   o += `<path d="M75 30 L79 14 L66 21 Z" fill="${C.pink}" opacity="0.8"/>`;
-  o += `<circle cx="81" cy="33" r="5" fill="none" stroke="${C.navyEdge}" stroke-width="5"/>`;
-  o += `<circle cx="81" cy="33" r="5" fill="none" stroke="#F2F4FC" stroke-width="2.5"/>`;
   o += `<path d="M4 54 Q13 55 21 57 M6 64 Q14 63 21 62" fill="none" stroke="${C.navy}" stroke-width="2.5" stroke-linecap="round"/>`;
   o += `<path d="M96 54 Q87 55 79 57 M94 64 Q86 63 79 62" fill="none" stroke="${C.navy}" stroke-width="2.5" stroke-linecap="round"/>`;
   o += cuteFace({ eyeY: 50, blushY: 63, blushDx: 24, mouth: false });
@@ -926,8 +924,6 @@ function charBunny(cx, cy, size, rotDeg = 0) {
   let o = `<path d="M32 44 C24 18 28 4 37 4 C45 4 47 20 45 44 Z" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
   o += `<path d="M35 36 C32 20 33 12 37 11 C40 11 41 22 40 36 Z" fill="${C.pink}" opacity="0.6"/>`;
   o += `<path d="M55 44 C55 20 60 6 70 4 C80 2 88 8 86 14 C79 10 71 14 68 24 C66 31 66 38 66 44 Z" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5" stroke-linejoin="round"/>`;
-  o += `<circle cx="84" cy="16" r="5" fill="none" stroke="${C.navyEdge}" stroke-width="5"/>`;
-  o += `<circle cx="84" cy="16" r="5" fill="none" stroke="#F2F4FC" stroke-width="2.5"/>`;
   o += `<ellipse cx="50" cy="64" rx="35" ry="29" fill="url(#g_lavender)" stroke="${C.navyEdge}" stroke-width="5"/>`;
   o += cuteFace({ eyeY: 60, blushY: 72, blushDx: 25, mouthY: 72 });
   o += `<rect x="45" y="74" width="10" height="8" rx="2" fill="#FFFFFF" stroke="${C.navy}" stroke-width="2"/>`;

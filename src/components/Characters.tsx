@@ -80,8 +80,6 @@ export function Cat({ color = '#b14dff', className, style }: CharProps) {
       />
       <path d="M25 30 L21 14 L34 21 Z" fill="#ff2d9e" opacity="0.8" />
       <path d="M75 30 L79 14 L66 21 Z" fill="#ff2d9e" opacity="0.8" />
-      <circle cx="81" cy="33" r="5" fill="none" stroke="#0c1130" strokeWidth="5" />
-      <circle cx="81" cy="33" r="5" fill="none" stroke="#f2f4fc" strokeWidth="2.5" />
       <path d="M4 54 Q13 55 21 57 M6 64 Q14 63 21 62" fill="none" stroke="#131a3a" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M96 54 Q87 55 79 57 M94 64 Q86 63 79 62" fill="none" stroke="#131a3a" strokeWidth="2.5" strokeLinecap="round" />
       <Face eyeY={50} blushY={63} blushDx={24} />
@@ -175,8 +173,6 @@ export function Bunny({ className, style }: CharProps) {
       <path d="M32 44 C24 18 28 4 37 4 C45 4 47 20 45 44 Z" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" strokeLinejoin="round" />
       <path d="M35 36 C32 20 33 12 37 11 C40 11 41 22 40 36 Z" fill="#ff2d9e" opacity="0.6" />
       <path d="M55 44 C55 20 60 6 70 4 C80 2 88 8 86 14 C79 10 71 14 68 24 C66 31 66 38 66 44 Z" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" strokeLinejoin="round" />
-      <circle cx="84" cy="16" r="5" fill="none" stroke="#0c1130" strokeWidth="5" />
-      <circle cx="84" cy="16" r="5" fill="none" stroke="#f2f4fc" strokeWidth="2.5" />
       <ellipse cx="50" cy="64" rx="35" ry="29" fill={`url(#${id})`} stroke="#0c1130" strokeWidth="5" />
       <Face eyeY={60} blushY={72} blushDx={25} />
       <path d="M44 72 Q47 76 50 72 Q53 76 56 72" fill="none" stroke="#131a3a" strokeWidth="3" strokeLinecap="round" />
