@@ -478,8 +478,17 @@ const Index = () => {
         one: these are other people's pages, and they read better against a
         neutral background than on the sky.
       */}
-      <section className="bg-background px-6 py-20 text-foreground">
-        <div className="mx-auto max-w-6xl">
+      <section className="relative overflow-hidden bg-background px-6 py-20 text-foreground">
+        {/* A whisper of wallpaper: faint tiled dots and a little edge glitter */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          aria-hidden="true"
+          style={{ background: 'radial-gradient(rgb(74 29 122 / 0.05) 1.5px, transparent 1.5px) 0 0 / 22px 22px' }}
+        />
+        <Sparkle color="#b14dff" className="pointer-events-none absolute top-10 right-[4%] w-6 opacity-30" />
+        <Sparkle color="#ff2d9e" className="pointer-events-none absolute bottom-12 left-[3%] hidden w-5 opacity-30 sm:block" />
+        <GlossyStar color="#00d9ff" className="pointer-events-none absolute top-1/2 -right-7 hidden w-16 rotate-12 opacity-20 lg:block" />
+        <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
             <h2 className="mb-3 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
               fresh off the press
