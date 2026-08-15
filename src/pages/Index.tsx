@@ -729,7 +729,7 @@ const Index = () => {
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-10">
-            <h2 className="mb-8 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
+            <h2 className="mb-0 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
               other people’s spaces
               <Alien className="ml-3 inline-block w-9 -rotate-6 align-[-0.3em] sm:w-11" />
             </h2>
