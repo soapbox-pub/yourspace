@@ -527,7 +527,7 @@ const Index = () => {
                 )}
 
                 {blocks.map((block) => {
-                  const shared = `relative w-full rounded-lg border-2 border-dashed p-3 pl-9 transition-colors ${
+                  const shared = `relative w-full rounded-lg border-2 border-dashed bg-white p-3 pl-9 transition-colors ${
                     dropTarget === block ? 'ring-2 ring-white/80' : ''
                   }`;
                   const grip = (
@@ -568,7 +568,7 @@ const Index = () => {
                               onChange={(e) => setName(e.target.value)}
                               aria-label="Page name"
                               placeholder="ur demo page"
-                              className="w-full truncate rounded-md border-2 border-ys-edge/15 bg-white px-2 py-0.5 font-display text-xl font-black italic transition-colors focus:border-ys-edge/40 focus:outline-none"
+                              className="w-full truncate rounded bg-transparent font-display text-xl font-black italic transition-colors focus:outline-none focus:ring-2 focus:ring-ys-edge/25"
                               style={{ color: accentDark }}
                             />
                             <span className="flex items-center gap-1.5 text-xs text-ys-dusk">
@@ -590,7 +590,7 @@ const Index = () => {
                         rows={3}
                         onChange={(e) => setAbout(e.target.value)}
                         aria-label="About me text"
-                        className="w-full resize-none rounded-md border-2 border-ys-edge/15 bg-white p-2 pr-5 text-sm leading-relaxed text-ys-dusk transition-colors focus:border-ys-edge/40 focus:outline-none"
+                        className="w-full resize-none rounded bg-transparent pr-5 text-sm leading-relaxed text-ys-dusk focus:outline-none focus:ring-2 focus:ring-ys-edge/25"
                       />
                     </div>
                   );
