@@ -985,8 +985,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Closing call to action: the page that could be yours */}
-      <section className="relative bg-[#16224e]">
+      {/* Closing call to action */}
+      <section className="relative bg-[#14ff89]">
         <div className="overflow-hidden" aria-hidden="true">
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
         </div>
@@ -994,48 +994,18 @@ const Index = () => {
         <div className="px-6 py-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="ys-outline mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
-              ur page is waiting
+              your space is waiting...
             </h2>
 
-            <div className="relative">
-              <Cat className="absolute -top-[60px] right-10 w-24 rotate-3" />
-              <div className="ys-card-gloss relative overflow-hidden text-left">
-              <div className="flex items-center justify-between border-b-[3px] border-ys-edge bg-[#1b2350] px-4 py-2.5">
-                <span className="font-display text-sm font-bold italic text-ys-lavender">ur-space.html</span>
-                <span className="flex gap-1.5" aria-hidden="true">
-                  <span className="inline-block size-3 rounded-[3px] border border-ys-edge bg-[#c9cfe8]" />
-                  <span className="inline-block size-3 rounded-[3px] border border-ys-edge bg-[#c9cfe8]" />
-                  <span className="inline-block size-3 rounded-[3px] border border-ys-edge bg-[#ff2d9e]" />
-                </span>
+            {user ? (
+              <Link to="/edit" className="ys-gel px-10 py-4 text-2xl">
+                start building
+              </Link>
+            ) : (
+              <div className="flex justify-center">
+                <LoginArea className="w-full max-w-xs" />
               </div>
-
-              <div className="flex flex-col items-center gap-6 p-6 sm:flex-row sm:p-8">
-                <img
-                  src="/icon.svg"
-                  alt="The YourSpace ghost"
-                  className="w-28 shrink-0 rounded-xl border-[3px] border-ys-edge bg-ys-purple"
-                />
-                <div className="text-center sm:text-left">
-                  <p className="font-display text-3xl font-black italic text-white">ur page</p>
-                  <p className="mt-1 text-sm text-ys-dusk">currently: under construction ♥</p>
-                  <p className="mt-3 text-sm leading-relaxed text-ys-lavender">
-                    no walled gardens, no algorithm, no feed to please. the pic, the colors, the
-                    blocks: all up to u. published under ur own key, so it stays urs.
-                  </p>
-
-                  <div className="mt-6">
-                    {user ? (
-                      <Link to="/edit" className="ys-gel">
-                        start building
-                      </Link>
-                    ) : (
-                      <LoginArea className="w-full max-w-xs" />
-                    )}
-                  </div>
-                </div>
-              </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
