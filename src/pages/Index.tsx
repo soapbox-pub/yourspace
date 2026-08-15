@@ -75,7 +75,7 @@ const Index = () => {
   const { user } = useCurrentUser();
 
   useSeoMeta({
-    title: 'YourSpace — Build a homepage that is actually yours',
+    title: 'YourSpace: Build a homepage that is actually yours',
     description:
       'Where nostalgia meets innovation. Design your own homepage with drag-and-drop blocks and publish it to Nostr as an nsite — no platform, no takedowns, no algorithm.',
   });
