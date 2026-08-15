@@ -549,9 +549,9 @@ const WORDMARK = [
 ];
 
 /** Demo page options. */
-const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff'];
+const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff', '#0c1130'];
 const PATTERNS = ['plain', 'checker', 'stripes', 'dots', 'grid'] as const;
-const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2', '#0c1130'] as const;
+const BG_COLORS = ['#e7d9ff', '#ffd6ec', '#d9ffd2', '#d2f4ff', '#fff3c2'] as const;
 const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'broken'] as const;
 
 function bgStyle(pattern: (typeof PATTERNS)[number], color: string): React.CSSProperties {
@@ -603,6 +603,8 @@ const Index = () => {
 
   /* The accent, deepened so it reads as text and borders on the pastel cards. */
   const accentDark = darken(accent, 0.25);
+  /* Text color that stays readable on the accent pills. */
+  const onAccent = accent === '#0c1130' ? '#ffffff' : '#131a3a';
 
   /* Drag a block by its grip onto another block: it lands before it. */
   const dropProps = (target: string) => ({
@@ -889,8 +891,8 @@ const Index = () => {
                           maxLength={14}
                           onChange={(e) => setLinks(links.map((l, j) => (j === i ? e.target.value : l)))}
                           aria-label={`Link ${i + 1} label`}
-                          className="rounded-full px-3 py-1.5 text-center font-display text-sm font-extrabold italic text-ys-navy transition-colors focus:outline-none focus:ring-2 focus:ring-ys-navy"
-                          style={{ backgroundColor: accent, width: `${Math.max(label.length + 2, 6)}ch` }}
+                          className="rounded-full px-3 py-1.5 text-center font-display text-sm font-extrabold italic transition-colors focus:outline-none focus:ring-2 focus:ring-ys-navy"
+                          style={{ backgroundColor: accent, color: onAccent, width: `${Math.max(label.length + 2, 6)}ch` }}
                         />
                       ))}
                     </div>
@@ -995,11 +997,21 @@ const Index = () => {
                 <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">glitter</p>
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={glitter}
                   onClick={() => setGlitter((g) => !g)}
-                  aria-pressed={glitter}
-                  className="rounded-full border-[3px] border-ys-edge px-5 py-1.5 font-display text-sm font-extrabold italic transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  style={{ backgroundColor: glitter ? '#8fe800' : 'rgb(255 255 255 / 0.7)', color: '#131a3a' }}
+                  className="flex items-center gap-2.5 rounded-full font-display text-sm font-extrabold italic text-ys-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
+                  <span
+                    className="relative h-8 w-14 rounded-full border-[3px] border-ys-edge transition-colors"
+                    style={{ backgroundColor: glitter ? '#8fe800' : 'rgb(255 255 255 / 0.7)' }}
+                  >
+                    <span
+                      className={`absolute top-1/2 size-4.5 -translate-y-1/2 rounded-full bg-ys-edge transition-all ${
+                        glitter ? 'left-[calc(100%-1.375rem)]' : 'left-0.5'
+                      }`}
+                    />
+                  </span>
                   {glitter ? 'on !!' : 'off'}
                 </button>
               </div>
