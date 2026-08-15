@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { GripVertical } from 'lucide-react';
 
 import { LoginArea } from '@/components/auth/LoginArea';
+import { Alien, Bat, Bunny, Cat, DevilHeart } from '@/components/Characters';
 import { Logo } from '@/components/Logo';
 import { NsiteShowcase } from '@/components/NsiteShowcase';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -181,7 +182,11 @@ function Skull({ className, style }: StickerProps) {
       />
       <ellipse cx="36" cy="44" rx="9" ry="12" fill="#131a3a" />
       <ellipse cx="64" cy="44" rx="9" ry="12" fill="#131a3a" />
-      <path d="M50 56 L45 64 L55 64 Z" fill="#131a3a" />
+      <circle cx="33" cy="40" r="3" fill="#ffffff" />
+      <circle cx="61" cy="40" r="3" fill="#ffffff" />
+      <ellipse cx="24" cy="58" rx="6" ry="4" fill="#ff2d9e" opacity="0.55" />
+      <ellipse cx="76" cy="58" rx="6" ry="4" fill="#ff2d9e" opacity="0.55" />
+      <path d="M50 55 L45 63 L55 63 Z" fill="#131a3a" />
       <rect x="42" y="72" width="3" height="12" fill="#131a3a" />
       <rect x="48.5" y="72" width="3" height="12" fill="#131a3a" />
       <rect x="55" y="72" width="3" height="12" fill="#131a3a" />
@@ -305,7 +310,7 @@ const WORDMARK = [
 /** Demo page options. */
 const ACCENTS = ['#ff2d9e', '#ff8a00', '#ffd400', '#8fe800', '#00d9ff', '#b14dff', '#14ff89'];
 const PATTERNS = ['plain', 'checker', 'stripes', 'zebra'] as const;
-const STICKERS = ['heart', 'star', 'skull', 'bolt', 'note', 'broken'] as const;
+const STICKERS = ['heart', 'star', 'skull', 'cat', 'devil', 'bolt', 'note', 'broken'] as const;
 
 function patternStyle(pattern: (typeof PATTERNS)[number]): React.CSSProperties {
   if (pattern === 'checker') {
@@ -326,6 +331,8 @@ function patternStyle(pattern: (typeof PATTERNS)[number]): React.CSSProperties {
 function DemoSticker({ kind, accent, className }: { kind: (typeof STICKERS)[number]; accent: string; className?: string }) {
   if (kind === 'heart') return <GlossyHeart color={accent} className={className} />;
   if (kind === 'star') return <GlossyStar color={accent} className={className} />;
+  if (kind === 'cat') return <Cat color={accent} className={className} />;
+  if (kind === 'devil') return <DevilHeart color={accent} className={className} />;
   if (kind === 'bolt') return <Bolt color={accent} className={className} />;
   if (kind === 'note') return <Note color={accent} className={className} />;
   if (kind === 'broken') return <BrokenHeart color={accent} className={className} />;
@@ -396,7 +403,7 @@ const Index = () => {
           <Note color="#b14dff" className="w-12" />
           <Sparkle color="#ff2d9e" className="ys-twinkle absolute -left-5 top-7 w-5" style={{ animationDelay: '0.7s' }} />
         </div>
-        <GlossyHeart color="#2a1245" className="absolute top-[42%] right-[2%] hidden w-9 -rotate-12 lg:block" />
+        <Bat className="absolute top-[42%] right-[2%] hidden w-14 -rotate-12 lg:block" />
         <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[18%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
 
         <div className="relative z-10 mx-auto max-w-6xl px-6 pt-12 pb-20 sm:pt-16 sm:pb-24">
@@ -476,6 +483,7 @@ const Index = () => {
           <div className="mb-10">
             <h2 className="mb-3 font-display text-4xl font-black italic tracking-tight sm:text-5xl">
               fresh off the press
+              <Alien className="ml-3 inline-block w-9 -rotate-6 align-[-0.3em] sm:w-11" />
             </h2>
             <p className="max-w-2xl text-lg text-muted-foreground">
               Browse the latest homepages published to Nostr
@@ -725,7 +733,9 @@ const Index = () => {
               ur page is waiting
             </h2>
 
-            <div className="ys-card-gloss overflow-hidden text-left">
+            <div className="relative">
+              <Bunny className="absolute -top-[72px] right-10 w-24 rotate-3" />
+              <div className="ys-card-gloss relative overflow-hidden text-left">
               <div className="flex items-center justify-between border-b-[3px] border-ys-edge bg-[#1b2350] px-4 py-2.5">
                 <span className="font-display text-sm font-bold italic text-ys-lavender">ur-space.html</span>
                 <span className="flex gap-1.5" aria-hidden="true">
@@ -759,6 +769,7 @@ const Index = () => {
                     )}
                   </div>
                 </div>
+              </div>
               </div>
             </div>
           </div>
