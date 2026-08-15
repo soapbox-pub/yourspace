@@ -26,6 +26,7 @@ import {
   Field,
   ImageControl,
   PanelSection,
+  RangeControl,
   SelectControl,
   SegmentedControl,
   TextControl,
@@ -164,6 +165,34 @@ function setInsetSide(target: StyleTarget, side: number, value: string) {
   });
 
   setStyle(target, patch);
+}
+
+/* --------------------------------------------------------------------------
+ * Rotation
+ * ------------------------------------------------------------------------ */
+
+/**
+ * How far the element is turned, in degrees.
+ *
+ * Reads the standalone `rotate` property rather than anything inside
+ * `transform`, because the two compose instead of competing: word art's Tilt
+ * and Wave presets own `transform` and rewrite it on every preset switch, so
+ * a rotation folded into it would be silently dropped there — and setting one
+ * would wipe the preset's skew. `rotate` answers to this control alone, which
+ * is also why only `deg` is read back: degrees are all this panel ever writes.
+ */
+function rotateDegrees(target: StyleTarget): number {
+  const match = /^(-?\d+(?:\.\d+)?)deg$/.exec(styleValue(target, 'rotate').trim());
+  return match ? Number(match[1]) : 0;
+}
+
+/**
+ * Straightening back to 0 clears the declaration rather than writing
+ * `rotate: 0deg` — no rotation is the CSS default, and a declaration that
+ * changes nothing is noise in the published stylesheet.
+ */
+function setRotation(target: StyleTarget, degrees: number) {
+  setStyle(target, { rotate: degrees ? `${degrees}deg` : '' });
 }
 
 interface BackgroundFieldsProps {
@@ -607,6 +636,8 @@ export function Inspector({
   const canRemove = selected.get('removable') !== false && Boolean(parent);
   const canCopy = selected.get('copyable') !== false && Boolean(parent);
 
+  const rotation = rotateDegrees(selected);
+
   /*
    * Typography leads for anything that is mostly text, and keeps its usual
    * place below the box properties for everything else.
@@ -1032,6 +1063,22 @@ export function Inspector({
           fieldKey={`${id}:border`}
           placeholder="1px solid #e2e8f0"
           onChange={(value) => setStyle(selected, { border: value })}
+        />
+
+        {/*
+          A slider rather than a text field for the reason `RangeControl`
+          exists at all: the right angle is however it looks, and dragging
+          shows the element turning under the pointer. Arrow keys still nudge
+          a degree at a time for anyone who does know the figure.
+        */}
+        <RangeControl
+          label="Rotation"
+          value={rotation}
+          min={-180}
+          max={180}
+          step={1}
+          valueLabel={`${rotation}°`}
+          onChange={(degrees) => setRotation(selected, degrees)}
         />
       </PanelSection>
     </div>
