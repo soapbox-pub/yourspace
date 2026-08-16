@@ -915,7 +915,7 @@ const Index = () => {
             </div>
 
             {/* The controls, on their own glossy panel so they read over the wallpaper */}
-            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5">
+            <div className="ys-card-pastel w-full max-w-md space-y-5 p-5 lg:max-w-sm">
               <div>
                 <p className="mb-2 font-display text-lg font-extrabold italic text-ys-navy">color</p>
                 <div className="flex flex-wrap gap-2.5" role="group" aria-label="Accent color">
