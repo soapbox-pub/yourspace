@@ -691,7 +691,7 @@ const Index = () => {
                   </Link>
                 ) : (
                   <>
-                    <LoginArea className="w-full max-w-xs" />
+                    <LoginArea gel className="w-full max-w-xs" />
                     <Link
                       to="/edit"
                       className="text-base text-ys-lavender underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ys-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-ys-purple"
@@ -1046,7 +1046,7 @@ const Index = () => {
                   start building
                 </Link>
               ) : (
-                <LoginArea className="w-auto max-w-xs" />
+                <LoginArea gel className="w-auto max-w-xs" />
               )}
               <DevilHeart className="w-12 shrink-0 rotate-12 sm:hidden" />
             </div>

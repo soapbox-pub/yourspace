@@ -27,9 +27,11 @@ export interface LoginAreaProps {
   className?: string;
   /** Shrinks the controls to fit inside the fixed top bar. */
   compact?: boolean;
+  /** Renders the join button as the chunky gel button. */
+  gel?: boolean;
 }
 
-export function LoginArea({ className, compact }: LoginAreaProps) {
+export function LoginArea({ className, compact, gel }: LoginAreaProps) {
   const { currentUser } = useLoggedInAccounts();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quickLoginPubkey, setQuickLoginPubkey] = useState<string | null>(null);
@@ -54,6 +56,10 @@ export function LoginArea({ className, compact }: LoginAreaProps) {
     <div className={cn('inline-flex items-center justify-center', className)}>
       {currentUser ? (
         <AccountSwitcher compact={compact} onAddAccountClick={() => setAuthDialogOpen(true)} />
+      ) : gel ? (
+        <button type="button" onClick={handleJoin} className="ys-gel animate-scale-in">
+          join
+        </button>
       ) : (
         <Button
           onClick={handleJoin}
