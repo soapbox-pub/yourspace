@@ -1,4 +1,5 @@
-import { bytesToBase64, utf8ToBase64 } from '@/lib/sandbox/base64';
+import { frameVersion, PROTOCOL_VERSION, textToBody, toBody } from '@/lib/sandbox/body';
+import type { SerialisedBody } from '@/lib/sandbox/types';
 
 /**
  * The parent half of iframe.diy's protocol, without React.
@@ -57,8 +58,10 @@ interface SandboxHostOptions {
   onNapplet: (message: Record<string, unknown>) => void;
 }
 
-function body(file: ServedFile): string {
-  return typeof file.body === 'string' ? utf8ToBase64(file.body) : bytesToBase64(file.body);
+function body(file: ServedFile, binary: boolean): SerialisedBody {
+  return typeof file.body === 'string'
+    ? textToBody(file.body, binary)
+    : toBody(file.body, binary);
 }
 
 /**
@@ -74,6 +77,12 @@ export function serveSandbox(options: SandboxHostOptions): {
   const { frame, origin, resolveFile, onNapplet } = options;
 
   let destroyed = false;
+
+  /*
+   * Protocol version the frame announced in `ready`. Raw binary bodies are only
+   * sent to a v2 frame; a stale cached v1 Service Worker still gets base64.
+   */
+  let version = 1;
 
   /*
    * Identifies this frame to the canvas bridge, which has no other way to tell
@@ -139,7 +148,7 @@ export function serveSandbox(options: SandboxHostOptions): {
             status: 404,
             statusText: 'Not Found',
             headers: { 'Content-Type': 'text/plain' },
-            body: utf8ToBase64('Not Found'),
+            body: textToBody('Not Found', version >= 2),
           },
         });
         return;
@@ -152,7 +161,7 @@ export function serveSandbox(options: SandboxHostOptions): {
           status: file.status,
           statusText: 'OK',
           headers: { 'Content-Type': file.contentType, 'Cache-Control': 'no-cache' },
-          body: body(file),
+          body: body(file, version >= 2),
         },
       });
     } catch (error) {
@@ -179,7 +188,8 @@ export function serveSandbox(options: SandboxHostOptions): {
 
     // `ready` is a notification and repeats until it is answered.
     if (method === 'ready' && id === undefined) {
-      post({ jsonrpc: '2.0', method: 'init', params: { version: 1 } });
+      version = frameVersion(params);
+      post({ jsonrpc: '2.0', method: 'init', params: { version: PROTOCOL_VERSION } });
       return;
     }
 

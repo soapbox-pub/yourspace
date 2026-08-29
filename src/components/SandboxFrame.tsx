@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, type IframeHTMLAttributes } from 'react';
 
 import { useAppContext } from '@/hooks/useAppContext';
-import { bytesToBase64, injectScriptTags, utf8ToBase64 } from '@/lib/sandbox';
-import type { FileResponse, InjectedScript, SerialisedRequest } from '@/lib/sandbox';
+import {
+  frameVersion,
+  injectScriptTags,
+  PROTOCOL_VERSION,
+  textToBody,
+  toBody,
+} from '@/lib/sandbox';
+import type {
+  FileResponse,
+  InjectedScript,
+  SerialisedBody,
+  SerialisedRequest,
+} from '@/lib/sandbox';
 
 export interface SandboxFrameProps
   extends Omit<IframeHTMLAttributes<HTMLIFrameElement>, 'src' | 'id' | 'sandbox'> {
@@ -61,6 +72,7 @@ async function serve(
   pathname: string,
   resolveFile: (pathname: string) => Promise<FileResponse | null>,
   scripts: InjectedScript[],
+  binaryBodies: boolean,
   respond: (result: Record<string, unknown>) => void,
   respondError: (code: number, message: string) => void,
 ): Promise<void> {
@@ -70,7 +82,7 @@ async function serve(
       status: 200,
       statusText: 'OK',
       headers: { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache' },
-      body: utf8ToBase64(virtual.content),
+      body: textToBody(virtual.content, binaryBodies),
     });
     return;
   }
@@ -83,7 +95,7 @@ async function serve(
         status: 404,
         statusText: 'Not Found',
         headers: { 'Content-Type': 'text/plain' },
-        body: utf8ToBase64('Not Found'),
+        body: textToBody('Not Found', binaryBodies),
       });
       return;
     }
@@ -93,12 +105,12 @@ async function serve(
       'Cache-Control': 'no-cache',
     };
 
-    let body: string;
+    let body: SerialisedBody;
     if (file.contentType === 'text/html' && scripts.length > 0) {
       const html = new TextDecoder().decode(file.body);
-      body = utf8ToBase64(injectScriptTags(html, scripts.map((s) => `/${s.path}`)));
+      body = textToBody(injectScriptTags(html, scripts.map((s) => `/${s.path}`)), binaryBodies);
     } else {
-      body = bytesToBase64(file.body);
+      body = toBody(file.body, binaryBodies);
       headers['Content-Length'] = String(file.body.byteLength);
     }
 
@@ -130,6 +142,11 @@ export function SandboxFrame({
 }: SandboxFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { config } = useAppContext();
+
+  // Protocol version announced by the frame in `ready`. Raw binary bodies are
+  // only sent when the frame supports v2; a stale cached v1 Service Worker
+  // still gets base64.
+  const frameVersionRef = useRef(1);
 
   const origin = useMemo(
     () => `https://${id}.${config.sandboxDomain}`,
@@ -180,6 +197,7 @@ export function SandboxFrame({
         pathname,
         resolveFileRef.current,
         injectedScriptsRef.current ?? [],
+        frameVersionRef.current >= 2,
         (result) => post({ jsonrpc: '2.0', id, result }),
         (code, message) => post({ jsonrpc: '2.0', id, error: { code, message } }),
       );
@@ -191,7 +209,7 @@ export function SandboxFrame({
       } catch (err) {
         console.error('[SandboxFrame] onReady failed:', err);
       }
-      post({ jsonrpc: '2.0', method: 'init', params: { version: 1 } });
+      post({ jsonrpc: '2.0', method: 'init', params: { version: PROTOCOL_VERSION } });
     }
 
     function onMessage(event: MessageEvent) {
@@ -203,6 +221,7 @@ export function SandboxFrame({
 
       // `ready` is a notification, so it carries no id.
       if (msg.method === 'ready' && msg.id === undefined) {
+        frameVersionRef.current = frameVersion(msg.params);
         handleReady();
         return;
       }

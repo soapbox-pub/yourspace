@@ -17,12 +17,18 @@ export interface JsonRpcErrorResponse {
 
 export type JsonRpcResponse = JsonRpcSuccessResponse | JsonRpcErrorResponse;
 
+/**
+ * A fetch body on the wire: base64 string (protocol v1), raw binary
+ * (protocol v2, structured-cloned by `postMessage`), or null if no body.
+ */
+export type SerialisedBody = string | Uint8Array | ArrayBuffer | null;
+
 /** A request the sandbox wants the parent to perform on its behalf. */
 export interface SerialisedRequest {
   url: string;
   method: string;
   headers: Record<string, string>;
-  body: string | null;
+  body: SerialisedBody;
 }
 
 /** The result of resolving one path inside the sandbox. */
