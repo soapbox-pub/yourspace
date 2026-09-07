@@ -1,5 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/*
+ * `pt-safe`, `px-safe-or-*`, `pb-safe-offset-*` and friends, resolving to
+ * `env(safe-area-inset-*)`. The viewport meta already carries
+ * `viewport-fit=cover`, so on a notched phone or an installed PWA the document
+ * runs under the status bar and the home indicator and these are what keep
+ * anything readable out from behind them.
+ */
+@import "tailwindcss-safe-area";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -207,12 +215,22 @@
   }
 
   :root {
+    /* The bar's own row of controls, ignoring anything the device eats. */
+    --ys-bar-row: 2.5rem;
+
     /*
-     * Height of the fixed YourSpace bar. Every page sits below it, and the
-     * full-height ones (the editor, an embedded nsite) subtract it rather than
-     * using 100vh, so nothing is pushed off the bottom of the screen.
+     * How much of the top of the screen the fixed YourSpace bar occupies.
+     * Every page sits below it, and the full-height ones (the editor, an
+     * embedded nsite) subtract it rather than using 100vh, so nothing is
+     * pushed off the bottom of the screen.
+     *
+     * The status bar / notch is included because the bar is what runs under
+     * it: the black strip extends up behind the inset and pads its own
+     * contents down past it, rather than leaving the cutout over whatever page
+     * is below. So every one of those callers wants the total, and gets it
+     * without knowing the inset exists.
      */
-    --ys-bar: 2.5rem;
+    --ys-bar: calc(var(--ys-bar-row) + var(--twsa-safe-area-inset-top, 0px));
   }
 }
 

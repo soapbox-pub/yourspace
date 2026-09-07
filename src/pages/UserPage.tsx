@@ -17,7 +17,7 @@ import NotFound from './NotFound';
 /** A page filling everything below the bar, for the states that aren't a site. */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="ys-below-bar overflow-y-auto px-6 py-16">
+    <div className="ys-below-bar overflow-y-auto px-safe-or-6 pt-16 pb-safe-offset-16">
       <div className="mx-auto max-w-md">{children}</div>
     </div>
   );
@@ -102,6 +102,10 @@ export function UserPage() {
 
   // The site gets everything the bar doesn't. It scrolls itself, so the page
   // around it must not also scroll — hence a fixed height rather than min-h.
+  //
+  // Deliberately no safe-area padding: this is somebody's whole website, and
+  // insetting it would frame it in a strip of app background. Running under
+  // the home indicator is what it does at its own URL too.
   return (
     <div className="ys-below-bar">
       <NsiteFrame

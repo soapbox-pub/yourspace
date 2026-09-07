@@ -657,7 +657,7 @@ const Index = () => {
         <Bat className="absolute top-[42%] right-[2%] hidden w-14 -rotate-12 lg:block" />
         <Sparkle color="#ffffff" className="ys-twinkle absolute bottom-[18%] left-[36%] hidden w-6 lg:block" style={{ animationDelay: '0.2s' }} />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pt-12 pb-12 sm:pt-16 sm:pb-24">
+        <div className="relative z-10 mx-auto max-w-6xl px-safe-or-6 pt-12 pb-12 sm:pt-16 sm:pb-24">
           <div className="flex flex-col items-center gap-10 lg:flex-row lg:gap-4">
             <div className="flex-1 text-center lg:text-left">
               <h1 aria-label="YourSpace" className="-rotate-2 select-none">
@@ -729,7 +729,7 @@ const Index = () => {
         one: these are other people's pages, and they read better against a
         neutral background than on the sky.
       */}
-      <section className="relative overflow-hidden bg-background px-6 py-20 text-foreground">
+      <section className="relative overflow-hidden bg-background px-safe-or-6 py-20 text-foreground">
         {/* Lined notebook paper: ruled lines, a margin line, ballpoint doodles */}
         <div
           className="pointer-events-none absolute inset-0"
@@ -767,7 +767,7 @@ const Index = () => {
         boxes, restyle it from the sidebar. The wallpaper is the punk
         retro-internet image from branding/.
       */}
-      <section className="ys-section-img relative overflow-hidden px-6 pb-24 pt-32">
+      <section className="ys-section-img relative overflow-hidden px-safe-or-6 pb-24 pt-32">
         <SlimeDrip className="absolute inset-x-0 top-0 h-24 w-full" />
         <div className="relative mx-auto max-w-5xl">
           <div className="mb-12 text-center">
@@ -1029,7 +1029,7 @@ const Index = () => {
           <ZebraStrip className="block h-10 w-full rotate-1 scale-x-110 sm:h-12" />
         </div>
 
-        <div className="px-6 py-24">
+        <div className="px-safe-or-6 py-24">
           <div className="relative mx-auto max-w-2xl text-center">
             <h2 className="ys-outline relative z-10 mb-10 font-display text-4xl font-black italic text-white sm:text-6xl">
               your space is waiting...
@@ -1054,7 +1054,7 @@ const Index = () => {
         </div>
       </section>
 
-      <footer className="bg-ys-edge px-6 py-10">
+      <footer className="bg-ys-edge px-safe-or-6 pt-10 pb-safe-offset-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center text-sm text-ys-lavender/70 sm:flex-row sm:justify-between sm:text-left">
           <Logo className="text-white" />
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

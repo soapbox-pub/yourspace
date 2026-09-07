@@ -33,8 +33,13 @@ export function TopBar() {
     <header className="fixed inset-x-0 top-0 z-50 h-[var(--ys-bar)] border-b border-white/10 bg-slate-950 text-white">
       {/* Full-bleed rather than matching the page's content width: what sits
           below is often a framed site with its own layout, and a bar that
-          stopped short of the edges would read as part of it. */}
-      <div className="relative flex h-full items-center gap-2 px-3 sm:px-4">
+          stopped short of the edges would read as part of it.
+
+          The safe-area padding is here rather than on the header, so the black
+          runs all the way up behind the status bar while the row of controls
+          starts below it. `px-safe-or-*` keeps the usual gutter and only grows
+          for a landscape notch. */}
+      <div className="relative flex h-full items-center gap-2 pt-safe px-safe-or-3 sm:px-safe-or-4">
         {/* The mark doubles as the way out of whatever is framed below. */}
         <Link
           to="/"

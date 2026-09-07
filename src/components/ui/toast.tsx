@@ -16,7 +16,10 @@ function ToastViewport({
     <ToastPrimitives.Viewport
       data-slot="toast-viewport"
       className={cn(
-        "fixed top-0 z-100 flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-105",
+        // `p-safe-offset-4` keeps the 4 of gutter and adds whatever the device
+        // eats on each side, which is the top inset where these stack from the
+        // top (mobile) and the bottom one where they stack from the bottom.
+        "fixed top-0 z-100 flex max-h-screen w-full flex-col-reverse p-safe-offset-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-105",
         className
       )}
       {...props}
